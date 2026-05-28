@@ -1,0 +1,32 @@
+import type { LeadStatus } from "@/types/lead";
+
+export const LEAD_STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
+  { value: "new", label: "New" },
+  { value: "interested", label: "Interested" },
+  { value: "follow_up", label: "Follow-Up" },
+  { value: "converted", label: "Converted" },
+  { value: "not_interested", label: "Not Interested" },
+  { value: "closed", label: "Closed" },
+];
+
+export const LEAD_TIER_OPTIONS = [
+  { value: "standard" as const, label: "Standard" },
+  { value: "premium" as const, label: "Premium" },
+  { value: "enterprise" as const, label: "Enterprise" },
+];
+
+export const LEAD_STATUS_VARIANT: Record<
+  LeadStatus,
+  "default" | "success" | "warning" | "info" | "neutral" | "error"
+> = {
+  new: "info",
+  interested: "default",
+  follow_up: "warning",
+  converted: "success",
+  not_interested: "error",
+  closed: "neutral",
+};
+
+export function formatLeadStatus(status: LeadStatus): string {
+  return LEAD_STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
+}

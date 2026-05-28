@@ -1,0 +1,103 @@
+import { NextResponse } from "next/server";
+import { requireAuthApi } from "@/lib/api/require-auth";
+import { toDbError } from "@/lib/db/errors";
+import { followupsService } from "@/services/followups.service";
+import { scheduleFollowupSchema } from "@/utils/validators";
+import type { FollowupFilters, FollowupView } from "@/types/followup";
+
+export async function GET(request: Request) {
+  const auth = await requireAuthApi();
+  if (auth.error) return auth.error;
+
+  const { searchParams } = new URL(request.url);
+  const view = (searchParams.get("view") as FollowupView) ?? "pending";
+  const filters: FollowupFilters = {
+    view,
+    agentId: searchParams.get("agentId") ?? undefined,
+    leadId: searchParams.get("leadId") ?? undefined,
+    priority: (searchParams.get("priority") as FollowupFilters["priority"]) ?? "all",
+    search: searchParams.get("search") ?? undefined,
+    from: searchParams.get("from") ?? undefined,
+    to: searchParams.get("to") ?? undefined,
+    status: (searchParams.get("status") as FollowupFilters["status"]) ?? undefined,
+  };
+
+  if (filters.priority === "all") delete filters.priority;
+  if (!filters.agentId) delete filters.agentId;
+  if (!filters.leadId) delete filters.leadId;
+  if (!filters.search) delete filters.search;
+  if (!filters.from) delete filters.from;
+  if (!filters.to) delete filters.to;
+  if (!filters.status || filters.status === "all") delete filters.status;
+
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+  const pageSize = Math.min(
+    100,
+    Math.max(1, Number(searchParams.get("pageSize") ?? "50") || 50),
+  );
+  const usePagination = searchParams.has("page") || searchParams.has("pageSize");
+
+  try {
+    const listResult = usePagination
+      ? await followupsService.listPaginated(filters, { page, pageSize })
+      : {
+          followups: await followupsService.list(filters),
+          total: 0,
+          page: 1,
+          pageSize: 50,
+          totalPages: 1,
+        };
+
+    const stats = await followupsService.getStats({ view: "all" });
+    const reminders = followupsService.getReminders(await followupsService.list({ view: "all" }));
+    const agents = await followupsService.getAgentSummaries();
+
+    return NextResponse.json({
+      followups: listResult.followups,
+      total: usePagination ? listResult.total : listResult.followups.length,
+      page: listResult.page,
+      pageSize: listResult.pageSize,
+      totalPages: listResult.totalPages,
+      stats,
+      reminders,
+      agents,
+    });
+  } catch (error) {
+    const message = toDbError(error, "Failed to load follow-ups").message;
+    console.error("[api/followups] GET failed:", error);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  const auth = await requireAuthApi();
+  if (auth.error) return auth.error;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = scheduleFollowupSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const dueAt = new Date(parsed.data.dueAt).toISOString();
+    const followup = await followupsService.create({
+      ...parsed.data,
+      dueAt,
+    });
+    return NextResponse.json(followup, { status: 201 });
+  } catch (error) {
+    const message = toDbError(error, "Failed to schedule follow-up").message;
+    console.error("[api/followups] POST failed:", error);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

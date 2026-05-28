@@ -1,0 +1,9 @@
+export { AuthGuard } from "@/components/auth/auth-guard";
+export { RoleGuard } from "@/components/auth/role-guard";
+export { ProtectedRoute } from "@/components/auth/protected-route";
+export { LoginForm } from "@/components/auth/login-form";
+export { RoleTabs } from "@/components/auth/role-tabs";
+export { RedirectIfAuthenticated } from "@/components/auth/redirect-if-authenticated";
+export { SessionLoading } from "@/components/auth/session-loading";
+export { LogoutButton } from "@/components/auth/logout-button";
+export { CrmAccessGuard } from "@/components/auth/crm-access-guard";

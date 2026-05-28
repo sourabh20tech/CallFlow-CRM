@@ -1,7 +1,10 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# CallFlow CRM — production .gitignore (Next.js, TypeScript, Supabase, Vercel)
+# https://help.github.com/articles/ignoring-files/
 
-# dependencies
-/node_modules
+# -----------------------------------------------------------------------------
+# Dependencies
+# -----------------------------------------------------------------------------
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,32 +13,114 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# -----------------------------------------------------------------------------
+# Next.js / build output
+# -----------------------------------------------------------------------------
+.next/
+out/
+build/
+dist/
+.turbo/
+.swc/
 
-# next.js
-/.next/
-/out/
+# -----------------------------------------------------------------------------
+# Environment & secrets (never commit real keys)
+# -----------------------------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+# Catch-all for other env variants; keep the safe template committable
+.env*
+!.env.example
 
-# production
-/build
-
-# misc
-.DS_Store
+# Credentials & key material
 *.pem
+*.key
+*.p12
+*.pfx
+secrets/
+.credentials/
+**/service-account*.json
+**/credentials*.json
 
-# debug
+# -----------------------------------------------------------------------------
+# Supabase (local CLI / temp; migrations stay tracked)
+# -----------------------------------------------------------------------------
+.supabase/
+supabase/.branches
+supabase/.temp
+supabase/.env
+supabase/.env.local
+
+# Optional generated types (regenerate via npm run db:types)
+types/database.generated.ts
+
+# -----------------------------------------------------------------------------
+# Testing & coverage
+# -----------------------------------------------------------------------------
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+
+# -----------------------------------------------------------------------------
+# Logs & debug
+# -----------------------------------------------------------------------------
+*.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# -----------------------------------------------------------------------------
+# TypeScript
+# -----------------------------------------------------------------------------
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+next-env.d.ts
 
-# vercel
+# -----------------------------------------------------------------------------
+# Vercel
+# -----------------------------------------------------------------------------
 .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# -----------------------------------------------------------------------------
+# OS-generated files
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# -----------------------------------------------------------------------------
+# Editors & local IDE
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+.cursor/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+
+# -----------------------------------------------------------------------------
+# Misc / caches
+# -----------------------------------------------------------------------------
+.cache/
+.eslintcache
+.stylelintcache
+*.pid
+*.seed
+*.pid.lock

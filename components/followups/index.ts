@@ -1,0 +1,13 @@
+export { FollowupsManagement } from "@/components/followups/followups-management";
+export { FollowupCard } from "@/components/followups/followup-card";
+export { FollowupStatusBadge } from "@/components/followups/followup-status-badge";
+export { PendingFollowupsSection } from "@/components/followups/pending-followups-section";
+export { CompletedFollowupsSection } from "@/components/followups/completed-followups-section";
+export { ScheduleFollowupModal } from "@/components/followups/schedule-followup-modal";
+export { ScheduleFollowupForm } from "@/components/followups/schedule-followup-form";
+export { FollowupFiltersBar } from "@/components/followups/followup-filters";
+export { FollowupStatsCards } from "@/components/followups/followup-stats-cards";
+export { FollowupsEmptyState } from "@/components/followups/followups-empty-state";
+export { FollowupTimeline } from "@/components/followups/followup-timeline";
+export { FollowupReminderListener } from "@/components/followups/followup-reminder-listener";
+export { FollowupCalendar } from "@/components/followups/followup-calendar";
