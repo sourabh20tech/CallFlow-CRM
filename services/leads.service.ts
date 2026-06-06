@@ -86,7 +86,7 @@ export class LeadsService {
     return this.update(id, { status });
   }
 
-  async getNotes(leadId: string): Promise<Note[]> {
+  async getNotes(leadId: string, excludeInternal = false): Promise<Note[]> {
     if (!leadId?.trim()) return [];
 
     requireSupabaseConfigured("lead notes");
@@ -94,7 +94,7 @@ export class LeadsService {
     if (!lead) return [];
 
     try {
-      return await notesDbServiceServer.listByLead(leadId);
+      return await notesDbServiceServer.listByLead(leadId, undefined, excludeInternal);
     } catch (error) {
       if (process.env.NODE_ENV === "development") {
         console.warn("[leads] getNotes failed:", error);
@@ -103,7 +103,7 @@ export class LeadsService {
     }
   }
 
-  async addNote(leadId: string, content: string): Promise<Note> {
+  async addNote(leadId: string, content: string, noteType: "public" | "internal" = "public"): Promise<Note> {
     const trimmed = content.trim();
     if (!leadId?.trim()) {
       throw new Error("Lead not found");
@@ -117,7 +117,7 @@ export class LeadsService {
     if (!lead) {
       throw new Error("Lead not found");
     }
-    return notesDbServiceServer.create({ leadId, content: trimmed });
+    return notesDbServiceServer.create({ leadId, content: trimmed, noteType });
   }
 
   async getRosterAgents(): Promise<LeadRosterAgent[]> {

@@ -115,9 +115,9 @@ export function applyCallLogFilters<T extends CallLogsFilterableQuery>(
   if (term) {
     const leadIds = search.leadIds;
     if (leadIds && leadIds.length > 0) {
-      q = q.or(`summary.ilike.%${term}%,lead_id.in.(${formatUuidInList(leadIds)})`);
+      q = q.or(`summary.ilike.%${term}%,status.ilike.%${term}%,lead_id.in.(${formatUuidInList(leadIds)})`);
     } else {
-      q = q.ilike("summary", `%${term}%`);
+      q = q.or(`summary.ilike.%${term}%,status.ilike.%${term}%`);
     }
   }
 

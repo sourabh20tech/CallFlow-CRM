@@ -92,7 +92,7 @@ const demoNotesByLead: Record<string, Note[]> = {
       authorId: "demo-agent",
       authorName: "Demo Agent",
       content: "Interested in enterprise tier — send pricing deck.",
-      isPinned: true,
+      isPinned: true, noteType: "public" as const,
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     },
@@ -249,7 +249,7 @@ export function addDemoLeadNote(
     authorId: "demo-agent",
     authorName,
     content,
-    isPinned: false,
+    isPinned: false, noteType: "public" as const,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

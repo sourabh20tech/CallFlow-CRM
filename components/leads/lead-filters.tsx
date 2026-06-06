@@ -8,8 +8,8 @@ import type { LeadListFilters, LeadRosterAgent } from "@/types/lead";
 import { cn } from "@/lib/utils";
 
 const selectClassName = cn(
-  "h-10 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80",
-  "px-3 text-sm backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+  "h-10 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]",
+  "px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
 );
 
 interface LeadFiltersBarProps {
@@ -32,7 +32,7 @@ export function LeadFiltersBar({ filters, agents, onChange, onClear }: LeadFilte
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <FormInput
           className="pl-9"
-          placeholder="Search name, email, company…"
+          placeholder="Search name, email, phone, company, source…"
           value={filters.search ?? ""}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
         />

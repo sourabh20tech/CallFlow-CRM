@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LayoutGrid, List, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/design-system/page-header";
@@ -169,7 +169,8 @@ export function CallsManagement({
         setIsRefreshing(false);
       }
     },
-    [filters, page, pageSize, selectedCall],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filters, page, pageSize],
   );
 
   useEffect(() => {
@@ -294,7 +295,7 @@ export function CallsManagement({
     }
   };
 
-  const displayCalls = useMemo(() => calls, [calls]);
+  const displayCalls = calls;
 
   const clearFilters = () => {
     setFilters({ status: "all", direction: "all", search: "" });
@@ -308,7 +309,7 @@ export function CallsManagement({
         description="One-click dialing, manual logs, notes, disposition updates, and full call history"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/60 p-0.5 backdrop-blur-sm">
+            <div className="flex rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] p-0.5">
               <ViewToggle
                 active={view === "timeline"}
                 onClick={() => setView("timeline")}

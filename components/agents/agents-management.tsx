@@ -40,7 +40,7 @@ function filterAgents(agents: Agent[], filters: AgentListFilters): Agent[] {
     if (filters.account === "active" && !agent.isActive) return false;
     if (filters.account === "inactive" && agent.isActive) return false;
     if (q) {
-      const hay = `${agent.name} ${agent.email} ${agent.phone ?? ""}`.toLowerCase();
+      const hay = `${agent.name} ${agent.email} ${agent.phone ?? ""} ${agent.department ?? ""}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -259,7 +259,7 @@ export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             <AddAgentButton onClick={openAddAgent} className="w-full shrink-0 sm:w-auto" />
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <div className="hidden items-center gap-2 rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm lg:flex">
+              <div className="hidden items-center gap-2 rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] px-3 py-2 text-sm text-muted-foreground lg:flex">
                 <Users className="h-4 w-4 text-primary" />
                 {stats.active} active · {stats.available} available
               </div>
@@ -361,7 +361,7 @@ export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/60 px-4 py-3 backdrop-blur-sm transition-colors duration-[var(--ds-duration-base)] hover:border-primary/25 hover:bg-[hsl(var(--ds-glass-bg))]/80">
+    <div className="rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] px-4 py-3 transition-colors duration-[var(--ds-duration-base)] hover:border-primary/25 hover:bg-[hsl(var(--ds-glass-bg-strong))]">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">{value}</p>
     </div>

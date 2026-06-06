@@ -35,18 +35,23 @@ export class NotesDbService extends BaseDbService {
     return supabase.from(LEAD_NOTES_TABLE);
   }
 
-  async listByLead(leadId: string, client?: TypedSupabaseClient): Promise<Note[]> {
+  async listByLead(leadId: string, client?: TypedSupabaseClient, excludeInternal = false): Promise<Note[]> {
     if (!leadId?.trim()) return [];
 
     const supabase = await this.db(client);
-    const result = await handleQuery(
-      this.leadNotesQuery(supabase)
-        .select(NOTE_LIST_SELECT)
-        .eq("lead_id", leadId)
-        .is("deleted_at", null)
-        .order("is_pinned", { ascending: false })
-        .order("created_at", { ascending: false }),
-    );
+    let query = this.leadNotesQuery(supabase)
+      .select(NOTE_LIST_SELECT)
+      .eq("lead_id", leadId)
+      .is("deleted_at", null)
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    // Filter out internal notes for agents
+    if (excludeInternal) {
+      query = query.neq("note_type" as any, "internal");
+    }
+
+    const result = await handleQuery(query);
 
     if (result.error) {
       logNotesWarning("listByLead", result.error);
@@ -105,19 +110,20 @@ export class NotesDbService extends BaseDbService {
       throw new DbError("A lead_id is required to create a note", "VALIDATION");
     }
 
-    const insertPayload = {
+    const insertPayload: Record<string, unknown> = {
       lead_id: input.leadId,
       call_log_id: input.callLogId ?? null,
       followup_id: input.followupId ?? null,
       author_id: authorId,
       content: input.content.trim(),
       is_pinned: input.isPinned ?? false,
+      note_type: input.noteType ?? "public",
     };
 
     try {
       const data = await handleQueryOrThrow(
         this.leadNotesQuery(supabase)
-          .insert(insertPayload)
+          .insert(insertPayload as any)
           .select(NOTE_LIST_SELECT)
           .single(),
       );

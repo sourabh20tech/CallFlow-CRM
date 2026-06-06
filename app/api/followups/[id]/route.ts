@@ -8,6 +8,31 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+async function resolveAgentId(profileId: string): Promise<string | undefined> {
+  const { isSupabaseConfigured } = await import("@/lib/supabase/config");
+  if (!isSupabaseConfigured()) return "agent-1";
+  const { agentsDbServiceServer } = await import("@/services/db/agents.service");
+  const agents = await agentsDbServiceServer.list(true);
+  const match = agents.find((a) => a.profileId === profileId);
+  return match?.id;
+}
+
+/** Verify agent owns this follow-up; returns error response if not. */
+async function assertAgentOwnership(
+  followupId: string,
+  profileId: string,
+): Promise<NextResponse | null> {
+  const followup = await followupsService.getById(followupId);
+  if (!followup) {
+    return NextResponse.json({ error: "Follow-up not found" }, { status: 404 });
+  }
+  const agentId = await resolveAgentId(profileId);
+  if (followup.assignedAgentId !== agentId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return null;
+}
+
 export async function GET(_request: Request, { params }: RouteParams) {
   const auth = await requireAuthApi();
   if (auth.error) return auth.error;
@@ -19,6 +44,14 @@ export async function GET(_request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Follow-up not found" }, { status: 404 });
   }
 
+  // Enforce agent data isolation
+  if (auth.user.role === "agent") {
+    const agentId = await resolveAgentId(auth.user.id);
+    if (followup.assignedAgentId !== agentId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
   return NextResponse.json(followup);
 }
 
@@ -27,6 +60,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   if (auth.error) return auth.error;
 
   const { id } = await params;
+
+  // Enforce agent data isolation
+  if (auth.user.role === "agent") {
+    const forbidden = await assertAgentOwnership(id, auth.user.id);
+    if (forbidden) return forbidden;
+  }
 
   let body: unknown;
   try {
@@ -62,6 +101,12 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
   if (auth.error) return auth.error;
 
   const { id } = await params;
+
+  // Enforce agent data isolation
+  if (auth.user.role === "agent") {
+    const forbidden = await assertAgentOwnership(id, auth.user.id);
+    if (forbidden) return forbidden;
+  }
 
   try {
     await followupsService.delete(id);

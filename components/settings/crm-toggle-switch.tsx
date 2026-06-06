@@ -26,7 +26,7 @@ export function CrmToggleSwitch({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 rounded-2xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/60 p-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-4 rounded-2xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] p-4 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >

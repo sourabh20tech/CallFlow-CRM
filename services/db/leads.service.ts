@@ -51,9 +51,18 @@ export class LeadsDbService extends BaseDbService {
     }
     if (filters?.search) {
       const term = filters.search.replace(/[%_]/g, "");
-      query = query.or(
-        `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,company.ilike.%${term}%`,
-      );
+      // Two-phase search: also find agents matching search term
+      const matchingAgentIds = await this.resolveSearchAgentIds(term, supabase);
+      if (matchingAgentIds.length > 0) {
+        const agentIdList = matchingAgentIds.map((id) => `"${id}"`).join(",");
+        query = query.or(
+          `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,company.ilike.%${term}%,source.ilike.%${term}%,assigned_agent_id.in.(${agentIdList})`,
+        );
+      } else {
+        query = query.or(
+          `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,company.ilike.%${term}%,source.ilike.%${term}%`,
+        );
+      }
     }
 
     const { data, count } = await handleListQueryOrThrow(query);
@@ -66,7 +75,25 @@ export class LeadsDbService extends BaseDbService {
     );
   }
 
-  async getById(id: string, client?: TypedSupabaseClient): Promise<Lead> {
+  /** Resolve agent IDs whose profile name matches the search term */
+  private async resolveSearchAgentIds(
+    term: string,
+    supabase: TypedSupabaseClient,
+  ): Promise<string[]> {
+    try {
+      const { data, error } = await supabase
+        .from("agents")
+        .select("id, profiles!inner(full_name)")
+        .is("deleted_at", null)
+        .ilike("profiles.full_name", `%${term}%`)
+        .limit(50);
+
+      if (error || !data) return [];
+      return data.map((row: { id: string }) => row.id);
+    } catch {
+      return [];
+    }
+  }  async getById(id: string, client?: TypedSupabaseClient): Promise<Lead> {
     const supabase = await this.db(client);
     const data = await handleQueryOrThrow(
       supabase

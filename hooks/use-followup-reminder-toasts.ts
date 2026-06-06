@@ -6,7 +6,7 @@ import { formatFollowupDue } from "@/lib/followups/datetime";
 import type { Followup } from "@/types/followup";
 
 const STORAGE_KEY = "crm-followup-reminder-toasts";
-const POLL_MS = 60_000;
+const POLL_MS = 120_000;
 
 function loadSeenIds(): Set<string> {
   if (typeof window === "undefined") return new Set();

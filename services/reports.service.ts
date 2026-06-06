@@ -36,6 +36,7 @@ export class ReportsService {
     customFrom?: string,
     customTo?: string,
     period?: ReportPeriod,
+    agentId?: string,
   ): Promise<ReportsBundle> {
     const range = period
       ? resolveDateRangeFromPeriod(period)
@@ -44,7 +45,7 @@ export class ReportsService {
     requireSupabaseConfigured("reports");
 
     try {
-      const raw = await analyticsDbServiceServer.fetchRaw(range);
+      const raw = await analyticsDbServiceServer.fetchRaw(range, undefined, agentId);
       return buildReportsBundleFromRaw(range, raw);
     } catch {
       return buildReportsBundleFromRaw(range, this.buildEmptyRaw());

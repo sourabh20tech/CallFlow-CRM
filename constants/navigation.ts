@@ -4,6 +4,7 @@ import {
   Briefcase,
   CalendarClock,
   LayoutDashboard,
+  MessageCircle,
   Phone,
   Settings,
   UserPlus,
@@ -19,6 +20,7 @@ export type NavIconKey =
   | "Users"
   | "Phone"
   | "CalendarClock"
+  | "MessageCircle"
   | "BarChart3"
   | "Settings";
 
@@ -81,6 +83,13 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Analytics",
   },
   {
+    title: "Messages",
+    href: "/dashboard/messages",
+    icon: "MessageCircle",
+    roles: "all",
+    description: "Internal chat",
+  },
+  {
     title: "Settings",
     href: "/dashboard/settings",
     icon: "Settings",
@@ -96,6 +105,7 @@ export const NAV_ICONS: Record<NavIconKey, LucideIcon> = {
   Users,
   Phone,
   CalendarClock,
+  MessageCircle,
   BarChart3,
   Settings,
 };
@@ -116,6 +126,7 @@ export const BREADCRUMB_LABELS: Record<string, string> = {
   calls: "Calls",
   [FOLLOWUPS_ROUTE_SEGMENT]: "Follow-Ups",
   reports: "Reports",
+  messages: "Messages",
   settings: "Settings",
   customers: "Customers",
 };

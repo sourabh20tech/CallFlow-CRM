@@ -31,18 +31,18 @@
   --chart-5: 340 82% 52%;
 
   /* ─── Design system extensions ─── */
-  --ds-glass-bg: 0 0% 100% / 0.68;
-  --ds-glass-border: 0 0% 100% / 0.42;
-  --ds-glass-blur: 20px;
-  --ds-glass-bg-strong: 0 0% 100% / 0.82;
-  --ds-glass-border-strong: 0 0% 100% / 0.52;
-  --ds-glass-highlight: 0 0% 100% / 0.65;
+  --ds-glass-bg: 0 0% 100%;
+  --ds-glass-border: 240 6% 90%;
+  --ds-glass-blur: 0px;
+  --ds-glass-bg-strong: 0 0% 100%;
+  --ds-glass-border-strong: 240 6% 86%;
+  --ds-glass-highlight: 0 0% 100% / 0.3;
 
-  --sidebar-background: 0 0% 100% / 0.55;
-  --sidebar-border: 0 0% 100% / 0.28;
+  --sidebar-background: 0 0% 99%;
+  --sidebar-border: 240 6% 90%;
   --sidebar-foreground: 240 10% 10%;
   --sidebar-muted: 240 4% 46%;
-  --sidebar-hover: 240 5% 96% / 0.8;
+  --sidebar-hover: 240 5% 96%;
   --sidebar-active: 262 83% 58% / 0.12;
   --sidebar-active-border: 262 83% 58% / 0.2;
 
@@ -95,18 +95,18 @@
   --input: 240 8% 18%;
   --ring: 262 83% 65%;
 
-  --ds-glass-bg: 240 12% 12% / 0.55;
-  --ds-glass-border: 240 8% 28% / 0.55;
-  --ds-glass-blur: 22px;
-  --ds-glass-bg-strong: 240 12% 14% / 0.72;
-  --ds-glass-border-strong: 240 8% 32% / 0.65;
-  --ds-glass-highlight: 240 10% 22% / 0.55;
+  --ds-glass-bg: 240 12% 10%;
+  --ds-glass-border: 240 8% 18%;
+  --ds-glass-blur: 0px;
+  --ds-glass-bg-strong: 240 12% 12%;
+  --ds-glass-border-strong: 240 8% 22%;
+  --ds-glass-highlight: 240 10% 16% / 0.5;
 
-  --sidebar-background: 240 12% 10% / 0.72;
-  --sidebar-border: 240 8% 22% / 0.55;
+  --sidebar-background: 240 14% 8%;
+  --sidebar-border: 240 8% 16%;
   --sidebar-foreground: 0 0% 98%;
   --sidebar-muted: 240 5% 65%;
-  --sidebar-hover: 240 8% 18% / 0.9;
+  --sidebar-hover: 240 8% 16%;
   --sidebar-active: 262 83% 65% / 0.16;
   --sidebar-active-border: 262 83% 65% / 0.28;
 
@@ -138,18 +138,18 @@
   --input: 236 27% 22%;
   --ring: 189 100% 58%;
 
-  --ds-glass-bg: 237 28% 12% / 0.62;
-  --ds-glass-border: 189 100% 58% / 0.2;
-  --ds-glass-blur: 24px;
-  --ds-glass-bg-strong: 237 28% 13% / 0.78;
-  --ds-glass-border-strong: 189 100% 58% / 0.3;
-  --ds-glass-highlight: 189 100% 58% / 0.16;
+  --ds-glass-bg: 237 28% 10%;
+  --ds-glass-border: 236 27% 22%;
+  --ds-glass-blur: 0px;
+  --ds-glass-bg-strong: 237 28% 11%;
+  --ds-glass-border-strong: 189 100% 58% / 0.18;
+  --ds-glass-highlight: 189 100% 58% / 0.08;
 
-  --sidebar-background: 238 32% 10% / 0.8;
-  --sidebar-border: 189 100% 58% / 0.25;
+  --sidebar-background: 238 32% 8%;
+  --sidebar-border: 236 27% 18%;
   --sidebar-foreground: 200 40% 96%;
   --sidebar-muted: 230 14% 74%;
-  --sidebar-hover: 236 26% 16% / 0.95;
+  --sidebar-hover: 236 26% 14%;
   --sidebar-active: 189 100% 58% / 0.18;
   --sidebar-active-border: 189 100% 58% / 0.32;
 
@@ -317,43 +317,27 @@ body {
 .mesh-gradient {
   background-color: hsl(var(--background));
   background-image:
-    radial-gradient(ellipse 120% 80% at 0% -10%, hsl(262 83% 58% / 0.12) 0px, transparent 55%),
-    radial-gradient(ellipse 90% 60% at 100% 0%, hsl(221 83% 53% / 0.09) 0px, transparent 50%),
-    radial-gradient(ellipse 80% 50% at 100% 100%, hsl(262 83% 58% / 0.07) 0px, transparent 50%),
-    radial-gradient(ellipse 70% 45% at 0% 100%, hsl(221 83% 53% / 0.06) 0px, transparent 45%);
+    radial-gradient(ellipse 120% 80% at 0% -10%, hsl(262 83% 58% / 0.04) 0px, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 0%, hsl(221 83% 53% / 0.03) 0px, transparent 50%);
   background-attachment: fixed;
 }
 
 .dark .mesh-gradient {
   background-image:
-    radial-gradient(at 0% 0%, hsl(262 83% 58% / 0.14) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, hsl(221 83% 53% / 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, hsl(262 83% 58% / 0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsl(221 83% 53% / 0.06) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, hsl(262 83% 58% / 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsl(221 83% 53% / 0.04) 0px, transparent 50%);
 }
 
 .midnight .mesh-gradient {
   background-image:
-    radial-gradient(ellipse 90% 65% at 0% 0%, hsl(189 100% 58% / 0.12) 0px, transparent 55%),
-    radial-gradient(ellipse 78% 52% at 100% 0%, hsl(275 88% 64% / 0.1) 0px, transparent 50%),
-    radial-gradient(ellipse 68% 50% at 100% 100%, hsl(221 83% 53% / 0.09) 0px, transparent 48%),
-    radial-gradient(ellipse 60% 45% at 0% 100%, hsl(189 100% 58% / 0.08) 0px, transparent 44%);
+    radial-gradient(ellipse 90% 65% at 0% 0%, hsl(189 100% 58% / 0.05) 0px, transparent 55%),
+    radial-gradient(ellipse 78% 52% at 100% 0%, hsl(275 88% 64% / 0.04) 0px, transparent 50%);
 }
 
 .ds-glass {
   border: 1px solid hsl(var(--ds-glass-border));
-  background: linear-gradient(
-    155deg,
-    hsl(var(--ds-glass-highlight)) 0%,
-    hsl(var(--ds-glass-bg)) 38%,
-    hsl(var(--ds-glass-bg)) 100%
-  );
-  box-shadow:
-    var(--ds-shadow-card),
-    inset 0 1px 0 hsl(var(--ds-glass-highlight)),
-    inset 0 -1px 0 hsl(240 10% 10% / 0.02);
-  backdrop-filter: blur(var(--ds-glass-blur)) saturate(1.4);
-  -webkit-backdrop-filter: blur(var(--ds-glass-blur)) saturate(1.4);
+  background: hsl(var(--ds-glass-bg));
+  box-shadow: var(--ds-shadow-card);
   transition:
     border-color var(--ds-duration-base) var(--ds-ease),
     box-shadow var(--ds-duration-base) var(--ds-ease),
@@ -362,32 +346,14 @@ body {
 
 .ds-glass-strong {
   border: 1px solid hsl(var(--ds-glass-border-strong));
-  background: linear-gradient(
-    160deg,
-    hsl(var(--ds-glass-highlight)) 0%,
-    hsl(var(--ds-glass-bg-strong)) 50%,
-    hsl(var(--ds-glass-bg-strong)) 100%
-  );
-  box-shadow:
-    var(--ds-shadow-lg),
-    inset 0 1px 0 hsl(var(--ds-glass-highlight));
-  backdrop-filter: blur(var(--ds-glass-blur)) saturate(1.4);
-  -webkit-backdrop-filter: blur(var(--ds-glass-blur)) saturate(1.4);
+  background: hsl(var(--ds-glass-bg-strong));
+  box-shadow: var(--ds-shadow-lg);
 }
 
 .ds-sidebar {
   border-right: 1px solid hsl(var(--sidebar-border));
-  background: linear-gradient(
-    180deg,
-    hsl(var(--sidebar-background)) 0%,
-    hsl(var(--ds-glass-bg)) 55%,
-    hsl(var(--ds-glass-bg)) 100%
-  );
-  box-shadow:
-    var(--ds-shadow-card),
-    inset -1px 0 0 hsl(var(--ds-glass-highlight) / 0.35);
-  backdrop-filter: blur(var(--ds-glass-blur)) saturate(1.3);
-  -webkit-backdrop-filter: blur(var(--ds-glass-blur)) saturate(1.3);
+  background: hsl(var(--sidebar-background));
+  box-shadow: var(--ds-shadow-sm);
 }
 
 .ds-hover-lift {
@@ -400,7 +366,7 @@ body {
 
 .ds-hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: var(--ds-shadow-lg), inset 0 1px 0 hsl(var(--ds-glass-highlight));
+  box-shadow: var(--ds-shadow-lg);
   border-color: hsl(var(--ds-glass-border-strong));
 }
 
@@ -413,7 +379,7 @@ body {
 
 .ds-hover-subtle:hover {
   background: hsl(var(--ds-glass-bg-strong));
-  box-shadow: var(--ds-shadow-md);
+  box-shadow: var(--ds-shadow-sm);
 }
 
 .ds-animate-in {
@@ -471,16 +437,8 @@ body {
 
 .ds-topbar {
   border-bottom: 1px solid hsl(var(--ds-glass-border));
-  background: linear-gradient(
-    180deg,
-    hsl(var(--ds-glass-bg) / 0.92) 0%,
-    hsl(var(--ds-glass-bg) / 0.78) 100%
-  );
-  box-shadow:
-    var(--ds-shadow-sm),
-    inset 0 1px 0 hsl(var(--ds-glass-highlight) / 0.5);
-  backdrop-filter: blur(var(--ds-glass-blur)) saturate(1.35);
-  -webkit-backdrop-filter: blur(var(--ds-glass-blur)) saturate(1.35);
+  background: hsl(var(--ds-glass-bg));
+  box-shadow: var(--ds-shadow-sm);
 }
 
 /* Shared page / section headers */
@@ -508,13 +466,12 @@ body {
   min-height: 2.5rem;
   border-radius: var(--radius);
   border: 1px solid hsl(var(--ds-glass-border));
-  background: hsl(var(--ds-glass-bg) / 0.85);
+  background: hsl(var(--ds-glass-bg));
   padding: 0.5rem 0.875rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
   color: hsl(var(--foreground));
   box-shadow: var(--ds-shadow-sm);
-  backdrop-filter: blur(12px);
   transition:
     border-color var(--ds-duration-base) var(--ds-ease),
     box-shadow var(--ds-duration-base) var(--ds-ease),

@@ -55,22 +55,32 @@ export class FollowupsDbService extends BaseDbService {
     client: TypedSupabaseClient,
   ): Promise<PaginatedResult<Followup>> {
     const { page, pageSize, from, to } = normalizePagination(pagination);
+    const hasSearch = Boolean(filters?.search?.trim());
+
     let query = this.applyFilters(
       client.from(TABLES.FOLLOW_UPS).select(select, { count: "exact" }),
       filters,
-    ).order("due_at", { ascending: true });
+    );
 
-    if (pagination) {
+    query = query.order("due_at", { ascending: true });
+
+    // When searching, skip DB-level pagination so client-side filter on
+    // embedded relation fields (lead name, agent name) works correctly.
+    // We still limit to 500 rows for performance.
+    if (pagination && !hasSearch) {
       query = query.range(from, to);
+    } else if (hasSearch) {
+      query = query.limit(500);
     }
 
     const { data, count } = await handleListQueryOrThrow(query);
     let rows = (data ?? []) as FollowupWithRelations[];
 
-    if (filters?.search?.trim()) {
-      const q = filters.search.toLowerCase();
+    // Client-side search across all relevant fields including embedded relations
+    if (hasSearch) {
+      const q = filters!.search!.trim().toLowerCase();
       rows = rows.filter((r) => {
-        const title = r.title.toLowerCase();
+        const title = r.title?.toLowerCase() ?? "";
         const lead = r.leads?.full_name?.toLowerCase() ?? "";
         const agent = r.agents?.profiles?.full_name?.toLowerCase() ?? "";
         const desc = r.description?.toLowerCase() ?? "";
@@ -79,8 +89,17 @@ export class FollowupsDbService extends BaseDbService {
     }
 
     const mapped = rows.map((row) => mapFollowupRow(row));
-    const total = pagination ? (count ?? mapped.length) : mapped.length;
 
+    if (hasSearch && pagination) {
+      // Manually paginate the filtered results
+      const filteredTotal = mapped.length;
+      const sliceFrom = (page - 1) * pageSize;
+      const sliceTo = sliceFrom + pageSize;
+      const paged = mapped.slice(sliceFrom, sliceTo);
+      return buildPaginatedResult(paged, filteredTotal, page, pageSize);
+    }
+
+    const total = pagination ? (count ?? mapped.length) : mapped.length;
     return buildPaginatedResult(mapped, total, page, pageSize);
   }
 

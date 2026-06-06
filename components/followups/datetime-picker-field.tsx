@@ -32,7 +32,7 @@ export function DatetimePickerField({
         onChange={(e) => onChange(e.target.value)}
         className={cn(
           "flex h-10 w-full rounded-lg border border-input bg-background/80 px-3 py-2 text-sm",
-          "backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          " focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       />
     </FormField>

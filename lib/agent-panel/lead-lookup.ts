@@ -8,7 +8,14 @@ export function filterAgentLeads(leads: AgentPanelLead[], query: string): AgentP
   const q = query.trim().toLowerCase();
   if (!q) return leads;
   return leads.filter((lead) => {
-    const haystack = [lead.fullName, lead.company, lead.email, lead.phone]
+    const haystack = [
+      lead.fullName,
+      lead.company,
+      lead.email,
+      lead.phone,
+      lead.status,
+      lead.source,
+    ]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();

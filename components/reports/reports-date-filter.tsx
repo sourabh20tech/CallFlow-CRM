@@ -35,7 +35,7 @@ export function ReportsDateFilter({
   onCustomToChange,
 }: ReportsDateFilterProps) {
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/60 p-4 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-4 rounded-2xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] p-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Calendar className="h-4 w-4 shrink-0 text-primary" />
         <span>{formatRangeLabel(range)}</span>
@@ -86,14 +86,14 @@ export function ReportsDateFilter({
             type="date"
             value={customFrom}
             onChange={(e) => onCustomFromChange(e.target.value)}
-            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm backdrop-blur-sm"
+            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm "
           />
           <span className="text-muted-foreground">to</span>
           <input
             type="date"
             value={customTo}
             onChange={(e) => onCustomToChange(e.target.value)}
-            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm backdrop-blur-sm"
+            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm "
           />
         </div>
       )}

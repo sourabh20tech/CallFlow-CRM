@@ -27,7 +27,7 @@ export function MyLeadsToolbar({
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Search leads by name, company, or email..."
+          placeholder="Search leads by name, company, email, phone, status…"
           className={cn(formControl, "h-10 pl-9")}
         />
       </div>

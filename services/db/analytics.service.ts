@@ -61,18 +61,19 @@ export interface AnalyticsRawData {
 }
 
 export class AnalyticsDbService extends BaseDbService {
-  async fetchRaw(range: ReportDateRange, client?: TypedSupabaseClient): Promise<AnalyticsRawData> {
+  async fetchRaw(range: ReportDateRange, client?: TypedSupabaseClient, agentId?: string): Promise<AnalyticsRawData> {
     const supabase = await this.db(client);
     const from = range.from;
     const to = range.to;
     const today = new Date().toISOString().slice(0, 10);
 
     const [dashboardStats, leads, calls, followups, agents] = await Promise.all([
-      this.refreshDashboardStats(supabase, today),
-      this.fetchLeads(supabase, from, to),
-      this.fetchCalls(supabase, from, to),
-      this.fetchFollowups(supabase, from, to),
-      this.fetchAgents(supabase),
+      // For agent-scoped reports, skip the global dashboard stats
+      agentId ? Promise.resolve(null) : this.refreshDashboardStats(supabase, today),
+      this.fetchLeads(supabase, from, to, agentId),
+      this.fetchCalls(supabase, from, to, agentId),
+      this.fetchFollowups(supabase, from, to, agentId),
+      agentId ? Promise.resolve([]) : this.fetchAgents(supabase),
     ]);
 
     return { dashboardStats, leads, calls, followups, agents };
@@ -112,16 +113,20 @@ export class AnalyticsDbService extends BaseDbService {
     supabase: TypedSupabaseClient,
     from: string,
     to: string,
+    agentId?: string,
   ): Promise<AnalyticsLeadRow[]> {
-    const data = await handleQueryOrThrow(
-      supabase
-        .from("leads")
-        .select("id, status, created_at, converted_at, assigned_agent_id, tier")
-        .is("deleted_at", null)
-        .gte("created_at", from)
-        .lte("created_at", to)
-        .limit(5000),
-    );
+    let query = supabase
+      .from("leads")
+      .select("id, status, created_at, converted_at, assigned_agent_id, tier")
+      .is("deleted_at", null)
+      .gte("created_at", from)
+      .lte("created_at", to);
+
+    if (agentId) {
+      query = query.eq("assigned_agent_id", agentId);
+    }
+
+    const data = await handleQueryOrThrow(query.limit(2000));
     return (data ?? []) as AnalyticsLeadRow[];
   }
 
@@ -129,16 +134,20 @@ export class AnalyticsDbService extends BaseDbService {
     supabase: TypedSupabaseClient,
     from: string,
     to: string,
+    agentId?: string,
   ): Promise<AnalyticsCallRow[]> {
-    const data = await handleQueryOrThrow(
-      supabase
-        .from("call_logs")
-        .select("id, status, started_at, agent_id, duration_seconds, direction")
-        .is("deleted_at", null)
-        .gte("started_at", from)
-        .lte("started_at", to)
-        .limit(5000),
-    );
+    let query = supabase
+      .from("call_logs")
+      .select("id, status, started_at, agent_id, duration_seconds, direction")
+      .is("deleted_at", null)
+      .gte("started_at", from)
+      .lte("started_at", to);
+
+    if (agentId) {
+      query = query.eq("agent_id", agentId);
+    }
+
+    const data = await handleQueryOrThrow(query.limit(2000));
     return (data ?? []) as AnalyticsCallRow[];
   }
 
@@ -146,16 +155,20 @@ export class AnalyticsDbService extends BaseDbService {
     supabase: TypedSupabaseClient,
     from: string,
     to: string,
+    agentId?: string,
   ): Promise<AnalyticsFollowupRow[]> {
-    const data = await handleQueryOrThrow(
-      supabase
-        .from(TABLES.FOLLOW_UPS)
-        .select("id, status, due_at, assigned_agent_id, completed_at")
-        .is("deleted_at", null)
-        .gte("due_at", from)
-        .lte("due_at", to)
-        .limit(5000),
-    );
+    let query = supabase
+      .from(TABLES.FOLLOW_UPS)
+      .select("id, status, due_at, assigned_agent_id, completed_at")
+      .is("deleted_at", null)
+      .gte("due_at", from)
+      .lte("due_at", to);
+
+    if (agentId) {
+      query = query.eq("assigned_agent_id", agentId);
+    }
+
+    const data = await handleQueryOrThrow(query.limit(2000));
     return (data ?? []) as AnalyticsFollowupRow[];
   }
 

@@ -5,6 +5,15 @@ import { followupsService } from "@/services/followups.service";
 import { scheduleFollowupSchema } from "@/utils/validators";
 import type { FollowupFilters, FollowupView } from "@/types/followup";
 
+async function resolveAgentId(profileId: string): Promise<string | undefined> {
+  const { isSupabaseConfigured } = await import("@/lib/supabase/config");
+  if (!isSupabaseConfigured()) return "agent-1";
+  const { agentsDbServiceServer } = await import("@/services/db/agents.service");
+  const agents = await agentsDbServiceServer.list(true);
+  const match = agents.find((a) => a.profileId === profileId);
+  return match?.id;
+}
+
 export async function GET(request: Request) {
   const auth = await requireAuthApi();
   if (auth.error) return auth.error;
@@ -30,6 +39,14 @@ export async function GET(request: Request) {
   if (!filters.to) delete filters.to;
   if (!filters.status || filters.status === "all") delete filters.status;
 
+  // Enforce agent data isolation: agents can only see their own follow-ups
+  if (auth.user.role === "agent") {
+    const agentId = await resolveAgentId(auth.user.id);
+    if (agentId) {
+      filters.agentId = agentId;
+    }
+  }
+
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const pageSize = Math.min(
     100,
@@ -48,9 +65,16 @@ export async function GET(request: Request) {
           totalPages: 1,
         };
 
-    const stats = await followupsService.getStats({ view: "all" });
-    const reminders = followupsService.getReminders(await followupsService.list({ view: "all" }));
-    const agents = await followupsService.getAgentSummaries();
+    // For agents, scope stats and reminders to their own data
+    const statsFilters = auth.user.role === "agent" ? { ...filters, view: "all" as const } : { view: "all" as const };
+    const stats = await followupsService.getStats(statsFilters);
+    const remindersData = await followupsService.list(
+      auth.user.role === "agent" ? { agentId: filters.agentId, view: "all" } : { view: "all" },
+    );
+    const reminders = followupsService.getReminders(remindersData);
+    const agents = auth.user.role === "admin"
+      ? await followupsService.getAgentSummaries()
+      : [];
 
     return NextResponse.json({
       followups: listResult.followups,

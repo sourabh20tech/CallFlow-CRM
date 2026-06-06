@@ -25,8 +25,8 @@ const buttonVariants = cva(
           "hover:bg-destructive/90",
         ].join(" "),
         outline: [
-          "border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/60",
-          "backdrop-blur-sm shadow-[var(--ds-shadow-sm)]",
+          "border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]",
+          "shadow-[var(--ds-shadow-sm)]",
           "hover:border-primary/30 hover:bg-accent/50 hover:shadow-[var(--ds-shadow-md)]",
         ].join(" "),
         secondary: [
@@ -37,7 +37,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         glass: [
           "border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]",
-          "text-foreground shadow-[var(--ds-shadow-card)] backdrop-blur-md",
+          "text-foreground shadow-[var(--ds-shadow-card)]",
           "hover:border-primary/25 hover:bg-[hsl(var(--ds-glass-bg-strong))] hover:shadow-[var(--ds-shadow-lg)]",
         ].join(" "),
         premium: [

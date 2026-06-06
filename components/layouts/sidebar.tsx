@@ -26,11 +26,7 @@ export function Sidebar() {
     >
       <div className="ds-sidebar relative flex h-full flex-col overflow-hidden">
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-violet-500/[0.07] via-transparent to-indigo-500/[0.05]"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -right-px top-0 h-full w-px bg-gradient-to-b from-transparent via-[hsl(var(--ds-glass-highlight))] to-transparent opacity-60"
+          className="pointer-events-none absolute -right-px top-0 h-full w-px bg-gradient-to-b from-transparent via-[hsl(var(--sidebar-border))] to-transparent opacity-40"
           aria-hidden
         />
 
@@ -72,7 +68,7 @@ export function Sidebar() {
         </div>
 
         {showUser && !collapsed && user && (
-          <div className="relative z-10 shrink-0 border-t border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))]/40 p-4 backdrop-blur-sm">
+          <div className="relative z-10 shrink-0 border-t border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] p-4">
             <p className="truncate text-xs font-medium text-[hsl(var(--sidebar-foreground))]">
               {user.fullName ?? "Signed in"}
             </p>

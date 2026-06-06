@@ -21,7 +21,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
-    const notes = await leadsService.getNotes(id);
+    const notes = await leadsService.getNotes(id, true); // exclude internal notes from agents
     return NextResponse.json({ notes });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load notes";
@@ -62,7 +62,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
-    const note = await leadsService.addNote(id, parsed.data.content);
+    // Agents can only create public notes
+    const note = await leadsService.addNote(id, parsed.data.content, "public");
     return NextResponse.json(note, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to add note";

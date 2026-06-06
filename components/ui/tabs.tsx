@@ -14,8 +14,8 @@ const TabsList = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-auto min-h-10 w-full flex-wrap items-center justify-start gap-1 rounded-xl",
-      "border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/70 p-1",
-      "text-muted-foreground shadow-[var(--ds-shadow-sm)] backdrop-blur-md",
+      "border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] p-1",
+      "text-muted-foreground shadow-[var(--ds-shadow-sm)]",
       "sm:w-auto sm:flex-nowrap",
       className,
     )}

@@ -129,11 +129,18 @@ export function FollowupsManagement({
     [filters],
   );
 
+  // Debounce search input, instant refresh for other filters
+  const [debouncedSearch, setDebouncedSearch] = useState(filters.search ?? "");
+
   useEffect(() => {
-    const t = setTimeout(() => void refresh(true), 350);
+    const t = setTimeout(() => setDebouncedSearch(filters.search ?? ""), 300);
     return () => clearTimeout(t);
+  }, [filters.search]);
+
+  useEffect(() => {
+    void refresh(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.view, filters.agentId, filters.priority, filters.search, filters.from, filters.to]);
+  }, [filters.view, filters.agentId, filters.priority, debouncedSearch, filters.from, filters.to]);
 
   const pendingList = useMemo(() => {
     if (filters.view === "completed") return [];

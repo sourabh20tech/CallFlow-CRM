@@ -1,11 +1,10 @@
 import { cn } from "@/lib/utils";
 
-/** Glass surface — backdrop blur + transparent fill */
+/** Solid surface — opaque card background */
 export const glassSurface = cn(
   "border border-[hsl(var(--ds-glass-border))]",
   "bg-[hsl(var(--ds-glass-bg))]",
   "shadow-[var(--ds-shadow-card)]",
-  "backdrop-blur-[var(--ds-glass-blur)]",
 );
 
 /** Interactive lift on hover */

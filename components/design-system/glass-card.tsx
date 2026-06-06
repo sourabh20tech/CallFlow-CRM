@@ -9,7 +9,7 @@ const glassCardVariants = cva(
         default: "ds-glass",
         strong: "ds-glass-strong",
         subtle:
-          "border border-border/50 bg-background/45 shadow-[var(--ds-shadow-sm)] backdrop-blur-md",
+          "border border-border/50 bg-background shadow-[var(--ds-shadow-sm)]",
         gradient: "ds-glass ds-gradient-border",
       },
       padding: {

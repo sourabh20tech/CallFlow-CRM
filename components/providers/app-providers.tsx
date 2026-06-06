@@ -28,7 +28,7 @@ export function AppProviders({ children }: AppProvidersProps) {
             richColors
             closeButton
             toastOptions={{
-              className: "backdrop-blur-xl border-border/50",
+              className: "border-border/50",
             }}
           />
           </TooltipProvider>

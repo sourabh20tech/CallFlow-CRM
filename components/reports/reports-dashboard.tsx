@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/design-system/page-header";
@@ -10,12 +11,6 @@ import { ReportsFilterSection } from "@/components/reports/reports-filter-sectio
 import { ReportsSummaryCards } from "@/components/reports/reports-summary-cards";
 import { ReportsExportActions } from "@/components/reports/reports-export-actions";
 import { ReportsDashboardSkeleton } from "@/components/reports/reports-dashboard-skeleton";
-import { ReportsOverviewSection } from "@/components/reports/sections/reports-overview-section";
-import { ReportsDailySection } from "@/components/reports/sections/reports-daily-section";
-import { ReportsConversionSection } from "@/components/reports/sections/reports-conversion-section";
-import { ReportsAgentsSection } from "@/components/reports/sections/reports-agents-section";
-import { ReportsSalesPerformanceSection } from "@/components/reports/sections/reports-sales-performance-section";
-import { ReportsFollowupsSection } from "@/components/reports/sections/reports-followups-section";
 import { toDatetimeLocalValue } from "@/lib/followups/datetime";
 import type {
   LiveDashboardStats,
@@ -25,7 +20,37 @@ import type {
 } from "@/types/reports";
 import { pageSection } from "@/lib/design-system/styles";
 
-const LIVE_STATS_INTERVAL_MS = 60_000;
+// Lazy-load heavy chart sections — only loads when tab is active
+const ReportsOverviewSection = dynamic(
+  () => import("@/components/reports/sections/reports-overview-section").then((m) => m.ReportsOverviewSection),
+  { ssr: false, loading: () => <SectionSkeleton /> },
+);
+const ReportsDailySection = dynamic(
+  () => import("@/components/reports/sections/reports-daily-section").then((m) => m.ReportsDailySection),
+  { ssr: false, loading: () => <SectionSkeleton /> },
+);
+const ReportsConversionSection = dynamic(
+  () => import("@/components/reports/sections/reports-conversion-section").then((m) => m.ReportsConversionSection),
+  { ssr: false, loading: () => <SectionSkeleton /> },
+);
+const ReportsAgentsSection = dynamic(
+  () => import("@/components/reports/sections/reports-agents-section").then((m) => m.ReportsAgentsSection),
+  { ssr: false, loading: () => <SectionSkeleton /> },
+);
+const ReportsSalesPerformanceSection = dynamic(
+  () => import("@/components/reports/sections/reports-sales-performance-section").then((m) => m.ReportsSalesPerformanceSection),
+  { ssr: false, loading: () => <SectionSkeleton /> },
+);
+const ReportsFollowupsSection = dynamic(
+  () => import("@/components/reports/sections/reports-followups-section").then((m) => m.ReportsFollowupsSection),
+  { ssr: false, loading: () => <SectionSkeleton /> },
+);
+
+function SectionSkeleton() {
+  return <div className="h-[320px] animate-pulse rounded-xl border border-border/40 bg-muted/20" />;
+}
+
+const LIVE_STATS_INTERVAL_MS = 120_000;
 
 interface ReportsDashboardProps {
   initialData: ReportsBundle;
@@ -105,17 +130,21 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
     return () => clearInterval(id);
   }, [fetchLiveStats]);
 
-  const displayKpis = liveStats
-    ? {
-        ...data.kpis,
-        totalLeads: liveStats.totalLeads,
-        convertedLeads: liveStats.convertedLeads,
-        pendingFollowups: liveStats.pendingFollowups,
-        totalCalls: liveStats.totalCalls,
-        activeAgents: liveStats.activeAgents,
-        conversionRate: liveStats.conversionRate,
-      }
-    : data.kpis;
+  const displayKpis = useMemo(
+    () =>
+      liveStats
+        ? {
+            ...data.kpis,
+            totalLeads: liveStats.totalLeads,
+            convertedLeads: liveStats.convertedLeads,
+            pendingFollowups: liveStats.pendingFollowups,
+            totalCalls: liveStats.totalCalls,
+            activeAgents: liveStats.activeAgents,
+            conversionRate: liveStats.conversionRate,
+          }
+        : data.kpis,
+    [data.kpis, liveStats],
+  );
 
   if (isLoading) {
     return <ReportsDashboardSkeleton />;

@@ -17,7 +17,7 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -30,8 +30,7 @@ const sheetVariants = cva(
   [
     "fixed z-50 gap-4 p-6",
     "border border-[hsl(var(--ds-glass-border-strong))]",
-    "bg-[hsl(var(--ds-glass-bg-strong))]/95 shadow-2xl",
-    "backdrop-blur-[var(--ds-glass-blur)]",
+    "bg-[hsl(var(--ds-glass-bg-strong))] shadow-2xl",
     "transition ease-[var(--ds-ease-out)]",
     "data-[state=closed]:duration-300 data-[state=open]:duration-500",
     "data-[state=open]:ds-animate-scale",

@@ -20,8 +20,8 @@ export const DEFAULT_AGENT_FILTERS: AgentListFilters = {
 };
 
 const selectClassName = cn(
-  "h-10 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80",
-  "px-3 text-sm backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+  "h-10 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]",
+  "px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
 );
 
 interface AgentFiltersBarProps {

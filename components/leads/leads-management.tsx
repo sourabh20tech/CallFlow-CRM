@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Download, Plus, RefreshCw, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/design-system/page-header";
@@ -58,20 +59,37 @@ function formToPayload(values: LeadFormValues) {
   };
 }
 
-export function LeadsManagement() {
+interface LeadsManagementProps {
+  initialLeads?: Lead[];
+  initialAgents?: LeadRosterAgent[];
+  initialTotal?: number;
+  initialTotalPages?: number;
+}
+
+export function LeadsManagement({
+  initialLeads,
+  initialAgents,
+  initialTotal,
+  initialTotalPages,
+}: LeadsManagementProps = {}) {
   const { role } = useAuth();
   const isAdmin = role === "admin";
   const canManage = isAdmin;
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") ?? "";
 
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [agents, setAgents] = useState<LeadRosterAgent[]>([]);
-  const [filters, setFilters] = useState<LeadListFilters>(DEFAULT_FILTERS);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const hasServerData = Boolean(initialLeads?.length);
+  const [leads, setLeads] = useState<Lead[]>(initialLeads ?? []);
+  const [agents, setAgents] = useState<LeadRosterAgent[]>(initialAgents ?? []);
+  const [filters, setFilters] = useState<LeadListFilters>({
+    ...DEFAULT_FILTERS,
+    search: initialSearch,
+  });
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [isLoading, setIsLoading] = useState(!hasServerData);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
-
   const [addOpen, setAddOpen] = useState(false);
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
@@ -79,8 +97,8 @@ export function LeadsManagement() {
   const [detailFocus, setDetailFocus] = useState<LeadDetailFocus>("overview");
   const [deleteLead, setDeleteLead] = useState<Lead | null>(null);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(initialTotal ?? 0);
+  const [totalPages, setTotalPages] = useState(initialTotalPages ?? 1);
   const pageSize = DEFAULT_PAGE_SIZE;
 
   useEffect(() => {
@@ -256,7 +274,7 @@ export function LeadsManagement() {
         description="Manage prospects, assignments, follow-ups, and conversion pipeline"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <div className="hidden items-center gap-2 rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm sm:flex">
+            <div className="hidden items-center gap-2 rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] px-3 py-2 text-sm text-muted-foreground sm:flex">
               <UserPlus className="h-4 w-4 text-primary" />
               {total} leads
             </div>
@@ -312,6 +330,13 @@ export function LeadsManagement() {
             onEdit={(lead) => setEditLead(lead)}
             onDelete={requestDelete}
             onAssign={(id, agentId) => void handleAssign(id, agentId)}
+            onStatusChange={(updatedLead) => {
+              setLeads((prev) =>
+                prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)),
+              );
+              if (detailLead?.id === updatedLead.id) setDetailLead(updatedLead);
+              void loadLeads(true);
+            }}
             assigningId={assigningId}
           />
           <TablePagination

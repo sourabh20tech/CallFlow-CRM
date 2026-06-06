@@ -30,7 +30,7 @@ export function AssignAgentSelect({
       onChange={(e) => onChange(e.target.value)}
       className={cn(
         "flex h-10 w-full rounded-lg border border-[hsl(var(--ds-glass-border))]",
-        "bg-[hsl(var(--ds-glass-bg))]/80 px-3 py-2 text-sm backdrop-blur-sm",
+        "bg-[hsl(var(--ds-glass-bg))]/80 px-3 py-2 text-sm ",
         "focus-visible:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
         disabled && "opacity-60",
         className,

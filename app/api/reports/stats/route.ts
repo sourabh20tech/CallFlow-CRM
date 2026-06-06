@@ -9,6 +9,14 @@ export async function GET() {
   const auth = await requireAuthApi();
   if (auth.error) return auth.error;
 
+  // Only admins can see global live stats; agents should not access org-wide data
+  if (auth.user.role !== "admin") {
+    return NextResponse.json(
+      { stats: null },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   try {
     const stats = await reportsService.getLiveStats();
     return NextResponse.json(

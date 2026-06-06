@@ -23,7 +23,7 @@ interface FollowupFiltersBarProps {
 
 export function FollowupFiltersBar({ filters, onChange, agents }: FollowupFiltersBarProps) {
   return (
-    <div className="space-y-4 rounded-2xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/60 p-4 backdrop-blur-xl">
+    <div className="space-y-4 rounded-2xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
           {VIEWS.map((v) => (
@@ -60,7 +60,7 @@ export function FollowupFiltersBar({ filters, onChange, agents }: FollowupFilter
           onChange={(e) =>
             onChange({ ...filters, agentId: e.target.value || undefined })
           }
-          className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm backdrop-blur-sm"
+          className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm "
         >
           <option value="">All agents</option>
           {agents.map((a) => (
@@ -83,7 +83,7 @@ export function FollowupFiltersBar({ filters, onChange, agents }: FollowupFilter
                   : undefined,
               })
             }
-            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm backdrop-blur-sm"
+            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm "
           />
           <label className="text-xs text-muted-foreground">to</label>
           <input
@@ -97,7 +97,7 @@ export function FollowupFiltersBar({ filters, onChange, agents }: FollowupFilter
                   : undefined,
               })
             }
-            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm backdrop-blur-sm"
+            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm "
           />
         </div>
 

@@ -28,15 +28,19 @@ export default async function FollowUpsPage() {
   let initialLoadError: string | undefined;
 
   try {
-    const [pendingFollowups, summaryStats, allForReminders, summaries] = await Promise.all([
-      followupsService.list({ view: "pending" }),
-      followupsService.getStats(),
+    // Fetch all follow-ups once, derive pending list, stats, and reminders from it
+    const [allFollowups, summaries] = await Promise.all([
       followupsService.list({ view: "all" }),
       followupsService.getAgentSummaries(),
     ]);
-    followups = pendingFollowups;
-    stats = summaryStats;
-    reminders = followupsService.getReminders(allForReminders);
+
+    followups = allFollowups.filter(
+      (f) => f.status === "pending" || f.status === "in_progress",
+    );
+    // Import computeStats from the db service to avoid extra fetch
+    const { followupsDbServiceServer } = await import("@/services/db/followups.service");
+    stats = followupsDbServiceServer.computeStats(allFollowups);
+    reminders = followupsService.getReminders(allFollowups);
     agentSummaries = summaries;
   } catch (error) {
     initialLoadError =

@@ -1,12 +1,12 @@
 import { resolveAgentIdForUser } from "@/lib/agents/resolve-current-agent";
 import { getDialLeads } from "@/lib/calls/dial-leads";
 import { requireSupabaseConfigured } from "@/lib/supabase/config";
+import { createClient } from "@/lib/supabase/server";
 import { agentsService } from "@/services/agents.service";
 import { callsService } from "@/services/calls.service";
 import { followupsService } from "@/services/followups.service";
 import { leadsDbServiceServer } from "@/services/db/leads.service";
 import { leadsService } from "@/services/leads.service";
-import { notesDbServiceServer } from "@/services/db/notes.service";
 import { systemSettingsDbServiceServer } from "@/services/db/system-settings.service";
 import type {
   AgentPanelBundle,
@@ -16,19 +16,35 @@ import type {
 import type { Lead } from "@/types/lead";
 import type { User } from "@/types/auth";
 
+/** Batch note count resolution — single query instead of N+1 */
 async function withNoteCounts(leads: Lead[]): Promise<AgentPanelLead[]> {
   if (!leads.length) return [];
 
-  return Promise.all(
-    leads.map(async (lead) => {
-      try {
-        const notes = await notesDbServiceServer.listByLead(lead.id);
-        return { ...lead, noteCount: notes.length };
-      } catch {
-        return { ...lead, noteCount: 0 };
+  try {
+    const supabase = await createClient();
+    const leadIds = leads.map((l) => l.id);
+
+    const { data: noteRows, error } = await supabase
+      .from("lead_notes")
+      .select("lead_id")
+      .in("lead_id", leadIds)
+      .is("deleted_at", null);
+
+    if (error) {
+      return leads.map((lead) => ({ ...lead, noteCount: 0 }));
+    }
+
+    const counts: Record<string, number> = {};
+    for (const row of noteRows ?? []) {
+      if (row.lead_id) {
+        counts[row.lead_id] = (counts[row.lead_id] ?? 0) + 1;
       }
-    }),
-  );
+    }
+
+    return leads.map((lead) => ({ ...lead, noteCount: counts[lead.id] ?? 0 }));
+  } catch {
+    return leads.map((lead) => ({ ...lead, noteCount: 0 }));
+  }
 }
 
 async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {

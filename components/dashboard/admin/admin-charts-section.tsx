@@ -1,14 +1,31 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { BarChart3 } from "lucide-react";
-import { DailyCallsChart } from "@/components/charts/dashboard/daily-calls-chart";
-import { LeadConversionChart } from "@/components/charts/dashboard/lead-conversion-chart";
-import { AgentPerformanceChart } from "@/components/charts/dashboard/agent-performance-chart";
 import type {
   AgentPerformanceDataPoint,
   DailyCallsDataPoint,
   LeadConversionDataPoint,
 } from "@/types/dashboard";
+
+const DailyCallsChart = dynamic(
+  () => import("@/components/charts/dashboard/daily-calls-chart").then((m) => m.DailyCallsChart),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const LeadConversionChart = dynamic(
+  () => import("@/components/charts/dashboard/lead-conversion-chart").then((m) => m.LeadConversionChart),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const AgentPerformanceChart = dynamic(
+  () => import("@/components/charts/dashboard/agent-performance-chart").then((m) => m.AgentPerformanceChart),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+
+function ChartSkeleton() {
+  return (
+    <div className="h-[280px] animate-pulse rounded-xl border border-border/40 bg-muted/20" />
+  );
+}
 
 interface AdminChartsSectionProps {
   dailyCalls: DailyCallsDataPoint[];

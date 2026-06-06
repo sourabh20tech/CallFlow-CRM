@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusChip } from "@/components/design-system/status-chip";
-import { LeadStatusBadge } from "@/components/leads/lead-status-badge";
+import { InlineLeadStatus } from "@/components/leads/inline-lead-status";
 import { AssignAgentSelect } from "@/components/leads/assign-agent-select";
 import { LeadRowActions, type LeadDetailFocus } from "@/components/leads/lead-row-actions";
 import { WhatsAppChatButton } from "@/components/shared/whatsapp-chat-button";
@@ -33,6 +33,7 @@ interface LeadTableProps {
   onEdit: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
   onAssign: (leadId: string, agentId: string) => void;
+  onStatusChange: (updatedLead: Lead) => void;
   assigningId?: string | null;
 }
 
@@ -44,6 +45,7 @@ export function LeadTable({
   onEdit,
   onDelete,
   onAssign,
+  onStatusChange,
   assigningId,
 }: LeadTableProps) {
   return (
@@ -86,7 +88,11 @@ export function LeadTable({
                   </div>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <LeadStatusBadge status={lead.status} />
+                  <InlineLeadStatus
+                    lead={lead}
+                    isAdmin={isAdmin}
+                    onStatusChange={onStatusChange}
+                  />
                 </TableCell>
                 <TableCell className="hidden lg:table-cell">
                   <StatusChip
@@ -148,7 +154,7 @@ export function LeadTable({
             <div
               className={cn(
                 "rounded-xl border border-[hsl(var(--ds-glass-border))]",
-                "bg-[hsl(var(--ds-glass-bg))]/60 p-4 backdrop-blur-sm",
+                "bg-[hsl(var(--ds-glass-bg))] p-4",
               )}
             >
               <div className="flex items-start gap-2">
@@ -157,14 +163,11 @@ export function LeadTable({
                   onClick={() => onSelect(lead)}
                   className="min-w-0 flex-1 text-left transition-colors active:scale-[0.99]"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium">{lead.fullName}</p>
-                      {lead.company && (
-                        <p className="text-xs text-muted-foreground">{lead.company}</p>
-                      )}
-                    </div>
-                    <LeadStatusBadge status={lead.status} />
+                  <div>
+                    <p className="font-medium">{lead.fullName}</p>
+                    {lead.company && (
+                      <p className="text-xs text-muted-foreground">{lead.company}</p>
+                    )}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     {lead.assignedAgentName && (
@@ -200,6 +203,16 @@ export function LeadTable({
                   onDelete={isAdmin ? onDelete : undefined}
                   onAssign={isAdmin ? onAssign : undefined}
                   assigning={assigningId === lead.id}
+                />
+              </div>
+              <div
+                className="mt-3 border-t border-border/40 pt-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <InlineLeadStatus
+                  lead={lead}
+                  isAdmin={isAdmin}
+                  onStatusChange={onStatusChange}
                 />
               </div>
               {isAdmin && (

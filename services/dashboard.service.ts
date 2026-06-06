@@ -83,31 +83,33 @@ export class DashboardService {
     requireSupabaseConfigured("admin dashboard");
 
     const range = this.lastNDaysRange(7);
-    const raw = await analyticsDbServiceServer.fetchRaw(range);
-    const bundle = buildReportsBundleFromRaw(range, raw);
-
     const supabase = await createClient();
 
-    const [{ data: leadsRows }, { data: callRows }, { data: followRows }] = await Promise.all([
-      supabase
-        .from("leads")
-        .select("id, full_name, company, email, tier, status, last_contacted_at, created_at")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .limit(8),
-      supabase
-        .from("call_logs")
-        .select("id, status, started_at")
-        .is("deleted_at", null)
-        .order("started_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("follow_ups")
-        .select("id, title, due_at, status, created_at")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .limit(5),
-    ]);
+    // Run analytics and recent items in parallel for faster load
+    const [raw, { data: leadsRows }, { data: callRows }, { data: followRows }] =
+      await Promise.all([
+        analyticsDbServiceServer.fetchRaw(range),
+        supabase
+          .from("leads")
+          .select("id, full_name, company, email, tier, status, last_contacted_at, created_at")
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(8),
+        supabase
+          .from("call_logs")
+          .select("id, status, started_at")
+          .is("deleted_at", null)
+          .order("started_at", { ascending: false })
+          .limit(5),
+        supabase
+          .from("follow_ups")
+          .select("id, title, due_at, status, created_at")
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(5),
+      ]);
+
+    const bundle = buildReportsBundleFromRaw(range, raw);
 
     const leads: DashboardLeadRow[] = (leadsRows ?? []).map((row) => ({
       id: row.id,
