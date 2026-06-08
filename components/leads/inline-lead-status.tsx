@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -9,13 +9,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { StatusChip } from "@/components/design-system/status-chip";
 import {
-  LEAD_STATUS_OPTIONS,
   LEAD_STATUS_VARIANT,
   formatLeadStatus,
 } from "@/lib/leads/constants";
 import type { Lead, LeadStatus } from "@/types/lead";
+import type { LeadStatusConfig } from "@/types/lead-status-config";
 import { cn } from "@/lib/utils";
 
 interface InlineLeadStatusProps {
@@ -24,10 +23,31 @@ interface InlineLeadStatusProps {
   onStatusChange: (updatedLead: Lead) => void;
 }
 
+// Cache statuses across component instances
+let cachedStatuses: LeadStatusConfig[] | null = null;
+let cachePromise: Promise<LeadStatusConfig[]> | null = null;
+
+function fetchStatuses(): Promise<LeadStatusConfig[]> {
+  if (cachedStatuses) return Promise.resolve(cachedStatuses);
+  if (cachePromise) return cachePromise;
+
+  cachePromise = fetch("/api/lead-statuses")
+    .then((res) => res.json())
+    .then((data) => {
+      cachedStatuses = data.statuses ?? [];
+      return cachedStatuses!;
+    })
+    .catch(() => {
+      cachePromise = null;
+      return [];
+    });
+
+  return cachePromise;
+}
+
 /**
  * Compact dropdown-based status selector for the leads table.
- * Shows current status as a badge with a chevron; clicking opens
- * a dropdown with all available statuses.
+ * Supports both system and custom statuses fetched from the API.
  */
 export function InlineLeadStatus({
   lead,
@@ -36,9 +56,14 @@ export function InlineLeadStatus({
 }: InlineLeadStatusProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [open, setOpen] = useState(false);
+  const [statuses, setStatuses] = useState<LeadStatusConfig[]>(cachedStatuses ?? []);
 
-  const handleStatus = async (status: LeadStatus) => {
-    if (status === lead.status || isSaving) return;
+  useEffect(() => {
+    void fetchStatuses().then(setStatuses);
+  }, []);
+
+  const handleStatus = async (statusValue: string) => {
+    if (statusValue === lead.status || isSaving) return;
     setOpen(false);
     setIsSaving(true);
 
@@ -50,14 +75,15 @@ export function InlineLeadStatus({
       const res = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status: statusValue }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Update failed");
 
       onStatusChange(data as Lead);
-      toast.success(`Status → ${formatLeadStatus(status)}`);
+      const label = statuses.find((s) => s.value === statusValue)?.label ?? statusValue;
+      toast.success(`Status → ${label}`);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not update status",
@@ -66,6 +92,14 @@ export function InlineLeadStatus({
       setIsSaving(false);
     }
   };
+
+  // Find current status config
+  const currentConfig = statuses.find((s) => s.value === lead.status);
+  const currentLabel = currentConfig?.label ?? formatLeadStatus(lead.status as LeadStatus);
+  const currentColor = currentConfig?.color ?? "#8b5cf6";
+
+  // Determine badge variant from color or system mapping
+  const variant = LEAD_STATUS_VARIANT[lead.status as LeadStatus] ?? "default";
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -78,14 +112,22 @@ export function InlineLeadStatus({
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             isSaving && "opacity-60 cursor-not-allowed",
           )}
-          aria-label={`Status: ${formatLeadStatus(lead.status)}. Click to change.`}
+          aria-label={`Status: ${currentLabel}. Click to change.`}
         >
-          <StatusChip
-            label={formatLeadStatus(lead.status)}
-            variant={LEAD_STATUS_VARIANT[lead.status]}
-            size="sm"
-            showDot
-          />
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0 text-[0.6875rem] font-medium"
+            style={{
+              borderColor: `${currentColor}40`,
+              backgroundColor: `${currentColor}18`,
+              color: currentColor,
+            }}
+          >
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: currentColor }}
+            />
+            {currentLabel}
+          </span>
           {isSaving ? (
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
           ) : (
@@ -94,32 +136,24 @@ export function InlineLeadStatus({
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="min-w-[160px]">
-        {LEAD_STATUS_OPTIONS.map(({ value, label }) => {
-          const active = lead.status === value;
-          const variant = LEAD_STATUS_VARIANT[value];
+      <DropdownMenuContent align="start" className="min-w-[170px]">
+        {statuses.map((status) => {
+          const active = lead.status === status.value;
 
           return (
             <DropdownMenuItem
-              key={value}
-              onClick={() => void handleStatus(value)}
+              key={status.id}
+              onClick={() => void handleStatus(status.value)}
               className={cn(
                 "flex items-center gap-2 px-2.5 py-2 cursor-pointer",
                 active && "bg-accent",
               )}
             >
               <span
-                className={cn(
-                  "h-2 w-2 shrink-0 rounded-full",
-                  variant === "default" && "bg-primary",
-                  variant === "success" && "bg-emerald-500",
-                  variant === "warning" && "bg-amber-500",
-                  variant === "error" && "bg-red-500",
-                  variant === "info" && "bg-blue-500",
-                  variant === "neutral" && "bg-muted-foreground",
-                )}
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: status.color }}
               />
-              <span className="flex-1 text-sm">{label}</span>
+              <span className="flex-1 text-sm">{status.label}</span>
               {active && <Check className="h-3.5 w-3.5 text-primary" />}
             </DropdownMenuItem>
           );

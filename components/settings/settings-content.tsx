@@ -7,6 +7,7 @@ import { GlassCard } from "@/components/design-system/glass-card";
 import { CrmSystemControl } from "@/components/settings/crm-system-control";
 import { AdminAnnouncementCard } from "@/components/settings/admin-announcement-card";
 import { DataManagementSection } from "@/components/settings/data-management/data-management-section";
+import { LeadStatusesSettings } from "@/components/settings/lead-statuses-settings";
 
 export function SettingsContent() {
   const searchParams = useSearchParams();
@@ -23,6 +24,10 @@ export function SettingsContent() {
     <div className="grid gap-[var(--ds-stack-gap)]">
       <CrmSystemControl />
       <AdminAnnouncementCard />
+
+      <GlassCard variant="default" padding="md">
+        <LeadStatusesSettings />
+      </GlassCard>
 
       <DataManagementSection />
 
