@@ -104,7 +104,7 @@ export function LeadsManagement({
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(initialTotal ?? 0);
   const [totalPages, setTotalPages] = useState(initialTotalPages ?? 1);
-  const pageSize = DEFAULT_PAGE_SIZE;
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -397,6 +397,7 @@ export function LeadsManagement({
             total={total}
             pageSize={pageSize}
             onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
             className="mt-4"
           />
         </DataTableCard>

@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   });
 
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
-  const pageSize = Math.min(100, Math.max(1, Number(searchParams.get("pageSize") ?? "30") || 30));
+  const pageSize = Math.min(200, Math.max(1, Number(searchParams.get("pageSize") ?? "30") || 30));
 
   try {
     const result = await activityLogsDbServiceServer.list(filters, { page, pageSize });
