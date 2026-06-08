@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Download, Plus, RefreshCw, UserPlus } from "lucide-react";
+import { Download, Plus, RefreshCw, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/design-system/page-header";
 import { DataTableCard } from "@/components/design-system/data-table-card";
 import { SkeletonTable } from "@/components/design-system/skeletons";
 import { AddLeadModal } from "@/components/leads/add-lead-modal";
+import { BulkUploadModal } from "@/components/leads/bulk-upload-modal";
+import { BulkActionsBar } from "@/components/leads/bulk-actions-bar";
+import { LeadStatsRow } from "@/components/leads/lead-stats-row";
 import { EditLeadModal } from "@/components/leads/edit-lead-modal";
 import { LeadDetailSection } from "@/components/leads/lead-detail-section";
 import { LeadFiltersBar } from "@/components/leads/lead-filters";
@@ -91,6 +94,8 @@ export function LeadsManagement({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -149,6 +154,31 @@ export function LeadsManagement({
       (filters.tier && filters.tier !== "all") ||
       (filters.assignedAgentId && filters.assignedAgentId !== "all"),
   );
+
+  // Compute lead stats from current data
+  const leadStats = useMemo(() => ({
+    total,
+    newLeads: leads.filter((l) => l.status === "new").length,
+    followUpDue: leads.filter((l) => l.nextFollowUpAt && new Date(l.nextFollowUpAt) <= new Date()).length,
+    converted: leads.filter((l) => l.status === "converted").length,
+    unassigned: leads.filter((l) => !l.assignedAgentId).length,
+  }), [leads, total]);
+
+  // Selection handlers
+  const toggleLeadSelection = useCallback((leadId: string) => {
+    setSelectedLeadIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(leadId)) next.delete(leadId);
+      else next.add(leadId);
+      return next;
+    });
+  }, []);
+
+  const toggleAllSelection = useCallback(() => {
+    setSelectedLeadIds((prev) =>
+      prev.size === leads.length ? new Set() : new Set(leads.map((l) => l.id)),
+    );
+  }, [leads]);
 
   const handleCreate = async (values: LeadFormValues) => {
     setIsSubmitting(true);
@@ -295,6 +325,12 @@ export function LeadsManagement({
               </Button>
             )}
             {canManage && (
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBulkUploadOpen(true)}>
+                <Upload className="h-4 w-4" />
+                Bulk Upload
+              </Button>
+            )}
+            {canManage && (
               <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Add lead
@@ -303,6 +339,18 @@ export function LeadsManagement({
           </div>
         }
       />
+
+      <LeadStatsRow {...leadStats} />
+
+      {canManage && selectedLeadIds.size > 0 && (
+        <BulkActionsBar
+          selectedCount={selectedLeadIds.size}
+          selectedIds={Array.from(selectedLeadIds)}
+          agents={agents}
+          onComplete={() => void loadLeads(true)}
+          onClearSelection={() => setSelectedLeadIds(new Set())}
+        />
+      )}
 
       <LeadFiltersBar
         filters={filters}
@@ -338,6 +386,9 @@ export function LeadsManagement({
               void loadLeads(true);
             }}
             assigningId={assigningId}
+            selectedIds={selectedLeadIds}
+            onToggleSelect={canManage ? toggleLeadSelection : undefined}
+            onToggleAll={canManage ? toggleAllSelection : undefined}
           />
           <TablePagination
             page={page}
@@ -358,6 +409,12 @@ export function LeadsManagement({
             agents={agents}
             onSubmit={handleCreate}
             isSubmitting={isSubmitting}
+          />
+          <BulkUploadModal
+            open={bulkUploadOpen}
+            onOpenChange={setBulkUploadOpen}
+            agents={agents}
+            onComplete={() => void loadLeads(true)}
           />
           <EditLeadModal
             open={Boolean(editLead)}

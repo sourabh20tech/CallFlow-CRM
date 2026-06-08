@@ -35,6 +35,9 @@ interface LeadTableProps {
   onAssign: (leadId: string, agentId: string) => void;
   onStatusChange: (updatedLead: Lead) => void;
   assigningId?: string | null;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (leadId: string) => void;
+  onToggleAll?: () => void;
 }
 
 export function LeadTable({
@@ -47,13 +50,30 @@ export function LeadTable({
   onAssign,
   onStatusChange,
   assigningId,
+  selectedIds,
+  onToggleSelect,
+  onToggleAll,
 }: LeadTableProps) {
+  const hasSelection = Boolean(onToggleSelect && selectedIds);
+  const allSelected = hasSelection && leads.length > 0 && selectedIds!.size === leads.length;
+
   return (
     <>
       <div className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
+              {hasSelection && (
+                <TableHead className="w-[40px]">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={onToggleAll}
+                    className="h-4 w-4 rounded border-border"
+                    aria-label="Select all"
+                  />
+                </TableHead>
+              )}
               <TableHead>Lead</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden lg:table-cell">Tier</TableHead>
@@ -70,6 +90,17 @@ export function LeadTable({
                 className="cursor-pointer transition-colors hover:bg-muted/40"
                 onClick={() => onSelect(lead)}
               >
+                {hasSelection && (
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds!.has(lead.id)}
+                      onChange={() => onToggleSelect!(lead.id)}
+                      className="h-4 w-4 rounded border-border"
+                      aria-label={`Select ${lead.fullName}`}
+                    />
+                  </TableCell>
+                )}
                 <TableCell>
                   <div>
                     <p className="font-medium">{lead.fullName}</p>

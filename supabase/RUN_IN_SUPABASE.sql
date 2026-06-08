@@ -7,107 +7,15 @@
 -- This file contains ONLY the new tables and columns added during recent updates.
 --
 -- Changes included:
---   1. Messages & Conversations tables (internal chat system)
---   2. note_type column on lead_notes (public/internal notes)
+--   1. note_type column on lead_notes (public/internal notes)
+--   2. dashboard_stats table for reports caching
+--   3. Soft delete support columns
+--   4. refresh_dashboard_stats RPC function
 --
 
--- ═══════════════════════════════════════════════════════════════════════════════
--- PART 1: MESSAGING SYSTEM (conversations + messages)
--- ═══════════════════════════════════════════════════════════════════════════════
-
--- 1A. Conversations table
-CREATE TABLE IF NOT EXISTS public.conversations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  participant_one UUID NOT NULL REFERENCES auth.users(id),
-  participant_two UUID NOT NULL REFERENCES auth.users(id),
-  last_message_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (participant_one, participant_two)
-);
-
--- 1B. Messages table
-CREATE TABLE IF NOT EXISTS public.messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
-  sender_id UUID NOT NULL REFERENCES auth.users(id),
-  receiver_id UUID NOT NULL REFERENCES auth.users(id),
-  content TEXT NOT NULL CHECK (char_length(content) > 0 AND char_length(content) <= 4000),
-  is_read BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- 1C. Performance Indexes
-CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON public.messages(conversation_id);
-CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON public.messages(sender_id);
-CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON public.messages(receiver_id);
-CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_messages_unread ON public.messages(receiver_id, is_read) WHERE is_read = false;
-CREATE INDEX IF NOT EXISTS idx_conversations_participant_one ON public.conversations(participant_one);
-CREATE INDEX IF NOT EXISTS idx_conversations_participant_two ON public.conversations(participant_two);
-CREATE INDEX IF NOT EXISTS idx_conversations_last_message ON public.conversations(last_message_at DESC);
-
--- 1D. Row Level Security — Messages
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own messages" ON public.messages
-  FOR SELECT USING (
-    auth.uid() = sender_id OR auth.uid() = receiver_id
-  );
-
-CREATE POLICY "Users can insert own messages" ON public.messages
-  FOR INSERT WITH CHECK (
-    auth.uid() = sender_id
-  );
-
-CREATE POLICY "Users can update own received messages" ON public.messages
-  FOR UPDATE USING (
-    auth.uid() = receiver_id
-  );
-
--- 1E. Row Level Security — Conversations
-ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own conversations" ON public.conversations
-  FOR SELECT USING (
-    auth.uid() = participant_one OR auth.uid() = participant_two
-  );
-
-CREATE POLICY "Users can create conversations" ON public.conversations
-  FOR INSERT WITH CHECK (
-    auth.uid() = participant_one OR auth.uid() = participant_two
-  );
-
-CREATE POLICY "Participants can update conversation" ON public.conversations
-  FOR UPDATE USING (
-    auth.uid() = participant_one OR auth.uid() = participant_two
-  );
-
--- 1F. Updated_at triggers
-CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS messages_updated_at ON public.messages;
-CREATE TRIGGER messages_updated_at
-  BEFORE UPDATE ON public.messages
-  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-
-DROP TRIGGER IF EXISTS conversations_updated_at ON public.conversations;
-CREATE TRIGGER conversations_updated_at
-  BEFORE UPDATE ON public.conversations
-  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PART 2: NOTE VISIBILITY (note_type column on lead_notes)
+-- PART 1: NOTE VISIBILITY (note_type column on lead_notes)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- 2A. Add note_type column (public or internal)
@@ -131,7 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_lead_notes_note_type ON public.lead_notes(note_ty
 
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PART 3: DASHBOARD STATS TABLE (for reports/analytics caching)
+-- PART 2: DASHBOARD STATS TABLE (for reports/analytics caching)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- This table may already exist from previous migrations. Create only if missing.
@@ -156,7 +64,7 @@ CREATE INDEX IF NOT EXISTS idx_dashboard_stats_scope ON public.dashboard_stats(s
 
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PART 4: SOFT DELETE SUPPORT (deleted_at on all core tables)
+-- PART 3: SOFT DELETE SUPPORT (deleted_at on all core tables)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Ensure deleted_at exists on all relevant tables (idempotent)
@@ -184,7 +92,7 @@ ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS next_follow_up_at TIMESTAMPTZ;
 
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PART 5: REFRESH DASHBOARD STATS RPC (used by reports)
+-- PART 4: REFRESH DASHBOARD STATS RPC (used by reports)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 CREATE OR REPLACE FUNCTION public.refresh_dashboard_stats(p_stat_date DATE DEFAULT CURRENT_DATE)
