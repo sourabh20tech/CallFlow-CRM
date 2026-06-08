@@ -58,19 +58,17 @@ export const sidebarNavItem = cn(
 );
 
 export const sidebarNavActive = cn(
-  "bg-gradient-to-r from-violet-500/20 to-indigo-500/15",
+  "bg-primary/10",
   "text-[hsl(var(--sidebar-foreground))]",
-  "shadow-[var(--ds-shadow-sm)]",
-  "border border-[hsl(var(--sidebar-active-border))]",
+  "border border-primary/20",
+  "font-semibold",
 );
 
 export const sidebarNavInactive = cn(
   "border border-transparent",
   "text-[hsl(var(--sidebar-muted))]",
-  "hover:border-[hsl(var(--sidebar-active-border))]/50",
   "hover:bg-[hsl(var(--sidebar-hover))]",
   "hover:text-[hsl(var(--sidebar-foreground))]",
-  "hover:shadow-[var(--ds-shadow-sm)]",
 );
 
 /** Shared form control styling */
