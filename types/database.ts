@@ -13,7 +13,8 @@ export type LeadStatus =
   | "follow_up"
   | "converted"
   | "not_interested"
-  | "closed";
+  | "closed"
+  | (string & {});
 export type AgentStatus = "available" | "busy" | "away" | "offline";
 export type CallDirection = "inbound" | "outbound";
 export type CallStatus =

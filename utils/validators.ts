@@ -142,14 +142,7 @@ export const updateFollowupSchema = z.object({
 export type ScheduleFollowupFormValues = z.infer<typeof scheduleFollowupSchema>;
 export type UpdateFollowupFormValues = z.infer<typeof updateFollowupSchema>;
 
-export const leadStatusSchema = z.enum([
-  "new",
-  "interested",
-  "follow_up",
-  "converted",
-  "not_interested",
-  "closed",
-]);
+export const leadStatusSchema = z.string().min(1, "Status is required");
 
 export const leadTierSchema = z.enum(["standard", "premium", "enterprise"]);
 
