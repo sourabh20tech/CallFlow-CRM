@@ -10,7 +10,9 @@ export async function GET() {
 
   try {
     const agents = await agentsService.getAll(true);
-    return NextResponse.json(agents);
+    return NextResponse.json(agents, {
+      headers: { "Cache-Control": "private, max-age=15, stale-while-revalidate=60" },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load agents";
     return NextResponse.json({ error: message }, { status: 500 });

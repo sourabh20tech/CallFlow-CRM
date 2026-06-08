@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { CalendarClock, User } from "lucide-react";
 import {
   Table,
@@ -41,7 +42,7 @@ interface LeadTableProps {
   onToggleAll?: () => void;
 }
 
-export function LeadTable({
+export const LeadTable = memo(function LeadTable({
   leads,
   agents,
   isAdmin,
@@ -275,4 +276,4 @@ export function LeadTable({
       </ul>
     </>
   );
-}
+});

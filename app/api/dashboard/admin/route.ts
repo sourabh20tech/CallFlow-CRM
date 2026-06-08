@@ -16,7 +16,9 @@ export async function GET() {
 
   try {
     const data = await dashboardService.getAdminDashboard();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "private, max-age=10, stale-while-revalidate=30" },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load dashboard";
     return NextResponse.json({ error: message }, { status: 500 });

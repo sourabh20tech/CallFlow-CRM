@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   CalendarClock,
   CheckCircle2,
@@ -40,7 +40,7 @@ interface FollowupCardProps {
   onStatusChange?: (status: FollowupStatus) => void;
 }
 
-export function FollowupCard({
+export const FollowupCard = memo(function FollowupCard({
   followup,
   selected,
   isAdmin = false,
@@ -218,4 +218,4 @@ export function FollowupCard({
       </div>
     </GlassCard>
   );
-}
+});
