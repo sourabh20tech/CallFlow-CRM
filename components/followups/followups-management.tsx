@@ -326,6 +326,7 @@ export function FollowupsManagement({
                 <PendingFollowupsSection
                   followups={pendingList}
                   selectedId={selected?.id}
+                  isAdmin={isAdmin}
                   onSelect={setSelected}
                   onComplete={(id) => void handleComplete(id)}
                   onDelete={(id) => void handleDelete(id)}

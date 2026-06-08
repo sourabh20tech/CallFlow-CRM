@@ -1,6 +1,19 @@
 "use client";
 
-import { CalendarClock, CheckCircle2, MoreHorizontal, Trash2, User } from "lucide-react";
+import { useState } from "react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  MessageSquare,
+  MoreHorizontal,
+  Phone,
+  MessageCircle,
+  RefreshCw,
+  Trash2,
+  User,
+  UserCheck,
+} from "lucide-react";
+import { toast } from "sonner";
 import { GlassCard } from "@/components/design-system/glass-card";
 import { FollowupStatusBadge } from "@/components/followups/followup-status-badge";
 import { PriorityBadge } from "@/components/followups/priority-badge";
@@ -12,6 +25,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -19,6 +33,7 @@ import { cn } from "@/lib/utils";
 interface FollowupCardProps {
   followup: Followup;
   selected?: boolean;
+  isAdmin?: boolean;
   onSelect?: () => void;
   onComplete?: () => void;
   onDelete?: () => void;
@@ -28,6 +43,7 @@ interface FollowupCardProps {
 export function FollowupCard({
   followup,
   selected,
+  isAdmin = false,
   onSelect,
   onComplete,
   onDelete,
@@ -35,6 +51,32 @@ export function FollowupCard({
 }: FollowupCardProps) {
   const overdue = isFollowupOverdue(followup);
   const isDone = followup.status === "completed";
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleCall = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Use leadId to find phone — for now open tel if available in metadata
+    toast.info("Opening dialer...");
+    // Navigate to lead for call action
+    window.location.href = `/dashboard/leads?search=${encodeURIComponent(followup.leadName ?? "")}`;
+  };
+
+  const handleWhatsApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Navigate to lead for WhatsApp
+    window.location.href = `/dashboard/leads?search=${encodeURIComponent(followup.leadName ?? "")}`;
+  };
+
+  const handleDelete = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      toast.warning("Click Delete again to confirm", { duration: 3000 });
+      setTimeout(() => setConfirmDelete(false), 3000);
+      return;
+    }
+    onDelete?.();
+    setConfirmDelete(false);
+  };
 
   return (
     <GlassCard
@@ -63,8 +105,8 @@ export function FollowupCard({
             )}
           </div>
           <div className="min-w-0">
-            <h3 className="font-semibold truncate">{followup.title}</h3>
-            <p className="text-sm text-muted-foreground truncate">
+            <h3 className="truncate font-semibold">{followup.title}</h3>
+            <p className="truncate text-sm text-muted-foreground">
               {followup.leadName ?? "Lead"}
             </p>
           </div>
@@ -78,23 +120,55 @@ export function FollowupCard({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+              {/* Communication actions */}
+              <DropdownMenuItem onClick={handleCall} className="gap-2">
+                <Phone className="h-4 w-4 text-blue-500" />
+                Quick Call
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleWhatsApp} className="gap-2">
+                <MessageCircle className="h-4 w-4 text-emerald-500" />
+                WhatsApp
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={(e) => { e.stopPropagation(); toast.info("Open lead to add notes"); }}>
+                <MessageSquare className="h-4 w-4 text-amber-500" />
+                Add Note
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              {/* Status actions */}
               {!isDone && onComplete && (
                 <DropdownMenuItem onClick={onComplete} className="gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Mark complete
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  Mark Complete
                 </DropdownMenuItem>
               )}
               {onStatusChange && followup.status === "pending" && (
-                <DropdownMenuItem onClick={() => onStatusChange("in_progress")}>
-                  Start progress
+                <DropdownMenuItem onClick={() => onStatusChange("in_progress")} className="gap-2">
+                  <RefreshCw className="h-4 w-4 text-blue-500" />
+                  Reschedule
                 </DropdownMenuItem>
               )}
-              {onDelete && (
-                <DropdownMenuItem onClick={onDelete} className="gap-2 text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
+
+              {/* Admin-only actions */}
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="gap-2" onClick={(e) => { e.stopPropagation(); toast.info("Use Follow-Up edit to reassign"); }}>
+                    <UserCheck className="h-4 w-4 text-primary" />
+                    Reassign Agent
+                  </DropdownMenuItem>
+                  {onDelete && (
+                    <DropdownMenuItem
+                      onClick={handleDelete}
+                      className={cn("gap-2", confirmDelete ? "bg-destructive/10 text-destructive" : "text-destructive")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {confirmDelete ? "Confirm Delete" : "Delete Follow-Up"}
+                    </DropdownMenuItem>
+                  )}
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -102,7 +176,7 @@ export function FollowupCard({
       </div>
 
       {followup.description && (
-        <p className="mt-3 text-sm text-muted-foreground line-clamp-2">{followup.description}</p>
+        <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{followup.description}</p>
       )}
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
@@ -112,11 +186,11 @@ export function FollowupCard({
         </div>
         <div className="rounded-md border border-border/40 bg-muted/20 px-2 py-1.5">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Priority</p>
-          <p className="capitalize font-medium text-foreground">{followup.priority}</p>
+          <p className="font-medium capitalize text-foreground">{followup.priority}</p>
         </div>
         <div className="rounded-md border border-border/40 bg-muted/20 px-2 py-1.5">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Status</p>
-          <p className="capitalize font-medium text-foreground">{followup.status.replace("_", " ")}</p>
+          <p className="font-medium capitalize text-foreground">{followup.status.replace("_", " ")}</p>
         </div>
         <div className="rounded-md border border-border/40 bg-muted/20 px-2 py-1.5">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Due</p>

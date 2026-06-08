@@ -8,6 +8,7 @@ import type { Followup, FollowupStatus } from "@/types/followup";
 
 export interface FollowupSectionActions {
   selectedId?: string;
+  isAdmin?: boolean;
   onSelect: (followup: Followup) => void;
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
@@ -24,6 +25,7 @@ interface PendingFollowupsSectionProps extends FollowupSectionActions {
 export function PendingFollowupsSection({
   followups,
   selectedId,
+  isAdmin = false,
   onSelect,
   onComplete,
   onDelete,
@@ -56,6 +58,7 @@ export function PendingFollowupsSection({
               key={followup.id}
               followup={followup}
               selected={selectedId === followup.id}
+              isAdmin={isAdmin}
               onSelect={() => onSelect(followup)}
               onComplete={() => onComplete(followup.id)}
               onDelete={() => onDelete(followup.id)}
