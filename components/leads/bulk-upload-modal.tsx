@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Loader2, Upload } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { AlertCircle, Check, CheckCircle2, Download, FileSpreadsheet, Loader2, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   Modal,
@@ -60,6 +60,22 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
+  const [defaultStatus, setDefaultStatus] = useState("new");
+  const [defaultTier, setDefaultTier] = useState("standard");
+  const [statusOptions, setStatusOptions] = useState<{ value: string; label: string }[]>([
+    { value: "new", label: "New" },
+    { value: "interested", label: "Interested" },
+    { value: "follow_up", label: "Follow-Up" },
+    { value: "converted", label: "Converted" },
+    { value: "not_interested", label: "Not Interested" },
+    { value: "closed", label: "Closed" },
+    { value: "npc", label: "NPC" },
+    { value: "switch_off", label: "Switch Off" },
+    { value: "call_cut", label: "Call Cut" },
+  ]);
+  const [showAddStatus, setShowAddStatus] = useState(false);
+  const [newStatusLabel, setNewStatusLabel] = useState("");
+  const [isCreatingStatus, setIsCreatingStatus] = useState(false);
 
   const reset = () => {
     setStep("upload");
@@ -69,6 +85,44 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
     setSelectedAgentId("");
     setSelectedAgentIds([]);
     setResult(null);
+  };
+
+  // Load custom statuses from API
+  useEffect(() => {
+    fetch("/api/lead-statuses")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.statuses?.length) {
+          setStatusOptions(data.statuses.map((s: { value: string; label: string }) => ({
+            value: s.value,
+            label: s.label,
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleCreateStatus = async () => {
+    if (!newStatusLabel.trim() || isCreatingStatus) return;
+    setIsCreatingStatus(true);
+    try {
+      const res = await fetch("/api/lead-statuses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: newStatusLabel.trim(), color: "#8b5cf6" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      toast.success(`Status "${newStatusLabel.trim()}" created`);
+      setStatusOptions((prev) => [...prev, { value: data.value, label: data.label }]);
+      setDefaultStatus(data.value);
+      setNewStatusLabel("");
+      setShowAddStatus(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Create failed");
+    } finally {
+      setIsCreatingStatus(false);
+    }
   };
 
   const handleClose = (openState: boolean) => {
@@ -153,6 +207,8 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
           assignmentMode,
           assignedAgentId: assignmentMode === "single" ? selectedAgentId : undefined,
           selectedAgentIds: assignmentMode === "round-robin" ? selectedAgentIds : undefined,
+          defaultStatus,
+          defaultTier,
         }),
       });
 
@@ -404,6 +460,74 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Default Status & Tier dropdowns */}
+              <div className="space-y-3 rounded-xl border border-border p-4">
+                <p className="text-sm font-medium">Default Values (for rows without Status/Tier)</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">Default Status</label>
+                    <select
+                      value={defaultStatus}
+                      onChange={(e) => setDefaultStatus(e.target.value)}
+                      className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                    >
+                      {statusOptions.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                    {!showAddStatus ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddStatus(true)}
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add New Status
+                      </button>
+                    ) : (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={newStatusLabel}
+                          onChange={(e) => setNewStatusLabel(e.target.value)}
+                          placeholder="Status name..."
+                          maxLength={30}
+                          className="h-7 flex-1 rounded border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleCreateStatus()}
+                          disabled={!newStatusLabel.trim() || isCreatingStatus}
+                          className="flex h-7 items-center gap-0.5 rounded bg-primary px-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                        >
+                          {isCreatingStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setShowAddStatus(false); setNewStatusLabel(""); }}
+                          className="h-7 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-muted-foreground">Default Tier</label>
+                    <select
+                      value={defaultTier}
+                      onChange={(e) => setDefaultTier(e.target.value)}
+                      className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                    >
+                      <option value="standard">Standard</option>
+                      <option value="premium">Premium</option>
+                      <option value="enterprise">Enterprise</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           )}

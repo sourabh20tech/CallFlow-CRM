@@ -18,6 +18,8 @@ export interface BulkUploadPayload {
   assignmentMode: "none" | "single" | "round-robin";
   assignedAgentId?: string;
   selectedAgentIds?: string[];
+  defaultStatus?: string;
+  defaultTier?: string;
 }
 
 interface RowError {
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { leads, assignmentMode, assignedAgentId, selectedAgentIds } = body;
+  const { leads, assignmentMode, assignedAgentId, selectedAgentIds, defaultStatus, defaultTier } = body;
 
   if (!Array.isArray(leads) || leads.length === 0) {
     return NextResponse.json({ error: "No leads provided" }, { status: 400 });
@@ -130,9 +132,10 @@ export async function POST(request: Request) {
     const leadName = row.fullName?.trim() || "Unknown Lead";
     const leadSource = row.source?.trim() || "Imported";
     const rawStatus = row.status?.trim().toLowerCase().replace(/[\s-]+/g, "_");
-    const status: CreateLeadInput["status"] = rawStatus && VALID_STATUSES.includes(rawStatus)
+    const status: CreateLeadInput["status"] = rawStatus
       ? rawStatus as CreateLeadInput["status"]
-      : "new";
+      : (defaultStatus || "new") as CreateLeadInput["status"];
+    const tier = (defaultTier || "standard") as "standard" | "premium" | "enterprise";
 
     // Determine agent assignment
     let agentId: string | undefined;
@@ -155,6 +158,7 @@ export async function POST(request: Request) {
         company: row.company?.trim() || undefined,
         source: leadSource,
         status,
+        tier,
         assignedAgentId: agentId,
       });
       successCount++;
