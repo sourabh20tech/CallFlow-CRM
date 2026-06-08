@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, ChevronDown, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -36,6 +37,8 @@ const FALLBACK_STATUSES: LeadStatusConfig[] = [
   { id: "s6", label: "Closed", value: "closed", color: "#6b7280", sortOrder: 6, isSystem: true, createdAt: "" },
 ];
 
+const PRESET_COLORS = ["#3b82f6", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444", "#6b7280", "#ec4899", "#14b8a6", "#f97316", "#6366f1"];
+
 function fetchStatuses(): Promise<LeadStatusConfig[]> {
   if (cachedStatuses) return Promise.resolve(cachedStatuses);
   if (cachePromise) return cachePromise;
@@ -56,9 +59,15 @@ function fetchStatuses(): Promise<LeadStatusConfig[]> {
   return cachePromise;
 }
 
+/** Invalidate cache so next render fetches fresh statuses */
+function invalidateStatusCache() {
+  cachedStatuses = null;
+  cachePromise = null;
+}
+
 /**
  * Compact dropdown-based status selector for the leads table.
- * Supports both system and custom statuses fetched from the API.
+ * Includes "Add New Status" option for admins at the bottom.
  */
 export function InlineLeadStatus({
   lead,
@@ -68,14 +77,26 @@ export function InlineLeadStatus({
   const [isSaving, setIsSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [statuses, setStatuses] = useState<LeadStatusConfig[]>(cachedStatuses ?? FALLBACK_STATUSES);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [newColor, setNewColor] = useState("#8b5cf6");
+  const [isCreating, setIsCreating] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void fetchStatuses().then(setStatuses);
   }, []);
 
+  useEffect(() => {
+    if (showCreateForm) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [showCreateForm]);
+
   const handleStatus = async (statusValue: string) => {
     if (statusValue === lead.status || isSaving) return;
     setOpen(false);
+    setShowCreateForm(false);
     setIsSaving(true);
 
     try {
@@ -104,16 +125,45 @@ export function InlineLeadStatus({
     }
   };
 
+  const handleCreateStatus = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!newLabel.trim() || isCreating) return;
+
+    setIsCreating(true);
+    try {
+      const res = await fetch("/api/lead-statuses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: newLabel.trim(), color: newColor }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to create");
+
+      toast.success(`Status "${newLabel.trim()}" created`);
+      setNewLabel("");
+      setNewColor("#8b5cf6");
+      setShowCreateForm(false);
+
+      // Refresh statuses
+      invalidateStatusCache();
+      const fresh = await fetchStatuses();
+      setStatuses(fresh);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Create failed");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   // Find current status config
   const currentConfig = statuses.find((s) => s.value === lead.status);
   const currentLabel = currentConfig?.label ?? formatLeadStatus(lead.status as LeadStatus);
   const currentColor = currentConfig?.color ?? "#8b5cf6";
 
-  // Determine badge variant from color or system mapping
-  const variant = LEAD_STATUS_VARIANT[lead.status as LeadStatus] ?? "default";
-
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={(v) => { setOpen(v); if (!v) setShowCreateForm(false); }}>
       <DropdownMenuTrigger asChild disabled={isSaving}>
         <button
           type="button"
@@ -147,10 +197,9 @@ export function InlineLeadStatus({
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="min-w-[170px]">
+      <DropdownMenuContent align="start" className="min-w-[180px]">
         {statuses.map((status) => {
           const active = lead.status === status.value;
-
           return (
             <DropdownMenuItem
               key={status.id}
@@ -169,6 +218,67 @@ export function InlineLeadStatus({
             </DropdownMenuItem>
           );
         })}
+
+        {/* Add New Status — Admin only */}
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            {!showCreateForm ? (
+              <DropdownMenuItem
+                onClick={(e) => { e.preventDefault(); setShowCreateForm(true); }}
+                className="flex items-center gap-2 px-2.5 py-2 cursor-pointer text-primary"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span className="text-sm font-medium">Add New Status</span>
+              </DropdownMenuItem>
+            ) : (
+              <div className="px-2.5 py-2" onClick={(e) => e.stopPropagation()}>
+                <form onSubmit={(e) => void handleCreateStatus(e)} className="space-y-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    placeholder="Status name..."
+                    maxLength={30}
+                    className="h-8 w-full rounded-md border border-border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <div className="flex items-center gap-1">
+                    {PRESET_COLORS.slice(0, 6).map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setNewColor(c)}
+                        className={cn(
+                          "h-5 w-5 rounded-full border-2 transition-transform",
+                          newColor === c ? "border-foreground scale-110" : "border-transparent",
+                        )}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="submit"
+                      disabled={!newLabel.trim() || isCreating}
+                      className="flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                    >
+                      {isCreating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                      Create
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowCreateForm(false); setNewLabel(""); }}
+                      className="flex h-7 items-center rounded-md px-2 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
