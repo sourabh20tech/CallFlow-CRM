@@ -94,38 +94,41 @@ export async function POST(request: Request) {
 
     // === VALIDATION ===
 
-    // Check name
-    if (!row.fullName?.trim()) {
-      failCount++;
-      errors.push({ row: rowNum, name: rowName, error: "Name is required", field: "name" });
-      continue;
-    }
-
-    // Check email or phone exists
+    // ONLY required: at least one of email or phone
     const hasEmail = Boolean(row.email?.trim());
     const hasPhone = Boolean(row.phone?.trim());
 
     if (!hasEmail && !hasPhone) {
       failCount++;
-      errors.push({ row: rowNum, name: rowName, error: "Email or phone is required", field: "email/phone" });
+      errors.push({ row: rowNum, name: rowName, error: "No phone number and no email — at least one is required", field: "email/phone" });
       continue;
     }
 
-    // Validate email format if provided
+    // Validate email format if provided (skip row only if format is truly invalid)
     if (hasEmail && !validateEmail(row.email!.trim())) {
-      failCount++;
-      errors.push({ row: rowNum, name: rowName, error: `Invalid email: ${row.email}`, field: "email" });
-      continue;
+      // Don't fail — just ignore the bad email if phone exists
+      if (!hasPhone) {
+        failCount++;
+        errors.push({ row: rowNum, name: rowName, error: `Invalid email and no phone: ${row.email}`, field: "email" });
+        continue;
+      }
+      // Has phone, skip bad email silently
     }
 
     // Validate phone format if provided
     if (hasPhone && !validatePhone(row.phone!.trim())) {
-      failCount++;
-      errors.push({ row: rowNum, name: rowName, error: `Invalid phone: ${row.phone}`, field: "phone" });
-      continue;
+      // Don't fail — just ignore bad phone if email exists
+      if (!hasEmail) {
+        failCount++;
+        errors.push({ row: rowNum, name: rowName, error: `Invalid phone and no email: ${row.phone}`, field: "phone" });
+        continue;
+      }
+      // Has email, skip bad phone silently
     }
 
-    // Validate status if provided
+    // Auto-fill optional fields with defaults
+    const leadName = row.fullName?.trim() || "Unknown Lead";
+    const leadSource = row.source?.trim() || "Imported";
     const rawStatus = row.status?.trim().toLowerCase().replace(/[\s-]+/g, "_");
     const status: CreateLeadInput["status"] = rawStatus && VALID_STATUSES.includes(rawStatus)
       ? rawStatus as CreateLeadInput["status"]
@@ -139,14 +142,18 @@ export async function POST(request: Request) {
       agentId = agentPool[i % agentPool.length];
     }
 
+    // Use validated values only
+    const finalEmail = (hasEmail && validateEmail(row.email!.trim())) ? row.email!.trim() : undefined;
+    const finalPhone = (hasPhone && validatePhone(row.phone!.trim())) ? row.phone!.trim() : undefined;
+
     // === CREATE LEAD ===
     try {
       await leadsService.create({
-        fullName: row.fullName.trim(),
-        email: hasEmail ? row.email!.trim() : undefined,
-        phone: hasPhone ? row.phone!.trim() : undefined,
+        fullName: leadName,
+        email: finalEmail,
+        phone: finalPhone,
         company: row.company?.trim() || undefined,
-        source: row.source?.trim() || undefined,
+        source: leadSource,
         status,
         assignedAgentId: agentId,
       });
@@ -191,6 +198,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     success: successCount,
     failed: failCount,
+    skipped: failCount + duplicateCount,
     duplicates: duplicateCount,
     total: leads.length,
     errors,

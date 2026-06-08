@@ -49,7 +49,7 @@ interface BulkUploadModalProps {
   onComplete: () => void;
 }
 
-const REQUIRED_COLUMNS = ["Name (required)", "Phone or Email (at least one)", "Company", "Source", "Status"];
+const REQUIRED_COLUMNS = ["Phone or Email (required — at least one)", "Name (optional)", "Company (optional)", "Source (optional)", "Status (optional)"];
 
 export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: BulkUploadModalProps) {
   const [step, setStep] = useState<"upload" | "preview" | "result">("upload");
@@ -195,13 +195,14 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
     URL.revokeObjectURL(url);
   };
 
-  // Client-side validation preview
+  // Client-side validation preview — only email/phone is required
   const validationResults = parsedLeads.map((lead, i) => {
     const issues: string[] = [];
-    if (!lead.fullName?.trim()) issues.push("Missing name");
-    if (!lead.email?.trim() && !lead.phone?.trim()) issues.push("No email or phone");
-    if (lead.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email.trim())) issues.push("Invalid email");
-    return { index: i, valid: issues.length === 0, issues };
+    const hasEmail = Boolean(lead.email?.trim());
+    const hasPhone = Boolean(lead.phone?.trim());
+    if (!hasEmail && !hasPhone) issues.push("No email and no phone");
+    if (!lead.fullName?.trim()) issues.push("Name missing (will use 'Unknown Lead')");
+    return { index: i, valid: hasEmail || hasPhone, issues };
   });
   const validCount = validationResults.filter((r) => r.valid).length;
   const invalidCount = parsedLeads.length - validCount;
@@ -323,7 +324,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
               {invalidCount > 0 && (
                 <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
                   <p className="mb-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                    {invalidCount} rows have validation issues:
+                    {invalidCount} rows will be skipped (no email or phone):
                   </p>
                   <ul className="max-h-20 overflow-y-auto text-xs text-muted-foreground">
                     {validationResults
