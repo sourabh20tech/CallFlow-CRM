@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { FileSpreadsheet, Loader2, Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   Modal,
@@ -25,6 +25,21 @@ interface ParsedLead {
   status?: string;
 }
 
+interface RowError {
+  row: number;
+  name: string;
+  error: string;
+  field?: string;
+}
+
+interface UploadResult {
+  success: number;
+  failed: number;
+  duplicates: number;
+  total: number;
+  errors: RowError[];
+}
+
 type AssignmentMode = "none" | "single" | "round-robin";
 
 interface BulkUploadModalProps {
@@ -34,6 +49,8 @@ interface BulkUploadModalProps {
   onComplete: () => void;
 }
 
+const REQUIRED_COLUMNS = ["Name (required)", "Phone or Email (at least one)", "Company", "Source", "Status"];
+
 export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: BulkUploadModalProps) {
   const [step, setStep] = useState<"upload" | "preview" | "result">("upload");
   const [parsedLeads, setParsedLeads] = useState<ParsedLead[]>([]);
@@ -42,7 +59,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [result, setResult] = useState<{ success: number; failed: number; total: number } | null>(null);
+  const [result, setResult] = useState<UploadResult | null>(null);
 
   const reset = () => {
     setStep("upload");
@@ -62,7 +79,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const handleFile = useCallback(async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !["csv", "xlsx", "xls"].includes(ext)) {
-      toast.error("Please upload a CSV or Excel file");
+      toast.error("Please upload a CSV or Excel file (.csv, .xlsx, .xls)");
       return;
     }
 
@@ -74,30 +91,43 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
       const rows = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
 
       if (rows.length === 0) {
-        toast.error("File is empty");
+        toast.error("File is empty — no data rows found");
         return;
       }
 
       if (rows.length > 1000) {
-        toast.error("Maximum 1000 leads per upload");
+        toast.error("Maximum 1000 leads per upload. Please split your file.");
         return;
       }
 
-      // Map columns (flexible matching)
-      const mapped: ParsedLead[] = rows.map((row) => ({
-        fullName: row["Name"] || row["name"] || row["Full Name"] || row["full_name"] || row["FullName"] || "",
-        email: row["Email"] || row["email"] || row["Email Address"] || "",
-        phone: row["Phone"] || row["phone"] || row["Mobile"] || row["Phone Number"] || "",
-        company: row["Company"] || row["company"] || row["Company Name"] || "",
-        source: row["Source"] || row["source"] || row["Lead Source"] || "",
-        status: row["Status"] || row["status"] || "",
-      }));
+      // Flexible column mapping (case-insensitive, multiple aliases)
+      const mapped: ParsedLead[] = rows.map((row) => {
+        const keys = Object.keys(row);
+        const find = (aliases: string[]) =>
+          keys.find((k) => aliases.some((a) => k.toLowerCase().trim() === a.toLowerCase()));
+
+        const nameKey = find(["Name", "Full Name", "FullName", "full_name", "Lead Name", "Contact Name"]);
+        const emailKey = find(["Email", "Email Address", "email_address", "E-mail"]);
+        const phoneKey = find(["Phone", "Mobile", "Phone Number", "phone_number", "Contact Phone", "Tel"]);
+        const companyKey = find(["Company", "Company Name", "company_name", "Organization"]);
+        const sourceKey = find(["Source", "Lead Source", "lead_source", "Origin"]);
+        const statusKey = find(["Status", "Lead Status", "lead_status"]);
+
+        return {
+          fullName: nameKey ? (row[nameKey] ?? "").toString().trim() : "",
+          email: emailKey ? (row[emailKey] ?? "").toString().trim() : "",
+          phone: phoneKey ? (row[phoneKey] ?? "").toString().trim() : "",
+          company: companyKey ? (row[companyKey] ?? "").toString().trim() : "",
+          source: sourceKey ? (row[sourceKey] ?? "").toString().trim() : "",
+          status: statusKey ? (row[statusKey] ?? "").toString().trim() : "",
+        };
+      });
 
       setParsedLeads(mapped);
       setFileName(file.name);
       setStep("preview");
-    } catch {
-      toast.error("Failed to parse file");
+    } catch (e) {
+      toast.error("Failed to parse file. Ensure it's a valid CSV or Excel file.");
     }
   }, []);
 
@@ -126,7 +156,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
         }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as UploadResult & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
 
       setResult(data);
@@ -136,6 +166,9 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
         toast.success(`${data.success} leads imported successfully`);
         onComplete();
       }
+      if (data.success === 0) {
+        toast.error("No leads were imported. Check the error details below.");
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
     } finally {
@@ -143,7 +176,34 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
     }
   };
 
-  const validCount = parsedLeads.filter((l) => l.fullName?.trim() && (l.email?.trim() || l.phone?.trim())).length;
+  const downloadErrorReport = () => {
+    if (!result?.errors.length) return;
+
+    const csvRows = [
+      "Row,Name,Error,Field",
+      ...result.errors.map((e) =>
+        `${e.row},"${(e.name ?? "").replace(/"/g, '""')}","${e.error.replace(/"/g, '""')}",${e.field ?? ""}`
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvRows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `import-errors-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Client-side validation preview
+  const validationResults = parsedLeads.map((lead, i) => {
+    const issues: string[] = [];
+    if (!lead.fullName?.trim()) issues.push("Missing name");
+    if (!lead.email?.trim() && !lead.phone?.trim()) issues.push("No email or phone");
+    if (lead.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email.trim())) issues.push("Invalid email");
+    return { index: i, valid: issues.length === 0, issues };
+  });
+  const validCount = validationResults.filter((r) => r.valid).length;
   const invalidCount = parsedLeads.length - validCount;
 
   return (
@@ -152,89 +212,134 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
         <ModalHeader>
           <ModalTitle>
             {step === "upload" && "Bulk Upload Leads"}
-            {step === "preview" && "Preview Import"}
-            {step === "result" && "Import Complete"}
+            {step === "preview" && "Preview & Validate Import"}
+            {step === "result" && "Import Results"}
           </ModalTitle>
           <ModalDescription>
             {step === "upload" && "Upload a CSV or Excel file with lead data"}
             {step === "preview" && `${parsedLeads.length} rows found in ${fileName}`}
-            {step === "result" && "Import results summary"}
+            {step === "result" && "Detailed import results"}
           </ModalDescription>
         </ModalHeader>
 
         <ModalBody showClose={false}>
+          {/* STEP 1: FILE UPLOAD */}
           {step === "upload" && (
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              className="flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border/60 p-10 text-center transition-colors hover:border-primary/40"
-            >
-              <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Drag & drop your file here</p>
-                <p className="mt-1 text-xs text-muted-foreground">CSV, XLSX, or XLS (max 1000 rows)</p>
+            <div className="space-y-4">
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                className="flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border/60 p-10 text-center transition-colors hover:border-primary/40"
+              >
+                <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Drag & drop your file here</p>
+                  <p className="mt-1 text-xs text-muted-foreground">CSV, XLSX, or XLS — max 1000 rows</p>
+                </div>
+                <label className="cursor-pointer">
+                  <input type="file" accept=".csv,.xlsx,.xls" onChange={handleInputChange} className="hidden" />
+                  <span className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-4 text-sm font-medium hover:bg-muted">
+                    <Upload className="h-4 w-4" />
+                    Browse files
+                  </span>
+                </label>
               </div>
-              <label className="cursor-pointer">
-                <input type="file" accept=".csv,.xlsx,.xls" onChange={handleInputChange} className="hidden" />
-                <span className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-4 text-sm font-medium hover:bg-muted">
-                  <Upload className="h-4 w-4" />
-                  Browse files
-                </span>
-              </label>
-              <div className="mt-2 text-xs text-muted-foreground">
-                <p className="font-medium">Required columns:</p>
-                <p>Name, Phone or Email</p>
-                <p className="mt-1">Optional: Company, Source, Status</p>
+
+              {/* Column guide */}
+              <div className="rounded-lg border border-border/50 p-4">
+                <p className="mb-2 text-sm font-medium">Required Columns</p>
+                <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground sm:grid-cols-3">
+                  {REQUIRED_COLUMNS.map((col) => (
+                    <span key={col} className="flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
+                      {col}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Column names are matched flexibly: "Name", "Full Name", "FullName" etc. all work.
+                </p>
               </div>
             </div>
           )}
 
+          {/* STEP 2: PREVIEW & VALIDATE */}
           {step === "preview" && (
             <div className="space-y-4">
-              {/* Stats */}
-              <div className="flex gap-3 text-sm">
-                <span className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-emerald-600 dark:text-emerald-400">
+              {/* Validation summary */}
+              <div className="flex flex-wrap gap-3 text-sm">
+                <span className="rounded-lg bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-600 dark:text-emerald-400">
                   ✓ {validCount} valid
                 </span>
                 {invalidCount > 0 && (
-                  <span className="rounded-lg bg-red-500/10 px-3 py-1.5 text-red-600 dark:text-red-400">
-                    ✗ {invalidCount} invalid (will be skipped)
+                  <span className="rounded-lg bg-red-500/10 px-3 py-1.5 font-medium text-red-600 dark:text-red-400">
+                    ✗ {invalidCount} will fail
                   </span>
                 )}
+                <span className="rounded-lg bg-muted px-3 py-1.5 text-muted-foreground">
+                  {parsedLeads.length} total rows
+                </span>
               </div>
 
               {/* Preview table */}
-              <div className="max-h-48 overflow-auto rounded-lg border border-border">
+              <div className="max-h-52 overflow-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-muted">
                     <tr>
-                      <th className="px-2 py-1.5 text-left">#</th>
+                      <th className="w-8 px-2 py-1.5 text-left">#</th>
                       <th className="px-2 py-1.5 text-left">Name</th>
                       <th className="px-2 py-1.5 text-left">Email</th>
                       <th className="px-2 py-1.5 text-left">Phone</th>
                       <th className="px-2 py-1.5 text-left">Company</th>
-                      <th className="px-2 py-1.5 text-left">Source</th>
+                      <th className="px-2 py-1.5 text-left">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/30">
-                    {parsedLeads.slice(0, 10).map((lead, i) => (
-                      <tr key={i} className={!lead.fullName?.trim() ? "bg-red-500/5" : ""}>
-                        <td className="px-2 py-1.5 text-muted-foreground">{i + 1}</td>
-                        <td className="px-2 py-1.5 font-medium">{lead.fullName || "—"}</td>
-                        <td className="px-2 py-1.5">{lead.email || "—"}</td>
-                        <td className="px-2 py-1.5">{lead.phone || "—"}</td>
-                        <td className="px-2 py-1.5">{lead.company || "—"}</td>
-                        <td className="px-2 py-1.5">{lead.source || "—"}</td>
-                      </tr>
-                    ))}
+                    {parsedLeads.slice(0, 15).map((lead, i) => {
+                      const vr = validationResults[i];
+                      return (
+                        <tr key={i} className={!vr.valid ? "bg-red-500/5" : ""}>
+                          <td className="px-2 py-1.5 text-muted-foreground">
+                            {!vr.valid && <span className="text-red-500">⚠</span>} {i + 1}
+                          </td>
+                          <td className="px-2 py-1.5 font-medium">{lead.fullName || <span className="text-red-500">—</span>}</td>
+                          <td className="px-2 py-1.5">{lead.email || "—"}</td>
+                          <td className="px-2 py-1.5">{lead.phone || "—"}</td>
+                          <td className="px-2 py-1.5">{lead.company || "—"}</td>
+                          <td className="px-2 py-1.5">{lead.status || "new"}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
-                {parsedLeads.length > 10 && (
-                  <p className="px-3 py-2 text-center text-xs text-muted-foreground">
-                    ...and {parsedLeads.length - 10} more rows
+                {parsedLeads.length > 15 && (
+                  <p className="border-t border-border/30 px-3 py-2 text-center text-xs text-muted-foreground">
+                    ...and {parsedLeads.length - 15} more rows
                   </p>
                 )}
               </div>
+
+              {/* Validation issues preview */}
+              {invalidCount > 0 && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                  <p className="mb-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                    {invalidCount} rows have validation issues:
+                  </p>
+                  <ul className="max-h-20 overflow-y-auto text-xs text-muted-foreground">
+                    {validationResults
+                      .filter((r) => !r.valid)
+                      .slice(0, 10)
+                      .map((r) => (
+                        <li key={r.index}>
+                          Row {r.index + 1}: {r.issues.join(", ")}
+                        </li>
+                      ))}
+                    {invalidCount > 10 && (
+                      <li className="text-muted-foreground/60">...and {invalidCount - 10} more</li>
+                    )}
+                  </ul>
+                </div>
+              )}
 
               {/* Assignment options */}
               <div className="space-y-3 rounded-xl border border-border p-4">
@@ -274,7 +379,9 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
 
                 {assignmentMode === "round-robin" && (
                   <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Select agents for distribution:</p>
+                    <p className="text-xs text-muted-foreground">
+                      Select agents for equal distribution ({selectedAgentIds.length} selected):
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {agents.map((a) => (
                         <label key={a.id} className="flex items-center gap-1.5 text-xs">
@@ -300,23 +407,73 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
             </div>
           )}
 
+          {/* STEP 3: RESULTS */}
           {step === "result" && result && (
-            <div className="flex flex-col items-center gap-4 py-6 text-center">
-              {result.failed === 0 ? (
-                <CheckCircle2 className="h-12 w-12 text-emerald-500" />
-              ) : (
-                <AlertCircle className="h-12 w-12 text-amber-500" />
-              )}
-              <div className="space-y-1">
+            <div className="space-y-4">
+              {/* Summary */}
+              <div className="flex flex-col items-center gap-3 py-4 text-center">
+                {result.failed === 0 && result.duplicates === 0 ? (
+                  <CheckCircle2 className="h-12 w-12 text-emerald-500" />
+                ) : result.success > 0 ? (
+                  <AlertCircle className="h-12 w-12 text-amber-500" />
+                ) : (
+                  <AlertCircle className="h-12 w-12 text-red-500" />
+                )}
                 <p className="text-lg font-semibold">
                   {result.success} of {result.total} leads imported
                 </p>
-                {result.failed > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {result.failed} rows failed (invalid data or duplicates)
-                  </p>
-                )}
               </div>
+
+              {/* Stats cards */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg bg-emerald-500/10 p-3 text-center">
+                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{result.success}</p>
+                  <p className="text-[11px] text-muted-foreground">Success</p>
+                </div>
+                <div className="rounded-lg bg-red-500/10 p-3 text-center">
+                  <p className="text-xl font-bold text-red-600 dark:text-red-400">{result.failed}</p>
+                  <p className="text-[11px] text-muted-foreground">Failed</p>
+                </div>
+                <div className="rounded-lg bg-amber-500/10 p-3 text-center">
+                  <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{result.duplicates}</p>
+                  <p className="text-[11px] text-muted-foreground">Duplicates</p>
+                </div>
+              </div>
+
+              {/* Error details */}
+              {result.errors.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                      Error Details ({result.errors.length})
+                    </p>
+                    <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={downloadErrorReport}>
+                      <Download className="h-3 w-3" />
+                      Download Report
+                    </Button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto rounded-lg border border-border">
+                    <table className="w-full text-xs">
+                      <thead className="sticky top-0 bg-muted">
+                        <tr>
+                          <th className="px-2 py-1.5 text-left">Row</th>
+                          <th className="px-2 py-1.5 text-left">Name</th>
+                          <th className="px-2 py-1.5 text-left">Error</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/30">
+                        {result.errors.map((err, i) => (
+                          <tr key={i}>
+                            <td className="px-2 py-1.5 font-mono text-muted-foreground">{err.row}</td>
+                            <td className="px-2 py-1.5 font-medium">{err.name}</td>
+                            <td className="px-2 py-1.5 text-red-600 dark:text-red-400">{err.error}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </ModalBody>

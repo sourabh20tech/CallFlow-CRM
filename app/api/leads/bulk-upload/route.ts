@@ -19,7 +19,24 @@ export interface BulkUploadPayload {
   selectedAgentIds?: string[];
 }
 
+interface RowError {
+  row: number;
+  name: string;
+  error: string;
+  field?: string;
+}
+
 const VALID_STATUSES = ["new", "interested", "follow_up", "converted", "not_interested", "closed"];
+
+function validateEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validatePhone(phone: string): boolean {
+  // Accept digits, spaces, dashes, plus, parentheses — minimum 7 chars
+  const cleaned = phone.replace(/[\s\-\(\)\+\.]/g, "");
+  return /^\d{7,15}$/.test(cleaned);
+}
 
 export async function POST(request: Request) {
   const auth = await requireLeadsAdminApi();
@@ -42,30 +59,76 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Maximum 1000 leads per upload" }, { status: 400 });
   }
 
+  // Validate agent IDs exist if assignment is requested
+  let validAgentIds: Set<string> = new Set();
+  if (assignmentMode === "single" || assignmentMode === "round-robin") {
+    try {
+      const rosterAgents = await leadsService.getRosterAgents();
+      validAgentIds = new Set(rosterAgents.map((a) => a.id));
+    } catch {
+      // If we can't validate agents, proceed without assignment
+    }
+
+    if (assignmentMode === "single" && assignedAgentId && !validAgentIds.has(assignedAgentId)) {
+      return NextResponse.json({
+        error: `Invalid agent ID: ${assignedAgentId}. Agent does not exist.`,
+      }, { status: 400 });
+    }
+  }
+
   // Determine agent assignment list for round-robin
   const agentPool = assignmentMode === "round-robin" && selectedAgentIds?.length
-    ? selectedAgentIds
+    ? selectedAgentIds.filter((id) => validAgentIds.size === 0 || validAgentIds.has(id))
     : [];
 
   let successCount = 0;
   let failCount = 0;
-  const errors: { row: number; error: string }[] = [];
+  let duplicateCount = 0;
+  const errors: RowError[] = [];
 
   for (let i = 0; i < leads.length; i++) {
     const row = leads[i];
+    const rowNum = i + 1;
+    const rowName = row.fullName?.trim() || `Row ${rowNum}`;
 
-    // Validate required fields
+    // === VALIDATION ===
+
+    // Check name
     if (!row.fullName?.trim()) {
       failCount++;
-      errors.push({ row: i + 1, error: "Name is required" });
+      errors.push({ row: rowNum, name: rowName, error: "Name is required", field: "name" });
       continue;
     }
 
-    if (!row.email?.trim() && !row.phone?.trim()) {
+    // Check email or phone exists
+    const hasEmail = Boolean(row.email?.trim());
+    const hasPhone = Boolean(row.phone?.trim());
+
+    if (!hasEmail && !hasPhone) {
       failCount++;
-      errors.push({ row: i + 1, error: "Email or phone is required" });
+      errors.push({ row: rowNum, name: rowName, error: "Email or phone is required", field: "email/phone" });
       continue;
     }
+
+    // Validate email format if provided
+    if (hasEmail && !validateEmail(row.email!.trim())) {
+      failCount++;
+      errors.push({ row: rowNum, name: rowName, error: `Invalid email: ${row.email}`, field: "email" });
+      continue;
+    }
+
+    // Validate phone format if provided
+    if (hasPhone && !validatePhone(row.phone!.trim())) {
+      failCount++;
+      errors.push({ row: rowNum, name: rowName, error: `Invalid phone: ${row.phone}`, field: "phone" });
+      continue;
+    }
+
+    // Validate status if provided
+    const rawStatus = row.status?.trim().toLowerCase().replace(/[\s-]+/g, "_");
+    const status: CreateLeadInput["status"] = rawStatus && VALID_STATUSES.includes(rawStatus)
+      ? rawStatus as CreateLeadInput["status"]
+      : "new";
 
     // Determine agent assignment
     let agentId: string | undefined;
@@ -75,15 +138,12 @@ export async function POST(request: Request) {
       agentId = agentPool[i % agentPool.length];
     }
 
-    const status = row.status && VALID_STATUSES.includes(row.status)
-      ? row.status as CreateLeadInput["status"]
-      : "new";
-
+    // === CREATE LEAD ===
     try {
       await leadsService.create({
         fullName: row.fullName.trim(),
-        email: row.email?.trim() || undefined,
-        phone: row.phone?.trim() || undefined,
+        email: hasEmail ? row.email!.trim() : undefined,
+        phone: hasPhone ? row.phone!.trim() : undefined,
         company: row.company?.trim() || undefined,
         source: row.source?.trim() || undefined,
         status,
@@ -91,18 +151,34 @@ export async function POST(request: Request) {
       });
       successCount++;
     } catch (error) {
-      failCount++;
-      errors.push({
-        row: i + 1,
-        error: error instanceof Error ? error.message : "Failed to create",
-      });
+      const message = error instanceof Error ? error.message : "Failed to create";
+      const isDuplicate = message.toLowerCase().includes("duplicate") ||
+        message.toLowerCase().includes("unique") ||
+        message.toLowerCase().includes("already exists") ||
+        message.toLowerCase().includes("violates unique");
+
+      if (isDuplicate) {
+        duplicateCount++;
+        errors.push({ row: rowNum, name: rowName, error: "Duplicate entry (email or phone already exists)", field: "duplicate" });
+      } else {
+        failCount++;
+        errors.push({ row: rowNum, name: rowName, error: message, field: "database" });
+      }
     }
+  }
+
+  // Log errors server-side for debugging
+  if (errors.length > 0) {
+    console.warn(`[bulk-upload] ${errors.length} errors out of ${leads.length} rows:`,
+      errors.slice(0, 5).map((e) => `Row ${e.row}: ${e.error}`).join("; "),
+    );
   }
 
   return NextResponse.json({
     success: successCount,
     failed: failCount,
+    duplicates: duplicateCount,
     total: leads.length,
-    errors: errors.slice(0, 20), // Return first 20 errors only
+    errors, // Return ALL errors (frontend will handle display)
   });
 }
