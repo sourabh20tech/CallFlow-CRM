@@ -8,6 +8,7 @@ import { AdminActivitySection } from "@/components/dashboard/admin/admin-activit
 import { AdminLatestLeadsSection } from "@/components/dashboard/admin/admin-latest-leads-section";
 import { AdminDashboardSkeleton } from "@/components/dashboard/admin/admin-dashboard-skeleton";
 import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
+import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useIsClient } from "@/hooks/use-is-client";
 import { pageSection } from "@/lib/design-system/styles";
@@ -63,6 +64,8 @@ export function AdminDashboardOverview() {
 
       <AdminKpiRow stats={data.stats} />
       <AdminKpiSummary stats={data.stats} />
+
+      <AnnouncementBanner />
 
       <AdminChartsSection
         dailyCalls={data.dailyCalls}

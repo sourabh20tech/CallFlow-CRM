@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarClock,
-  Megaphone,
   Phone,
   PhoneCall,
   RefreshCw,
@@ -17,6 +16,7 @@ import { GlassCard } from "@/components/design-system/glass-card";
 import { AgentPanelQuickActions } from "@/components/agent-panel/agent-panel-quick-actions";
 import { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
 import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
+import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { Button } from "@/components/ui/button";
 import { useAgentPanel } from "@/hooks/use-agent-panel";
 import { pageSection, statsGrid } from "@/lib/design-system/styles";
@@ -76,19 +76,7 @@ export function AgentDashboard() {
       )}
 
       {showAnnouncement && (
-        <GlassCard variant="subtle" padding="sm" className="border-primary/30">
-          <div className="flex items-start gap-2">
-            <Megaphone className="mt-0.5 h-4 w-4 text-primary" />
-            <div>
-              {announcement?.title ? (
-                <p className="text-sm font-semibold text-foreground">📢 {announcement.title}</p>
-              ) : null}
-              {announcement?.message ? (
-                <p className="text-sm text-muted-foreground">{announcement.message}</p>
-              ) : null}
-            </div>
-          </div>
-        </GlassCard>
+        <AnnouncementBanner data={announcement} />
       )}
 
       <div className={statsGrid}>
