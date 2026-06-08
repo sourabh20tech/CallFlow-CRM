@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/design-system/page-header";
 import { SkeletonStatCard } from "@/components/design-system/skeletons";
 import { FollowupStatsCards } from "@/components/followups/followup-stats-cards";
@@ -59,6 +60,8 @@ export function FollowupsManagement({
   rosterAgents,
   initialLoadError,
 }: FollowupsManagementProps) {
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
   const [followups, setFollowups] = useState(initialFollowups);
   const [stats, setStats] = useState(initialStats);
   const [reminders, setReminders] = useState(initialReminders);
@@ -305,12 +308,15 @@ export function FollowupsManagement({
             filters={filters}
             onChange={setFilters}
             agents={rosterAgents}
+            isAdmin={isAdmin}
           />
-          <AgentFollowupTracker
-            agents={agentSummaries}
-            selectedAgentId={filters.agentId}
-            onSelectAgent={(agentId) => setFilters({ ...filters, agentId })}
-          />
+          {isAdmin && (
+            <AgentFollowupTracker
+              agents={agentSummaries}
+              selectedAgentId={filters.agentId}
+              onSelectAgent={(agentId) => setFilters({ ...filters, agentId })}
+            />
+          )}
 
           {filters.view === "calendar" ? (
             <FollowupCalendar followups={followups} onSelectFollowup={setSelected} />

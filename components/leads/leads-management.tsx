@@ -355,6 +355,7 @@ export function LeadsManagement({
       <LeadFiltersBar
         filters={filters}
         agents={agents}
+        isAdmin={isAdmin}
         onChange={setFilters}
         onClear={() => setFilters(DEFAULT_FILTERS)}
       />

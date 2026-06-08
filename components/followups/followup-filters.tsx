@@ -19,9 +19,10 @@ interface FollowupFiltersBarProps {
   filters: FollowupFilters;
   onChange: (filters: FollowupFilters) => void;
   agents: { id: string; name: string }[];
+  isAdmin?: boolean;
 }
 
-export function FollowupFiltersBar({ filters, onChange, agents }: FollowupFiltersBarProps) {
+export function FollowupFiltersBar({ filters, onChange, agents, isAdmin = true }: FollowupFiltersBarProps) {
   return (
     <div className="space-y-4 rounded-2xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -55,20 +56,22 @@ export function FollowupFiltersBar({ filters, onChange, agents }: FollowupFilter
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <select
-          value={filters.agentId ?? ""}
-          onChange={(e) =>
-            onChange({ ...filters, agentId: e.target.value || undefined })
-          }
-          className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm "
-        >
-          <option value="">All agents</option>
-          {agents.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
+        {isAdmin && (
+          <select
+            value={filters.agentId ?? ""}
+            onChange={(e) =>
+              onChange({ ...filters, agentId: e.target.value || undefined })
+            }
+            className="h-9 rounded-lg border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))]/80 px-3 text-sm "
+          >
+            <option value="">All agents</option>
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-xs text-muted-foreground">Due from</label>

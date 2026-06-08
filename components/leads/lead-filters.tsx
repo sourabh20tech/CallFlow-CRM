@@ -16,11 +16,12 @@ const selectClassName = cn(
 interface LeadFiltersBarProps {
   filters: LeadListFilters;
   agents: LeadRosterAgent[];
+  isAdmin?: boolean;
   onChange: (filters: LeadListFilters) => void;
   onClear: () => void;
 }
 
-export function LeadFiltersBar({ filters, agents, onChange, onClear }: LeadFiltersBarProps) {
+export function LeadFiltersBar({ filters, agents, isAdmin = true, onChange, onClear }: LeadFiltersBarProps) {
   const { statuses: dynamicStatuses } = useLeadStatuses();
   const statusOptions = dynamicStatuses.length > 0
     ? dynamicStatuses.map((s) => ({ value: s.value, label: s.label }))
@@ -83,25 +84,27 @@ export function LeadFiltersBar({ filters, agents, onChange, onClear }: LeadFilte
           ))}
         </select>
 
-        <select
-          className={cn(selectClassName, "max-w-[180px]")}
-          value={filters.assignedAgentId ?? "all"}
-          onChange={(e) =>
-            onChange({
-              ...filters,
-              assignedAgentId: e.target.value as LeadListFilters["assignedAgentId"],
-            })
-          }
-          aria-label="Filter by agent"
-        >
-          <option value="all">All agents</option>
-          <option value="unassigned">Unassigned</option>
-          {agents.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
+        {isAdmin && (
+          <select
+            className={cn(selectClassName, "max-w-[180px]")}
+            value={filters.assignedAgentId ?? "all"}
+            onChange={(e) =>
+              onChange({
+                ...filters,
+                assignedAgentId: e.target.value as LeadListFilters["assignedAgentId"],
+              })
+            }
+            aria-label="Filter by agent"
+          >
+            <option value="all">All agents</option>
+            <option value="unassigned">Unassigned</option>
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" className="gap-1" onClick={onClear}>
