@@ -14,6 +14,7 @@ import { InlineLeadStatus } from "@/components/leads/inline-lead-status";
 import { AssignAgentSelect } from "@/components/leads/assign-agent-select";
 import { LeadRowActions, type LeadDetailFocus } from "@/components/leads/lead-row-actions";
 import { WhatsAppChatButton } from "@/components/shared/whatsapp-chat-button";
+import { DirectCallButton } from "@/components/shared/direct-call-button";
 import { WHATSAPP_TEMPLATES } from "@/lib/whatsapp";
 import { formatRelativeTime } from "@/utils/format";
 import type { Lead, LeadRosterAgent } from "@/types/lead";
@@ -108,11 +109,15 @@ export function LeadTable({
                       {[lead.email, lead.company].filter(Boolean).join(" · ") || lead.phone}
                     </p>
                     {lead.phone && (isAdmin || Boolean(lead.assignedAgentId)) && (
-                      <div className="mt-1.5">
+                      <div className="mt-1.5 flex gap-1.5">
                         <WhatsAppChatButton
                           phone={lead.phone}
                           message={WHATSAPP_TEMPLATES.greeting}
                           label={`WhatsApp ${lead.fullName}`}
+                        />
+                        <DirectCallButton
+                          phone={lead.phone}
+                          label={`Call ${lead.fullName}`}
                         />
                       </div>
                     )}
@@ -215,11 +220,15 @@ export function LeadTable({
                     )}
                   </div>
                   {lead.phone && (isAdmin || Boolean(lead.assignedAgentId)) && (
-                    <div className="mt-2">
+                    <div className="mt-2 flex gap-1.5">
                       <WhatsAppChatButton
                         phone={lead.phone}
                         message={WHATSAPP_TEMPLATES.greeting}
                         label={`WhatsApp ${lead.fullName}`}
+                      />
+                      <DirectCallButton
+                        phone={lead.phone}
+                        label={`Call ${lead.fullName}`}
                       />
                     </div>
                   )}
