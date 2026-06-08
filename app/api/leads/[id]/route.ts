@@ -63,6 +63,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   const { nextFollowUpAt, assignedAgentId, email, phone, ...rest } = parsed.data;
 
   try {
+    // Fetch current lead to capture old status for audit
+    const existingLead = await leadsService.getById(id);
+    const oldStatus = existingLead?.status;
+
     const lead = await leadsService.update(id, {
       ...rest,
       email: email === "" ? null : email,
@@ -77,16 +81,30 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             : undefined,
     });
 
-    logActivity({
-      userId: auth.user.id,
-      userName: auth.user.fullName ?? "Admin",
-      role: auth.user.role as "admin" | "agent",
-      actionType: "lead_updated",
-      actionDescription: `Updated lead "${lead.fullName}"`,
-      entityType: "lead",
-      entityId: lead.id,
-      metadata: rest,
-    });
+    // Log status change specifically if status was changed
+    if (rest.status && oldStatus && rest.status !== oldStatus) {
+      logActivity({
+        userId: auth.user.id,
+        userName: auth.user.fullName ?? "Admin",
+        role: auth.user.role as "admin" | "agent",
+        actionType: "lead_status_changed",
+        actionDescription: `Changed lead "${lead.fullName}" status: ${oldStatus} → ${rest.status}`,
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: { oldStatus, newStatus: rest.status },
+      });
+    } else {
+      logActivity({
+        userId: auth.user.id,
+        userName: auth.user.fullName ?? "Admin",
+        role: auth.user.role as "admin" | "agent",
+        actionType: "lead_updated",
+        actionDescription: `Updated lead "${lead.fullName}"`,
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: rest,
+      });
+    }
 
     return NextResponse.json(lead);
   } catch (error) {

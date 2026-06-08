@@ -27,6 +27,15 @@ interface InlineLeadStatusProps {
 let cachedStatuses: LeadStatusConfig[] | null = null;
 let cachePromise: Promise<LeadStatusConfig[]> | null = null;
 
+const FALLBACK_STATUSES: LeadStatusConfig[] = [
+  { id: "s1", label: "New", value: "new", color: "#3b82f6", sortOrder: 1, isSystem: true, createdAt: "" },
+  { id: "s2", label: "Interested", value: "interested", color: "#8b5cf6", sortOrder: 2, isSystem: true, createdAt: "" },
+  { id: "s3", label: "Follow-Up", value: "follow_up", color: "#f59e0b", sortOrder: 3, isSystem: true, createdAt: "" },
+  { id: "s4", label: "Converted", value: "converted", color: "#10b981", sortOrder: 4, isSystem: true, createdAt: "" },
+  { id: "s5", label: "Not Interested", value: "not_interested", color: "#ef4444", sortOrder: 5, isSystem: true, createdAt: "" },
+  { id: "s6", label: "Closed", value: "closed", color: "#6b7280", sortOrder: 6, isSystem: true, createdAt: "" },
+];
+
 function fetchStatuses(): Promise<LeadStatusConfig[]> {
   if (cachedStatuses) return Promise.resolve(cachedStatuses);
   if (cachePromise) return cachePromise;
@@ -34,12 +43,14 @@ function fetchStatuses(): Promise<LeadStatusConfig[]> {
   cachePromise = fetch("/api/lead-statuses")
     .then((res) => res.json())
     .then((data) => {
-      cachedStatuses = data.statuses ?? [];
+      const list = data.statuses ?? [];
+      cachedStatuses = list.length > 0 ? list : FALLBACK_STATUSES;
       return cachedStatuses!;
     })
     .catch(() => {
       cachePromise = null;
-      return [];
+      cachedStatuses = FALLBACK_STATUSES;
+      return FALLBACK_STATUSES;
     });
 
   return cachePromise;
@@ -56,7 +67,7 @@ export function InlineLeadStatus({
 }: InlineLeadStatusProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [open, setOpen] = useState(false);
-  const [statuses, setStatuses] = useState<LeadStatusConfig[]>(cachedStatuses ?? []);
+  const [statuses, setStatuses] = useState<LeadStatusConfig[]>(cachedStatuses ?? FALLBACK_STATUSES);
 
   useEffect(() => {
     void fetchStatuses().then(setStatuses);

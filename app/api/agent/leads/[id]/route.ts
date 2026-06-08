@@ -32,6 +32,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   try {
     await agentPanelService.assertLeadOwnedByAgent(id, ctx.agentId);
+
+    // Fetch current lead to capture old status for audit
+    const existingLead = await leadsService.getById(id);
+    const oldStatus = existingLead?.status ?? "unknown";
+
     const lead = await leadsService.updateStatus(id, parsed.data.status);
 
     logActivity({
@@ -39,10 +44,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       userName: ctx.user.fullName ?? "Agent",
       role: "agent",
       actionType: "lead_status_changed",
-      actionDescription: `Changed lead "${lead.fullName}" status to ${parsed.data.status}`,
+      actionDescription: `Changed lead "${lead.fullName}" status: ${oldStatus} → ${parsed.data.status}`,
       entityType: "lead",
       entityId: lead.id,
-      metadata: { newStatus: parsed.data.status },
+      metadata: { oldStatus, newStatus: parsed.data.status },
     });
 
     return NextResponse.json(lead);
