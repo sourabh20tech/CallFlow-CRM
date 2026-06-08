@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireLeadsAdminApi } from "@/lib/api/require-leads-admin";
+import { logActivity } from "@/lib/activity/log-activity";
 import { leadsService } from "@/services/leads.service";
 import type { CreateLeadInput } from "@/types/lead";
 
@@ -174,11 +175,24 @@ export async function POST(request: Request) {
     );
   }
 
+  // Log bulk upload activity
+  if (successCount > 0) {
+    logActivity({
+      userId: auth.user.id,
+      userName: auth.user.fullName ?? "Admin",
+      role: auth.user.role as "admin" | "agent",
+      actionType: "bulk_lead_upload",
+      actionDescription: `Bulk uploaded ${successCount} leads (${failCount + duplicateCount} failed) from "${assignmentMode}" assignment mode`,
+      entityType: "lead",
+      metadata: { successCount, failCount, duplicateCount, total: leads.length, assignmentMode },
+    });
+  }
+
   return NextResponse.json({
     success: successCount,
     failed: failCount,
     duplicates: duplicateCount,
     total: leads.length,
-    errors, // Return ALL errors (frontend will handle display)
+    errors,
   });
 }

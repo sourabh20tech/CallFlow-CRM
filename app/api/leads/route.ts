@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthApi } from "@/lib/api/require-auth";
 import { requireLeadsAdminApi } from "@/lib/api/require-leads-admin";
+import { logActivity } from "@/lib/activity/log-activity";
 import { leadsService } from "@/services/leads.service";
 import { createLeadSchema } from "@/utils/validators";
 import type { LeadListFilters } from "@/types/lead";
@@ -79,6 +80,17 @@ export async function POST(request: Request) {
       assignedAgentId: assignedAgentId ?? undefined,
       nextFollowUpAt: nextFollowUpAt ? new Date(nextFollowUpAt).toISOString() : undefined,
     });
+
+    logActivity({
+      userId: auth.user.id,
+      userName: auth.user.fullName ?? "Admin",
+      role: auth.user.role as "admin" | "agent",
+      actionType: "lead_created",
+      actionDescription: `Created lead "${lead.fullName}"`,
+      entityType: "lead",
+      entityId: lead.id,
+    });
+
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create lead";

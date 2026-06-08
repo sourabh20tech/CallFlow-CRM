@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthApi } from "@/lib/api/require-auth";
 import { requireLeadsAdminApi } from "@/lib/api/require-leads-admin";
+import { logActivity } from "@/lib/activity/log-activity";
 import { agentPanelService } from "@/services/agent-panel.service";
 import { leadsService } from "@/services/leads.service";
 import { updateLeadSchema } from "@/utils/validators";
@@ -75,6 +76,18 @@ export async function PATCH(request: Request, { params }: RouteParams) {
             ? new Date(nextFollowUpAt).toISOString()
             : undefined,
     });
+
+    logActivity({
+      userId: auth.user.id,
+      userName: auth.user.fullName ?? "Admin",
+      role: auth.user.role as "admin" | "agent",
+      actionType: "lead_updated",
+      actionDescription: `Updated lead "${lead.fullName}"`,
+      entityType: "lead",
+      entityId: lead.id,
+      metadata: rest,
+    });
+
     return NextResponse.json(lead);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update lead";

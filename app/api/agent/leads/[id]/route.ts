@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAgentContextApi } from "@/lib/api/require-agent-context";
+import { logActivity } from "@/lib/activity/log-activity";
 import { agentPanelService } from "@/services/agent-panel.service";
 import { leadsService } from "@/services/leads.service";
 import { updateLeadStatusSchema } from "@/utils/validators";
@@ -32,6 +33,18 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     await agentPanelService.assertLeadOwnedByAgent(id, ctx.agentId);
     const lead = await leadsService.updateStatus(id, parsed.data.status);
+
+    logActivity({
+      userId: ctx.user.id,
+      userName: ctx.user.fullName ?? "Agent",
+      role: "agent",
+      actionType: "lead_status_changed",
+      actionDescription: `Changed lead "${lead.fullName}" status to ${parsed.data.status}`,
+      entityType: "lead",
+      entityId: lead.id,
+      metadata: { newStatus: parsed.data.status },
+    });
+
     return NextResponse.json(lead);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update lead";

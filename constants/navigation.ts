@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Activity,
   BarChart3,
   Briefcase,
   CalendarClock,
@@ -20,6 +21,7 @@ export type NavIconKey =
   | "Phone"
   | "CalendarClock"
   | "BarChart3"
+  | "Activity"
   | "Settings";
 
 export interface NavItem {
@@ -81,6 +83,13 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Analytics",
   },
   {
+    title: "Activity Logs",
+    href: "/dashboard/activity",
+    icon: "Activity",
+    roles: "all",
+    description: "Action history",
+  },
+  {
     title: "Settings",
     href: "/dashboard/settings",
     icon: "Settings",
@@ -97,6 +106,7 @@ export const NAV_ICONS: Record<NavIconKey, LucideIcon> = {
   Phone,
   CalendarClock,
   BarChart3,
+  Activity,
   Settings,
 };
 
@@ -116,6 +126,7 @@ export const BREADCRUMB_LABELS: Record<string, string> = {
   calls: "Calls",
   [FOLLOWUPS_ROUTE_SEGMENT]: "Follow-Ups",
   reports: "Reports",
+  activity: "Activity Logs",
   settings: "Settings",
   customers: "Customers",
 };
