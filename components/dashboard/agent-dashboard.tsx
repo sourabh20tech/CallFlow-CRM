@@ -16,6 +16,7 @@ import { StatCard } from "@/components/design-system/stat-card";
 import { GlassCard } from "@/components/design-system/glass-card";
 import { AgentPanelQuickActions } from "@/components/agent-panel/agent-panel-quick-actions";
 import { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
+import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
 import { Button } from "@/components/ui/button";
 import { useAgentPanel } from "@/hooks/use-agent-panel";
 import { pageSection, statsGrid } from "@/lib/design-system/styles";
@@ -100,6 +101,13 @@ export function AgentDashboard() {
         />
         <StatCard title="Active Calls" value={stats?.activeCalls ?? 0} icon={PhoneCall} />
         <StatCard title="Converted" value={stats?.convertedLeads ?? 0} icon={Trophy} />
+      </div>
+
+      <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <FollowupCenterWidget />
+        </div>
+        <AgentPanelQuickActions />
       </div>
 
       <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-3">

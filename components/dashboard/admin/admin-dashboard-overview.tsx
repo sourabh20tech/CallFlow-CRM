@@ -7,6 +7,7 @@ import { AdminChartsSection } from "@/components/dashboard/admin/admin-charts-se
 import { AdminActivitySection } from "@/components/dashboard/admin/admin-activity-section";
 import { AdminLatestLeadsSection } from "@/components/dashboard/admin/admin-latest-leads-section";
 import { AdminDashboardSkeleton } from "@/components/dashboard/admin/admin-dashboard-skeleton";
+import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useIsClient } from "@/hooks/use-is-client";
 import { pageSection } from "@/lib/design-system/styles";
@@ -72,7 +73,10 @@ export function AdminDashboardOverview() {
 
       <AdminActivitySection activities={data.activities} />
 
-      <AdminLatestLeadsSection leads={data.leads} />
+      <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-2">
+        <FollowupCenterWidget />
+        <AdminLatestLeadsSection leads={data.leads} />
+      </div>
     </div>
   );
 }
