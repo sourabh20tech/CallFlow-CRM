@@ -462,14 +462,15 @@ body {
 /* Form controls — align Input / FormInput / selects */
 .ds-control {
   display: flex;
+  align-items: center;
   width: 100%;
   min-height: 2.5rem;
   border-radius: var(--radius);
   border: 1px solid hsl(var(--ds-glass-border));
   background: hsl(var(--ds-glass-bg));
-  padding: 0.5rem 0.875rem;
+  padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  line-height: 1.25rem;
+  line-height: 1.5;
   color: hsl(var(--foreground));
   box-shadow: var(--ds-shadow-sm);
   transition:
@@ -479,7 +480,8 @@ body {
 }
 
 .ds-control::placeholder {
-  color: hsl(var(--muted-foreground) / 0.85);
+  color: hsl(var(--muted-foreground) / 0.7);
+  font-size: 0.875rem;
 }
 
 .ds-control:hover:not(:disabled) {
@@ -492,7 +494,7 @@ body {
   border-color: hsl(var(--primary) / 0.5);
   box-shadow:
     var(--ds-shadow-md),
-    0 0 0 3px hsl(var(--ring) / 0.2);
+    0 0 0 3px hsl(var(--ring) / 0.15);
 }
 
 .ds-control:disabled {

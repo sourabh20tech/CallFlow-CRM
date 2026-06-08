@@ -3,7 +3,6 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { formControl } from "@/lib/design-system/styles";
 
 interface MyLeadsToolbarProps {
   value: string;
@@ -28,7 +27,7 @@ export function MyLeadsToolbar({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Search leads by name, company, email, phone, status…"
-          className={cn(formControl, "h-10 pl-9")}
+          className="h-10 pl-9"
         />
       </div>
       <p className="shrink-0 text-xs text-muted-foreground sm:text-sm">

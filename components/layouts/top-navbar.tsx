@@ -71,10 +71,10 @@ export function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
           onSubmit={handleGlobalSearch}
           className="relative hidden min-w-0 flex-1 lg:block xl:max-w-md"
         >
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search leads, calls, agents..."
-            className="h-10 pl-10 pr-8"
+            className="h-10 pl-9 pr-8"
             aria-label="Global search"
             value={globalSearch}
             onChange={(e) => setGlobalSearch(e.target.value)}
