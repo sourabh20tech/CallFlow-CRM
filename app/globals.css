@@ -193,8 +193,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-mono);
 }
 
 /* ─── Keyframes ─── */
@@ -246,11 +246,13 @@
 body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   font-feature-settings: "rlig" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 ::selection {
@@ -258,49 +260,49 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* ─── Typography scale ─── */
+/* ─── Typography scale (Inter) ─── */
 .ds-display {
-  font-size: 2.25rem;
+  font-size: 2rem;
   line-height: 2.5rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .ds-h1 {
-  font-size: clamp(1.5rem, 2.5vw + 1rem, 1.875rem);
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .ds-h2 {
-  font-size: 1.5rem;
-  line-height: 2rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
   font-weight: 600;
   letter-spacing: -0.015em;
 }
 
 .ds-h3 {
-  font-size: clamp(1rem, 0.5vw + 0.95rem, 1.125rem);
-  line-height: 1.5;
-  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
 .ds-h4 {
-  font-size: 0.9375rem;
-  line-height: 1.4;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   font-weight: 600;
 }
 
 .ds-body {
   font-size: 0.875rem;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .ds-caption {
   font-size: 0.75rem;
-  line-height: 1.125rem;
+  line-height: 1rem;
   color: hsl(var(--muted-foreground));
 }
 
