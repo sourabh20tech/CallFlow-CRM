@@ -16,7 +16,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       attribute="class"
       defaultTheme="system"
       enableSystem
-      themes={["light", "dark", "midnight", "system"]}
+      themes={["light", "dark", "system"]}
       disableTransitionOnChange
     >
       <SystemStatusProvider>

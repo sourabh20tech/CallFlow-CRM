@@ -53,8 +53,8 @@ export const statsGrid = cn(
 
 /** Sidebar nav item base */
 export const sidebarNavItem = cn(
-  "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
-  "transition-all duration-[var(--ds-duration-base)] ease-[var(--ds-ease-out)]",
+  "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+  "transition-colors duration-150",
 );
 
 export const sidebarNavActive = cn(

@@ -25,10 +25,6 @@ export function Sidebar() {
       )}
     >
       <div className="ds-sidebar relative flex h-full flex-col overflow-hidden">
-        <div
-          className="pointer-events-none absolute -right-px top-0 h-full w-px bg-gradient-to-b from-transparent via-[hsl(var(--sidebar-border))] to-transparent opacity-40"
-          aria-hidden
-        />
 
         <div
           className={cn(
@@ -38,7 +34,7 @@ export function Sidebar() {
         >
           <BrandMark
             size="sm"
-            className="shrink-0 transition-transform duration-[var(--ds-duration-base)] ease-[var(--ds-ease-out)] hover:scale-[1.03]"
+            className="shrink-0"
           />
           {!collapsed && (
             <div className="ml-3 min-w-0 space-y-0.5">
