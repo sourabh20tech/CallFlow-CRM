@@ -56,6 +56,7 @@ const ACTION_TYPE_OPTIONS = [
   { value: "", label: "All Actions" },
   { value: "login", label: "Login" },
   { value: "logout", label: "Logout" },
+  { value: "password_change", label: "Password Change" },
   { value: "lead_created", label: "Lead Created" },
   { value: "lead_updated", label: "Lead Updated" },
   { value: "lead_assigned", label: "Lead Assigned" },
@@ -65,9 +66,13 @@ const ACTION_TYPE_OPTIONS = [
   { value: "call_logged", label: "Call Logged" },
   { value: "call_updated", label: "Call Updated" },
   { value: "followup_created", label: "Follow-Up Created" },
+  { value: "followup_updated", label: "Follow-Up Updated" },
   { value: "followup_completed", label: "Follow-Up Completed" },
   { value: "note_added", label: "Note Added" },
+  { value: "note_edited", label: "Note Edited" },
+  { value: "note_deleted", label: "Note Deleted" },
   { value: "agent_created", label: "Agent Created" },
+  { value: "agent_updated", label: "Agent Updated" },
   { value: "agent_deactivated", label: "Agent Deactivated" },
 ];
 
@@ -239,7 +244,14 @@ export function ActivityLogsPage() {
         ) : logs.length === 0 ? (
           <div className="py-12 text-center">
             <Activity className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">No activity found</p>
+            <p className="text-sm text-muted-foreground">
+              No activity found for selected filter.
+            </p>
+            {(actionType || roleFilter || debouncedSearch || dateFrom || dateTo) && (
+              <p className="mt-1 text-xs text-muted-foreground/60">
+                Try changing the filters or date range.
+              </p>
+            )}
           </div>
         ) : (
           <div className="relative">
