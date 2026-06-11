@@ -32,6 +32,8 @@ export function LogCallForm({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<LogCallFormValues>({
     resolver: zodResolver(logCallSchema),
@@ -118,16 +120,46 @@ export function LogCallForm({
       </div>
 
       <FormField
-        label="Duration (seconds)"
-        htmlFor="durationSeconds"
+        label="Duration"
+        htmlFor="durationMinutes"
         error={errors.durationSeconds?.message}
       >
-        <FormInput
-          id="durationSeconds"
-          type="number"
-          min={0}
-          {...register("durationSeconds", { valueAsNumber: true })}
-        />
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label htmlFor="durationMinutes" className="mb-1 block text-xs text-muted-foreground">Minutes</label>
+            <FormInput
+              id="durationMinutes"
+              type="number"
+              min={0}
+              placeholder="0"
+              onChange={(e) => {
+                const mins = Math.max(0, Number(e.target.value) || 0);
+                const currentTotal = watch("durationSeconds") ?? 0;
+                const currentSecs = currentTotal % 60;
+                setValue("durationSeconds", mins * 60 + currentSecs);
+              }}
+              defaultValue={Math.floor((watch("durationSeconds") ?? 0) / 60)}
+            />
+          </div>
+          <div>
+            <label htmlFor="durationSecs" className="mb-1 block text-xs text-muted-foreground">Seconds</label>
+            <FormInput
+              id="durationSecs"
+              type="number"
+              min={0}
+              max={59}
+              placeholder="0"
+              onChange={(e) => {
+                const secs = Math.min(59, Math.max(0, Number(e.target.value) || 0));
+                const currentTotal = watch("durationSeconds") ?? 0;
+                const currentMins = Math.floor(currentTotal / 60);
+                setValue("durationSeconds", currentMins * 60 + secs);
+              }}
+              defaultValue={(watch("durationSeconds") ?? 0) % 60}
+            />
+          </div>
+        </div>
+        <input type="hidden" {...register("durationSeconds", { valueAsNumber: true })} />
       </FormField>
 
       <FormField label="Call summary" htmlFor="summary" error={errors.summary?.message}>

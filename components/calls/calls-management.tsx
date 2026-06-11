@@ -468,16 +468,40 @@ export function CallsManagement({
                       <option value="outbound">outbound</option>
                     </select>
                   </label>
-                  <label className="text-xs text-muted-foreground">
-                    Duration (seconds)
-                    <Input
-                      type="number"
-                      min={0}
-                      value={editDuration}
-                      onChange={(e) => setEditDuration(e.target.value)}
-                      className="mt-1"
-                    />
-                  </label>
+                  <div className="text-xs text-muted-foreground">
+                    Duration
+                    <div className="mt-1 grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px]">Minutes</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={String(Math.floor(Number(editDuration) / 60))}
+                          onChange={(e) => {
+                            const mins = Math.max(0, Number(e.target.value) || 0);
+                            const secs = Number(editDuration) % 60;
+                            setEditDuration(String(mins * 60 + secs));
+                          }}
+                          className="mt-0.5"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px]">Seconds</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={59}
+                          value={String(Number(editDuration) % 60)}
+                          onChange={(e) => {
+                            const secs = Math.min(59, Math.max(0, Number(e.target.value) || 0));
+                            const mins = Math.floor(Number(editDuration) / 60);
+                            setEditDuration(String(mins * 60 + secs));
+                          }}
+                          className="mt-0.5"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <label className="text-xs text-muted-foreground">
                   Summary
