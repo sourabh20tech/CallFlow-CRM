@@ -99,7 +99,7 @@ export function AgentDashboard() {
       </div>
 
       <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-3">
-        <GlassCard variant="default" padding="md" className="lg:col-span-2">
+        <GlassCard variant="default" padding="md" className="lg:col-span-3">
           <h3 className="ds-h3 mb-2">Today at a glance</h3>
           <p className="mb-4 text-sm text-muted-foreground">
             Manage leads, log dispositions, add notes, and complete follow-ups in your workspace.
@@ -136,7 +136,6 @@ export function AgentDashboard() {
             </Button>
           </div>
         </GlassCard>
-        <AgentPanelQuickActions />
       </div>
     </div>
   );
