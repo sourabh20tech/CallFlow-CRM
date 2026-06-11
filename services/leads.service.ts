@@ -21,13 +21,21 @@ function toDbFilters(filters?: LeadListFilters, agentId?: string): LeadFilters |
   if (!filters && !agentId) return undefined;
 
   const db: LeadFilters = {};
-  if (agentId) db.assignedAgentId = agentId;
+
+  // Agent isolation: if agentId is provided, it takes absolute priority
+  // Agent cannot filter by other agents or see unassigned leads
+  if (agentId) {
+    db.assignedAgentId = agentId;
+  } else {
+    // Admin can filter by any agent or see unassigned
+    if (filters?.assignedAgentId === "unassigned") db.unassignedOnly = true;
+    else if (filters?.assignedAgentId && filters.assignedAgentId !== "all") {
+      db.assignedAgentId = filters.assignedAgentId;
+    }
+  }
+
   if (filters?.status && filters.status !== "all") db.status = filters.status;
   if (filters?.force && filters.force !== "all") db.force = filters.force;
-  if (filters?.assignedAgentId === "unassigned") db.unassignedOnly = true;
-  else if (filters?.assignedAgentId && filters.assignedAgentId !== "all") {
-    db.assignedAgentId = filters.assignedAgentId;
-  }
   if (filters?.search?.trim()) db.search = filters.search.trim();
   return db;
 }

@@ -156,7 +156,23 @@ export class LeadsDbService extends BaseDbService {
     agentId: string | null,
     client?: TypedSupabaseClient,
   ): Promise<Lead> {
-    return this.update(leadId, { assignedAgentId: agentId ?? undefined }, client);
+    const supabase = await this.db(client);
+
+    // Update lead assignment
+    const lead = await this.update(leadId, { assignedAgentId: agentId ?? undefined }, client);
+
+    // Also reassign all pending/in_progress follow-ups for this lead to the new agent
+    // This ensures the new agent sees the lead's follow-ups
+    if (agentId) {
+      await supabase
+        .from("follow_ups")
+        .update({ assigned_agent_id: agentId })
+        .eq("lead_id", leadId)
+        .is("deleted_at", null)
+        .in("status", ["pending", "in_progress"]);
+    }
+
+    return lead;
   }
 }
 
