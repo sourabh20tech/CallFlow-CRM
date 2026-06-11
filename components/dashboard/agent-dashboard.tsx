@@ -13,7 +13,6 @@ import {
 import { PageHeader } from "@/components/design-system/page-header";
 import { StatCard } from "@/components/design-system/stat-card";
 import { GlassCard } from "@/components/design-system/glass-card";
-import { AgentPanelQuickActions } from "@/components/agent-panel/agent-panel-quick-actions";
 import { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
 import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
@@ -91,12 +90,7 @@ export function AgentDashboard() {
         <StatCard title="Converted" value={stats?.convertedLeads ?? 0} icon={Trophy} />
       </div>
 
-      <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <FollowupCenterWidget />
-        </div>
-        <AgentPanelQuickActions />
-      </div>
+      <FollowupCenterWidget />
 
       <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-3">
         <GlassCard variant="default" padding="md" className="lg:col-span-3">
