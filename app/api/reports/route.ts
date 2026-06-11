@@ -27,9 +27,13 @@ export async function GET(request: Request) {
   const to = searchParams.get("to") ?? undefined;
 
   // Resolve agent ID for agent-scoped reports
-  const agentId = auth.user.role === "agent"
-    ? await resolveAgentId(auth.user.id)
-    : undefined;
+  let agentId: string | undefined;
+  if (auth.user.role === "agent") {
+    agentId = await resolveAgentId(auth.user.id);
+    if (!agentId) {
+      return NextResponse.json({ error: "Agent profile not found" }, { status: 403 });
+    }
+  }
 
   try {
     const data = await reportsService.getReports(preset, from, to, period, agentId);

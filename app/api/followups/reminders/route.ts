@@ -23,7 +23,10 @@ export async function GET() {
     const filters: FollowupFilters = { view: "all" };
     if (auth.user.role === "agent") {
       const agentId = await resolveAgentId(auth.user.id);
-      if (agentId) filters.agentId = agentId;
+      if (!agentId) {
+        return NextResponse.json({ overdue: [], dueToday: [], upcoming: [], total: 0 });
+      }
+      filters.agentId = agentId;
     }
 
     const all = await followupsService.list(filters);

@@ -42,9 +42,10 @@ export async function GET(request: Request) {
   // Enforce agent data isolation: agents can only see their own follow-ups
   if (auth.user.role === "agent") {
     const agentId = await resolveAgentId(auth.user.id);
-    if (agentId) {
-      filters.agentId = agentId;
+    if (!agentId) {
+      return NextResponse.json({ followups: [], total: 0, page: 1, pageSize: 50, totalPages: 1, stats: { total: 0, pending: 0, inProgress: 0, completed: 0, overdue: 0, dueToday: 0 }, reminders: { overdue: [], dueToday: [], upcoming: [] }, agents: [] });
     }
+    filters.agentId = agentId;
   }
 
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);

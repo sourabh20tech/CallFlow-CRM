@@ -43,7 +43,10 @@ export async function GET(request: Request) {
   try {
     if (auth.user.role === "agent") {
       const agentId = await resolveAgentId(auth.user.id);
-      if (agentId) filters.agentId = agentId;
+      if (!agentId) {
+        return NextResponse.json({ calls: [], stats: { total: 0, connected: 0, callback: 0, interested: 0, noAnswer: 0 }, agents: [], total: 0, totalPages: 1, page: 1, pageSize });
+      }
+      filters.agentId = agentId;
     }
 
     const [result, stats, agents] = await Promise.all([

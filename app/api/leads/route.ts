@@ -32,6 +32,19 @@ export async function GET(request: Request) {
 
   try {
     const agentId = auth.user.role === "agent" ? await resolveAgentId(auth.user.id) : undefined;
+
+    // SECURITY: If agent role but no agentId resolved, return empty (never show all data)
+    if (auth.user.role === "agent" && !agentId) {
+      return NextResponse.json({
+        leads: [],
+        total: 0,
+        page: 1,
+        pageSize,
+        totalPages: 1,
+        agents: [],
+      });
+    }
+
     const [result, agents] = await Promise.all([
       leadsService.list(filters, { agentId, page, pageSize }),
       leadsService.getRosterAgents(),
