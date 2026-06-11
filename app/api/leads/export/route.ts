@@ -28,7 +28,6 @@ export async function GET(request: Request) {
       Name: lead.fullName,
       Email: lead.email ?? "",
       Phone: lead.phone ?? "",
-      Company: lead.company ?? "",
       Force: lead.force,
       Status: lead.status,
       Agent: lead.assignedAgentName ?? "",

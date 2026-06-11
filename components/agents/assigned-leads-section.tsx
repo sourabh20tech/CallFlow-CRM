@@ -44,7 +44,6 @@ export function AssignedLeadsSection({ leads, agentName }: AssignedLeadsSectionP
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden sm:table-cell">Company</TableHead>
               <TableHead>Force</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
@@ -61,9 +60,6 @@ export function AssignedLeadsSection({ leads, agentName }: AssignedLeadsSectionP
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell text-muted-foreground">
-                    {lead.company ?? "—"}
-                  </TableCell>
                   <TableCell className="capitalize">{lead.force}</TableCell>
                   <TableCell>
                     <StatusChip
@@ -76,7 +72,7 @@ export function AssignedLeadsSection({ leads, agentName }: AssignedLeadsSectionP
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                   No leads assigned yet.
                 </TableCell>
               </TableRow>

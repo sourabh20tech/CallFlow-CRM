@@ -91,7 +91,7 @@ export class DashboardService {
         analyticsDbServiceServer.fetchRaw(range),
         supabase
           .from("leads")
-          .select("id, full_name, company, email, tier, status, last_contacted_at, created_at")
+          .select("id, full_name, email, tier, status, last_contacted_at, created_at")
           .is("deleted_at", null)
           .order("created_at", { ascending: false })
           .limit(8),
@@ -114,7 +114,6 @@ export class DashboardService {
     const leads: DashboardLeadRow[] = (leadsRows ?? []).map((row) => ({
       id: row.id,
       name: row.full_name,
-      company: row.company ?? undefined,
       email: row.email ?? "—",
       force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
       status: row.status as DashboardLeadRow["status"],

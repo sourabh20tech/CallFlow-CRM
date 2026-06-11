@@ -22,8 +22,7 @@ export function QuickDialPanel({ leads, onCallInitiated }: QuickDialPanelProps) 
     return leads.filter(
       (l) =>
         l.name.toLowerCase().includes(q) ||
-        l.phone?.includes(q) ||
-        l.company?.toLowerCase().includes(q),
+        l.phone?.includes(q),
     );
   }, [leads, search]);
 
@@ -63,7 +62,7 @@ export function QuickDialPanel({ leads, onCallInitiated }: QuickDialPanelProps) 
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{lead.name}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {lead.phone ?? "No phone"} {lead.company ? `· ${lead.company}` : ""}
+                {lead.phone ?? "No phone"}
               </p>
             </div>
             <QuickCallButton

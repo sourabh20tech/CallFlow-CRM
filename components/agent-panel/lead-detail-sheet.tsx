@@ -47,7 +47,7 @@ export function LeadDetailSheet({
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
-          <LeadContactBlock company={lead.company} email={lead.email} phone={lead.phone} />
+          <LeadContactBlock email={lead.email} phone={lead.phone} />
 
           <div className="flex gap-2">
             <LeadQuickCallButton

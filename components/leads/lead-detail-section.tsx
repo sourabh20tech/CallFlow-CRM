@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import {
-  Building2,
   CalendarClock,
   Mail,
   MessageSquare,
@@ -137,12 +136,6 @@ export function LeadDetailSection({
               <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Contact
               </h4>
-              {lead.company && (
-                <p className="flex items-center gap-2 text-muted-foreground">
-                  <Building2 className="h-4 w-4 shrink-0" />
-                  {lead.company}
-                </p>
-              )}
               {lead.email && (
                 <p className="flex items-center gap-2 text-muted-foreground">
                   <Mail className="h-4 w-4 shrink-0" />

@@ -54,7 +54,7 @@ export function CallFiltersBar({
               { value: "all", label: "All leads" },
               ...leads.map((l) => ({
                 value: l.id,
-                label: l.company ? `${l.name} — ${l.company}` : l.name,
+                label: l.name,
               })),
             ]}
           />

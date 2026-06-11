@@ -50,7 +50,7 @@ export class CallLogsDbService extends BaseDbService {
       .from("leads")
       .select("id")
       .is("deleted_at", null)
-      .or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%,company.ilike.%${term}%`)
+      .or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%`)
       .limit(100);
 
     if (error) {

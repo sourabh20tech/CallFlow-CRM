@@ -287,7 +287,6 @@ export const latestLeads: DashboardLeadRow[] = [
   {
     id: "lead-2",
     name: "Michael Chen",
-    company: "TechFlow",
     email: "m.chen@techflow.io",
     force: "premium",
     status: "interested",
@@ -296,7 +295,6 @@ export const latestLeads: DashboardLeadRow[] = [
   {
     id: "lead-3",
     name: "Sarah Johnson",
-    company: "Acme Corp",
     email: "sarah.j@acme.com",
     force: "enterprise",
     status: "follow_up",
@@ -305,7 +303,6 @@ export const latestLeads: DashboardLeadRow[] = [
   {
     id: "lead-4",
     name: "Robert Wilson",
-    company: "Global Systems",
     email: "robert@global.io",
     force: "premium",
     status: "interested",
@@ -314,7 +311,6 @@ export const latestLeads: DashboardLeadRow[] = [
   {
     id: "lead-5",
     name: "Lisa Anderson",
-    company: "Northstar Inc",
     email: "lisa@northstar.com",
     force: "enterprise",
     status: "converted",

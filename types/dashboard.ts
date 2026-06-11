@@ -46,7 +46,6 @@ export interface DashboardActivity {
 export interface DashboardLeadRow {
   id: string;
   name: string;
-  company?: string;
   email: string;
   force: "standard" | "premium" | "enterprise";
   status: import("@/types/database").LeadStatus;

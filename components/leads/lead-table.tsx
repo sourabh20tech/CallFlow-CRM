@@ -107,7 +107,7 @@ export const LeadTable = memo(function LeadTable({
                   <div>
                     <p className="font-medium">{lead.fullName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {[lead.email, lead.company].filter(Boolean).join(" · ") || lead.phone}
+                      {lead.email || lead.phone}
                     </p>
                     {lead.phone && (isAdmin || Boolean(lead.assignedAgentId)) && (
                       <div className="mt-1.5 flex gap-1.5">
@@ -202,9 +202,6 @@ export const LeadTable = memo(function LeadTable({
                 >
                   <div>
                     <p className="font-medium">{lead.fullName}</p>
-                    {lead.company && (
-                      <p className="text-xs text-muted-foreground">{lead.company}</p>
-                    )}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     {lead.assignedAgentName && (

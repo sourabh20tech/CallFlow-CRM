@@ -44,7 +44,6 @@ export function ConvertedLeadsSection({ leads }: ConvertedLeadsSectionProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Company</TableHead>
                 <TableHead>Force</TableHead>
                 <TableHead>Converted</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -55,7 +54,6 @@ export function ConvertedLeadsSection({ leads }: ConvertedLeadsSectionProps) {
                 leads.map((lead) => (
                   <TableRow key={lead.id}>
                     <TableCell className="font-medium">{lead.fullName}</TableCell>
-                    <TableCell className="text-muted-foreground">{lead.company ?? "—"}</TableCell>
                     <TableCell className="capitalize">{lead.force}</TableCell>
                     <TableCell>
                       <StatusChip label="Converted" variant="success" size="sm" />
@@ -75,7 +73,7 @@ export function ConvertedLeadsSection({ leads }: ConvertedLeadsSectionProps) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-20 text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="h-20 text-center text-muted-foreground">
                     No converted leads yet.
                   </TableCell>
                 </TableRow>
@@ -95,7 +93,7 @@ export function ConvertedLeadsSection({ leads }: ConvertedLeadsSectionProps) {
                 >
                   <div>
                     <p className="font-medium">{lead.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{lead.company}</p>
+                    <p className="text-xs text-muted-foreground">{lead.email}</p>
                   </div>
                   <StatusChip label="Converted" variant="success" size="sm" />
                 </button>

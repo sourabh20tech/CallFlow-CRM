@@ -140,10 +140,6 @@ export function LeadForm({
         </FormField>
       </div>
 
-      <FormField label="Company" htmlFor="company">
-        <FormInput id="company" {...register("company")} placeholder="Acme Inc." />
-      </FormField>
-
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="Force" htmlFor="tier">
           <select id="tier" className={selectClassName} {...register("tier")}>

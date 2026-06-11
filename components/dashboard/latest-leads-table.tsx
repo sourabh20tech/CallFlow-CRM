@@ -35,7 +35,6 @@ export function LatestLeadsTable({ leads }: LatestLeadsTableProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Lead</TableHead>
-            <TableHead className="hidden sm:table-cell">Company</TableHead>
             <TableHead>Force</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="hidden md:table-cell">Last contact</TableHead>
@@ -49,9 +48,6 @@ export function LatestLeadsTable({ leads }: LatestLeadsTableProps) {
                   <p className="font-medium">{lead.name}</p>
                   <p className="text-xs text-muted-foreground">{lead.email}</p>
                 </div>
-              </TableCell>
-              <TableCell className="hidden text-muted-foreground sm:table-cell">
-                {lead.company ?? "—"}
               </TableCell>
               <TableCell>
                 <span className="capitalize text-sm">{lead.force}</span>

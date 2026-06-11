@@ -11,7 +11,6 @@ export async function exportLeadsToExcel(
     Name: lead.fullName,
     Email: lead.email ?? "",
     Phone: lead.phone ?? "",
-    Company: lead.company ?? "",
     Force: lead.force,
     Status: formatLeadStatus(lead.status),
     Source: lead.source ?? "",

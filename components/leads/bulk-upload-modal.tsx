@@ -49,7 +49,7 @@ interface BulkUploadModalProps {
   onComplete: () => void;
 }
 
-const REQUIRED_COLUMNS = ["Phone or Email (required — at least one)", "Name (optional)", "Company (optional)", "Source (optional)", "Status (optional)"];
+const REQUIRED_COLUMNS = ["Phone or Email (required — at least one)", "Name (optional)", "Source (optional)", "Status (optional)"];
 
 export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: BulkUploadModalProps) {
   const [step, setStep] = useState<"upload" | "preview" | "result">("upload");
@@ -347,7 +347,6 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                       <th className="px-2 py-1.5 text-left">Name</th>
                       <th className="px-2 py-1.5 text-left">Email</th>
                       <th className="px-2 py-1.5 text-left">Phone</th>
-                      <th className="px-2 py-1.5 text-left">Company</th>
                       <th className="px-2 py-1.5 text-left">Status</th>
                     </tr>
                   </thead>
@@ -362,7 +361,6 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                           <td className="px-2 py-1.5 font-medium">{lead.fullName || <span className="text-red-500">—</span>}</td>
                           <td className="px-2 py-1.5">{lead.email || "—"}</td>
                           <td className="px-2 py-1.5">{lead.phone || "—"}</td>
-                          <td className="px-2 py-1.5">{lead.company || "—"}</td>
                           <td className="px-2 py-1.5">{lead.status || "new"}</td>
                         </tr>
                       );

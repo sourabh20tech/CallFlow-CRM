@@ -56,11 +56,11 @@ export class LeadsDbService extends BaseDbService {
       if (matchingAgentIds.length > 0) {
         const agentIdList = matchingAgentIds.map((id) => `"${id}"`).join(",");
         query = query.or(
-          `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,company.ilike.%${term}%,source.ilike.%${term}%,assigned_agent_id.in.(${agentIdList})`,
+          `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,source.ilike.%${term}%,assigned_agent_id.in.(${agentIdList})`,
         );
       } else {
         query = query.or(
-          `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,company.ilike.%${term}%,source.ilike.%${term}%`,
+          `full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,source.ilike.%${term}%`,
         );
       }
     }

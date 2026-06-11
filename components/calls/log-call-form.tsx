@@ -60,7 +60,6 @@ export function LogCallForm({
           {leads.map((lead) => (
             <option key={lead.id} value={lead.id}>
               {lead.name}
-              {lead.company ? ` — ${lead.company}` : ""}
             </option>
           ))}
         </select>

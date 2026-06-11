@@ -44,7 +44,6 @@ export function ConvertedLeadDetailSheet({
 
         <div className="mt-6 space-y-6">
           <LeadContactBlock
-            company={lead.company}
             email={lead.email}
             phone={lead.phone}
             phoneAction={

@@ -26,7 +26,7 @@ export function MyLeadsToolbar({
         <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Search leads by name, company, email, phone, status…"
+          placeholder="Search leads by name, email, phone, status…"
           className="h-10 pl-9"
         />
       </div>

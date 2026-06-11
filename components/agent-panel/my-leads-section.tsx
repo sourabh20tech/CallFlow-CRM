@@ -97,7 +97,6 @@ export function MyLeadsSection({
             <TableHeader>
               <TableRow>
                 <TableHead>Lead</TableHead>
-                <TableHead>Company</TableHead>
                 <TableHead>Force</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -119,7 +118,6 @@ export function MyLeadsSection({
                         )}
                       </button>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{lead.company ?? "—"}</TableCell>
                     <TableCell className="capitalize">{lead.force}</TableCell>
                     <TableCell>
                       <StatusChip
@@ -157,7 +155,7 @@ export function MyLeadsSection({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                     {search ? "No leads match your search." : "No active leads assigned."}
                   </TableCell>
                 </TableRow>
@@ -177,7 +175,7 @@ export function MyLeadsSection({
                 >
                   <div>
                     <p className="font-medium">{lead.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{lead.company ?? lead.email}</p>
+                    <p className="text-xs text-muted-foreground">{lead.email}</p>
                   </div>
                   <StatusChip
                     label={formatLeadStatus(lead.status)}
