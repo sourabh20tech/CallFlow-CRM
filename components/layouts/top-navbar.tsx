@@ -10,6 +10,7 @@ import { NotificationsMenu } from "@/components/layouts/notifications-menu";
 import { UserMenu } from "@/components/layouts/user-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { useAppStore } from "@/store/app-store";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 interface TopNavbarProps {
@@ -18,6 +19,8 @@ interface TopNavbarProps {
 
 export function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
   const { sidebarCollapsed, toggleSidebar } = useAppStore();
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
   const router = useRouter();
   const [globalSearch, setGlobalSearch] = useState("");
 
@@ -67,29 +70,31 @@ export function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
           <Breadcrumbs />
         </div>
 
-        <form
-          onSubmit={handleGlobalSearch}
-          className="relative hidden min-w-0 flex-1 lg:block xl:max-w-md"
-        >
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search leads, calls, agents..."
-            className="h-10 pl-9 pr-8"
-            aria-label="Global search"
-            value={globalSearch}
-            onChange={(e) => setGlobalSearch(e.target.value)}
-          />
-          {globalSearch && (
-            <button
-              type="button"
-              onClick={() => setGlobalSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label="Clear search"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </form>
+        {isAdmin && (
+          <form
+            onSubmit={handleGlobalSearch}
+            className="relative hidden min-w-0 flex-1 lg:block xl:max-w-md"
+          >
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search leads, calls, agents..."
+              className="h-10 pl-9 pr-8"
+              aria-label="Global search"
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+            />
+            {globalSearch && (
+              <button
+                type="button"
+                onClick={() => setGlobalSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </form>
+        )}
 
         <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
           <NotificationsMenu />
