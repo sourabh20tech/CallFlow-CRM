@@ -211,6 +211,8 @@ body {
   text-rendering: optimizeLegibility;
   font-size: 14px;
   line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 ::selection {
@@ -646,5 +648,83 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ─── Mobile Responsive Fixes ─── */
+@media (max-width: 767px) {
+  /* Prevent any element from causing horizontal scroll */
+  .ds-page-container {
+    overflow-x: hidden;
+  }
+
+  /* Full-width inputs on mobile */
+  select,
+  input[type="date"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Stack filters vertically */
+  .ds-page-header {
+    gap: 0.5rem;
+  }
+
+  /* Reduce padding on small screens */
+  :root {
+    --ds-page-padding-x: 0.75rem;
+    --ds-page-padding-y: 0.75rem;
+    --ds-section-gap: 1rem;
+    --ds-stack-gap: 0.75rem;
+  }
+
+  /* Cards: tighter padding on mobile */
+  .ds-glass,
+  .ds-glass-strong {
+    border-radius: var(--radius);
+  }
+
+  /* Modals: full-width on mobile */
+  [role="dialog"] {
+    max-width: calc(100vw - 1.5rem) !important;
+    max-height: calc(100dvh - 2rem) !important;
+    overflow-y: auto;
+  }
+
+  /* Typography: slightly smaller on mobile */
+  .ds-h1 {
+    font-size: 1.25rem;
+  }
+
+  .ds-h2 {
+    font-size: 1.125rem;
+  }
+
+  .ds-h3 {
+    font-size: 1rem;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --ds-page-padding-x: 1.25rem;
+  }
+}
+
+/* Ensure no element overflows */
+img, video, svg, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Fix button wrapping on small screens */
+@media (max-width: 639px) {
+  .ds-page-header [class*="flex-wrap"] {
+    gap: 0.5rem;
+  }
+
+  .ds-page-header button {
+    font-size: 0.75rem;
   }
 }
