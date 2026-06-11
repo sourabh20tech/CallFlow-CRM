@@ -45,7 +45,7 @@ export function ConvertedLeadsSection({ leads }: ConvertedLeadsSectionProps) {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Company</TableHead>
-                <TableHead>Tier</TableHead>
+                <TableHead>Force</TableHead>
                 <TableHead>Converted</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -56,7 +56,7 @@ export function ConvertedLeadsSection({ leads }: ConvertedLeadsSectionProps) {
                   <TableRow key={lead.id}>
                     <TableCell className="font-medium">{lead.fullName}</TableCell>
                     <TableCell className="text-muted-foreground">{lead.company ?? "—"}</TableCell>
-                    <TableCell className="capitalize">{lead.tier}</TableCell>
+                    <TableCell className="capitalize">{lead.force}</TableCell>
                     <TableCell>
                       <StatusChip label="Converted" variant="success" size="sm" />
                       {lead.convertedAt && (

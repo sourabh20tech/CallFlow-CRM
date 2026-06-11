@@ -2,7 +2,7 @@
 
 import { Search, X } from "lucide-react";
 import { FormInput } from "@/components/design-system/form-input";
-import { LEAD_STATUS_OPTIONS, LEAD_TIER_OPTIONS } from "@/lib/leads/constants";
+import { LEAD_STATUS_OPTIONS, LEAD_FORCE_OPTIONS } from "@/lib/leads/constants";
 import { useLeadStatuses } from "@/hooks/use-lead-statuses";
 import { Button } from "@/components/ui/button";
 import type { LeadListFilters, LeadRosterAgent } from "@/types/lead";
@@ -30,7 +30,7 @@ export function LeadFiltersBar({ filters, agents, isAdmin = true, onChange, onCl
   const hasActiveFilters =
     Boolean(filters.search) ||
     (filters.status && filters.status !== "all") ||
-    (filters.tier && filters.tier !== "all") ||
+    (filters.force && filters.force !== "all") ||
     (filters.assignedAgentId && filters.assignedAgentId !== "all");
 
   return (
@@ -67,17 +67,17 @@ export function LeadFiltersBar({ filters, agents, isAdmin = true, onChange, onCl
 
         <select
           className={selectClassName}
-          value={filters.tier ?? "all"}
+          value={filters.force ?? "all"}
           onChange={(e) =>
             onChange({
               ...filters,
-              tier: e.target.value as LeadListFilters["tier"],
+              force: e.target.value as LeadListFilters["force"],
             })
           }
-          aria-label="Filter by tier"
+          aria-label="Filter by force"
         >
-          <option value="all">All tiers</option>
-          {LEAD_TIER_OPTIONS.map((o) => (
+          <option value="all">All Forces</option>
+          {LEAD_FORCE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>

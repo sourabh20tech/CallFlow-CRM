@@ -15,7 +15,7 @@ const demoNotesByCall: Record<string, Note[]> = {
       callLogId: "call-1",
       authorId: "demo-agent",
       authorName: "Alex Morgan",
-      content: "Discussed enterprise pricing tier.",
+      content: "Discussed enterprise pricing force.",
       isPinned: true, noteType: "public" as const,
       createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
       updatedAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),

@@ -22,7 +22,7 @@ import { LeadStatusActions } from "@/components/agent-panel/lead-status-actions"
 import { WhatsAppChatButton } from "@/components/shared/whatsapp-chat-button";
 import type { LeadDetailFocus } from "@/components/leads/lead-row-actions";
 import { formatLeadStatus } from "@/lib/leads/constants";
-import { LEAD_TIER_OPTIONS } from "@/lib/leads/constants";
+import { LEAD_FORCE_OPTIONS } from "@/lib/leads/constants";
 import { WHATSAPP_TEMPLATES } from "@/lib/whatsapp";
 import { formatRelativeTime } from "@/utils/format";
 import type { Lead, LeadRosterAgent } from "@/types/lead";
@@ -75,7 +75,7 @@ export function LeadDetailSection({
 
   if (!lead) return null;
 
-  const tierLabel = LEAD_TIER_OPTIONS.find((t) => t.value === lead.tier)?.label ?? lead.tier;
+  const forceLabel = LEAD_FORCE_OPTIONS.find((t) => t.value === lead.force)?.label ?? lead.force;
   const canMessageOnWhatsApp = Boolean(lead.phone) && (isAdmin || Boolean(lead.assignedAgentId));
 
   const jumpTo = (focus: LeadDetailFocus) => {
@@ -99,7 +99,7 @@ export function LeadDetailSection({
           <SheetTitle>{lead.fullName}</SheetTitle>
           <div className="flex flex-wrap items-center gap-2">
             <LeadStatusBadge status={lead.status} size="md" />
-            <StatusChip label={tierLabel} variant="neutral" size="sm" showDot={false} />
+            <StatusChip label={forceLabel} variant="neutral" size="sm" showDot={false} />
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => jumpTo("followups")}>

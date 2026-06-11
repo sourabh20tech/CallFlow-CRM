@@ -98,7 +98,7 @@ export function MyLeadsSection({
               <TableRow>
                 <TableHead>Lead</TableHead>
                 <TableHead>Company</TableHead>
-                <TableHead>Tier</TableHead>
+                <TableHead>Force</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -120,7 +120,7 @@ export function MyLeadsSection({
                       </button>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{lead.company ?? "—"}</TableCell>
-                    <TableCell className="capitalize">{lead.tier}</TableCell>
+                    <TableCell className="capitalize">{lead.force}</TableCell>
                     <TableCell>
                       <StatusChip
                         label={formatLeadStatus(lead.status)}

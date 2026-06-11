@@ -21,7 +21,7 @@ import { formatRelativeTime } from "@/utils/format";
 import type { Lead, LeadRosterAgent } from "@/types/lead";
 import { cn } from "@/lib/utils";
 
-const tierVariant = {
+const forceVariant = {
   standard: "neutral" as const,
   premium: "default" as const,
   enterprise: "info" as const,
@@ -78,7 +78,7 @@ export const LeadTable = memo(function LeadTable({
               )}
               <TableHead>Lead</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="hidden lg:table-cell">Tier</TableHead>
+              <TableHead className="hidden lg:table-cell">Force</TableHead>
               <TableHead className="hidden xl:table-cell">Agent</TableHead>
               <TableHead className="hidden lg:table-cell">Follow-up</TableHead>
               <TableHead className="hidden sm:table-cell">Updated</TableHead>
@@ -133,8 +133,8 @@ export const LeadTable = memo(function LeadTable({
                 </TableCell>
                 <TableCell className="hidden lg:table-cell">
                   <StatusChip
-                    label={lead.tier}
-                    variant={tierVariant[lead.tier]}
+                    label={lead.force}
+                    variant={forceVariant[lead.force]}
                     size="sm"
                     showDot={false}
                   />

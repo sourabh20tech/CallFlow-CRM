@@ -144,14 +144,17 @@ export type UpdateFollowupFormValues = z.infer<typeof updateFollowupSchema>;
 
 export const leadStatusSchema = z.string().min(1, "Status is required");
 
-export const leadTierSchema = z.enum(["standard", "premium", "enterprise"]);
+export const leadForceSchema = z.enum(["standard", "premium", "enterprise"]);
+
+/** @deprecated Use leadForceSchema instead */
+export const leadTierSchema = leadForceSchema;
 
 const leadFieldsSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   phone: z.string().optional(),
   company: z.string().optional(),
-  tier: leadTierSchema.optional(),
+  tier: leadForceSchema.optional(),
   status: leadStatusSchema.optional(),
   source: z.string().max(120).optional(),
   assignedAgentId: z.string().optional().nullable(),

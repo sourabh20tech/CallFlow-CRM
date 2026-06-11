@@ -28,7 +28,7 @@ import type { LeadFormValues } from "@/utils/validators";
 
 const DEFAULT_FILTERS: LeadListFilters = {
   status: "all",
-  tier: "all",
+  force: "all",
   assignedAgentId: "all",
   search: "",
 };
@@ -38,7 +38,7 @@ function filtersToParams(filters: LeadListFilters, page: number, pageSize: numbe
   params.set("page", String(page));
   params.set("pageSize", String(pageSize));
   if (filters.status && filters.status !== "all") params.set("status", filters.status);
-  if (filters.tier && filters.tier !== "all") params.set("tier", filters.tier);
+  if (filters.force && filters.force !== "all") params.set("force", filters.force);
   if (filters.assignedAgentId && filters.assignedAgentId !== "all") {
     params.set("assignedAgentId", filters.assignedAgentId);
   }
@@ -52,7 +52,7 @@ function formToPayload(values: LeadFormValues) {
     email: values.email?.trim() || undefined,
     phone: values.phone?.trim() || undefined,
     company: values.company?.trim() || undefined,
-    tier: values.tier,
+    force: values.tier,
     status: values.status,
     source: values.source?.trim() || undefined,
     assignedAgentId: values.assignedAgentId || null,
@@ -116,7 +116,7 @@ export function LeadsManagement({
 
   useEffect(() => {
     setPage(1);
-  }, [filters.status, filters.tier, filters.assignedAgentId]);
+  }, [filters.status, filters.force, filters.assignedAgentId]);
 
   const queryFilters = useMemo(
     () => ({ ...filters, search: debouncedSearch }),
@@ -151,7 +151,7 @@ export function LeadsManagement({
   const hasActiveFilters = Boolean(
     debouncedSearch ||
       (filters.status && filters.status !== "all") ||
-      (filters.tier && filters.tier !== "all") ||
+      (filters.force && filters.force !== "all") ||
       (filters.assignedAgentId && filters.assignedAgentId !== "all"),
   );
 

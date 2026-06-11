@@ -9,11 +9,14 @@ export const LEAD_STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
   { value: "closed", label: "Closed" },
 ];
 
-export const LEAD_TIER_OPTIONS = [
+export const LEAD_FORCE_OPTIONS = [
   { value: "standard" as const, label: "Standard" },
   { value: "premium" as const, label: "Premium" },
   { value: "enterprise" as const, label: "Enterprise" },
 ];
+
+/** @deprecated Use LEAD_FORCE_OPTIONS instead */
+export const LEAD_TIER_OPTIONS = LEAD_FORCE_OPTIONS;
 
 export const LEAD_STATUS_VARIANT: Record<
   LeadStatus,

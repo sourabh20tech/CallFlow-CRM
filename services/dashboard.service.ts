@@ -116,7 +116,7 @@ export class DashboardService {
       name: row.full_name,
       company: row.company ?? undefined,
       email: row.email ?? "—",
-      tier: (row.tier as DashboardLeadRow["tier"]) ?? "standard",
+      force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
       status: row.status as DashboardLeadRow["status"],
       lastContactAt: row.last_contacted_at ?? row.created_at,
     }));

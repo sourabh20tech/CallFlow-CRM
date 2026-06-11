@@ -45,7 +45,7 @@ export function AssignedLeadsSection({ leads, agentName }: AssignedLeadsSectionP
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead className="hidden sm:table-cell">Company</TableHead>
-              <TableHead>Tier</TableHead>
+              <TableHead>Force</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -64,7 +64,7 @@ export function AssignedLeadsSection({ leads, agentName }: AssignedLeadsSectionP
                   <TableCell className="hidden sm:table-cell text-muted-foreground">
                     {lead.company ?? "—"}
                   </TableCell>
-                  <TableCell className="capitalize">{lead.tier}</TableCell>
+                  <TableCell className="capitalize">{lead.force}</TableCell>
                   <TableCell>
                     <StatusChip
                       label={formatLeadStatus(lead.status)}

@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { FormField } from "@/components/design-system/form-field";
 import { FormInput } from "@/components/design-system/form-input";
 import { AssignAgentSelect } from "@/components/leads/assign-agent-select";
-import { LEAD_STATUS_OPTIONS, LEAD_TIER_OPTIONS } from "@/lib/leads/constants";
+import { LEAD_STATUS_OPTIONS, LEAD_FORCE_OPTIONS } from "@/lib/leads/constants";
 import { Button } from "@/components/ui/button";
 import { leadFormSchema, type LeadFormValues } from "@/utils/validators";
 import type { Lead, LeadRosterAgent } from "@/types/lead";
@@ -45,7 +45,7 @@ function leadToDefaults(lead?: Lead): LeadFormValues {
     email: lead.email ?? "",
     phone: lead.phone ?? "",
     company: lead.company ?? "",
-    tier: lead.tier,
+    tier: lead.force,
     status: lead.status,
     source: lead.source ?? "",
     assignedAgentId: lead.assignedAgentId ?? "",
@@ -145,9 +145,9 @@ export function LeadForm({
       </FormField>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="Tier" htmlFor="tier">
+        <FormField label="Force" htmlFor="tier">
           <select id="tier" className={selectClassName} {...register("tier")}>
-            {LEAD_TIER_OPTIONS.map((o) => (
+            {LEAD_FORCE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>

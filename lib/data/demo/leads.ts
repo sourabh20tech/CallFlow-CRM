@@ -9,7 +9,7 @@ let demoLeads: Lead[] = [
     email: "sarah.j@acme.com",
     phone: "+1 (555) 123-4567",
     company: "Acme Corp",
-    tier: "enterprise",
+    force: "enterprise",
     status: "follow_up",
     assignedAgentId: "agent-1",
     assignedAgentName: "Alex Rivera",
@@ -23,7 +23,7 @@ let demoLeads: Lead[] = [
     email: "m.chen@techflow.io",
     phone: "+1 (555) 234-5678",
     company: "TechFlow",
-    tier: "premium",
+    force: "premium",
     status: "interested",
     assignedAgentId: "agent-1",
     assignedAgentName: "Alex Rivera",
@@ -36,7 +36,7 @@ let demoLeads: Lead[] = [
     fullName: "Emily Davis",
     email: "emily@startup.co",
     phone: "+1 (555) 345-6789",
-    tier: "standard",
+    force: "standard",
     status: "new",
     assignedAgentId: "agent-2",
     assignedAgentName: "Jordan Lee",
@@ -49,7 +49,7 @@ let demoLeads: Lead[] = [
     email: "robert@global.io",
     phone: "+1 (555) 456-7890",
     company: "Global Systems",
-    tier: "premium",
+    force: "premium",
     status: "converted",
     assignedAgentId: "agent-1",
     assignedAgentName: "Alex Rivera",
@@ -63,7 +63,7 @@ let demoLeads: Lead[] = [
     email: "lisa@northwind.io",
     phone: "+1 (555) 567-8901",
     company: "Northwind",
-    tier: "enterprise",
+    force: "enterprise",
     status: "interested",
     assignedAgentId: "agent-1",
     assignedAgentName: "Alex Rivera",
@@ -77,7 +77,7 @@ let demoLeads: Lead[] = [
     email: "david@innovate.io",
     phone: "+1 (555) 678-9012",
     company: "Innovate Labs",
-    tier: "standard",
+    force: "standard",
     status: "not_interested",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
     updatedAt: new Date().toISOString(),
@@ -91,7 +91,7 @@ const demoNotesByLead: Record<string, Note[]> = {
       leadId: "lead-1",
       authorId: "demo-agent",
       authorName: "Demo Agent",
-      content: "Interested in enterprise tier — send pricing deck.",
+      content: "Interested in enterprise force — send pricing deck.",
       isPinned: true, noteType: "public" as const,
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
@@ -109,7 +109,7 @@ function matchesFilters(lead: Lead, filters?: LeadListFilters): boolean {
   if (filters.status && filters.status !== "all" && lead.status !== filters.status) {
     return false;
   }
-  if (filters.tier && filters.tier !== "all" && lead.tier !== filters.tier) {
+  if (filters.force && filters.force !== "all" && lead.force !== filters.force) {
     return false;
   }
   if (filters.assignedAgentId === "unassigned" && lead.assignedAgentId) {
@@ -162,7 +162,7 @@ export function createDemoLead(
     email: input.email,
     phone: input.phone,
     company: input.company,
-    tier: input.tier ?? "standard",
+    force: input.force ?? "standard",
     status: input.status ?? "new",
     source: input.source,
     assignedAgentId: input.assignedAgentId,
@@ -195,7 +195,7 @@ export function updateDemoLead(id: string, input: UpdateLeadInput): Lead | undef
     email: input.email === null ? undefined : (input.email ?? current.email),
     phone: input.phone === null ? undefined : (input.phone ?? current.phone),
     company: input.company ?? current.company,
-    tier: input.tier ?? current.tier,
+    force: input.force ?? current.force,
     source: input.source ?? current.source,
     status,
     assignedAgentId,

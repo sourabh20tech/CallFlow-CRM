@@ -19,7 +19,7 @@ export interface BulkUploadPayload {
   assignedAgentId?: string;
   selectedAgentIds?: string[];
   defaultStatus?: string;
-  defaultTier?: string;
+  defaultForce?: string;
 }
 
 interface RowError {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { leads, assignmentMode, assignedAgentId, selectedAgentIds, defaultStatus, defaultTier } = body;
+  const { leads, assignmentMode, assignedAgentId, selectedAgentIds, defaultStatus, defaultForce } = body;
 
   if (!Array.isArray(leads) || leads.length === 0) {
     return NextResponse.json({ error: "No leads provided" }, { status: 400 });
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     const status: CreateLeadInput["status"] = rawStatus
       ? rawStatus as CreateLeadInput["status"]
       : (defaultStatus || "new") as CreateLeadInput["status"];
-    const tier = (defaultTier || "standard") as "standard" | "premium" | "enterprise";
+    const force = (defaultForce || "standard") as "standard" | "premium" | "enterprise";
 
     // Determine agent assignment
     let agentId: string | undefined;
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
         company: row.company?.trim() || undefined,
         source: leadSource,
         status,
-        tier,
+        force,
         assignedAgentId: agentId,
       });
       successCount++;

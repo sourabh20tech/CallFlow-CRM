@@ -61,7 +61,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [defaultStatus, setDefaultStatus] = useState("new");
-  const [defaultTier, setDefaultTier] = useState("standard");
+  const [defaultForce, setDefaultForce] = useState("standard");
   const [statusOptions, setStatusOptions] = useState<{ value: string; label: string }[]>([
     { value: "new", label: "New" },
     { value: "interested", label: "Interested" },
@@ -208,7 +208,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
           assignedAgentId: assignmentMode === "single" ? selectedAgentId : undefined,
           selectedAgentIds: assignmentMode === "round-robin" ? selectedAgentIds : undefined,
           defaultStatus,
-          defaultTier,
+          defaultForce,
         }),
       });
 
@@ -464,7 +464,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
 
               {/* Default Status & Tier dropdowns */}
               <div className="space-y-3 rounded-xl border border-border p-4">
-                <p className="text-sm font-medium">Default Values (for rows without Status/Tier)</p>
+                <p className="text-sm font-medium">Default Values (for rows without Status/Force)</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs text-muted-foreground">Default Status</label>
@@ -516,10 +516,10 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                     )}
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">Default Tier</label>
+                    <label className="mb-1 block text-xs text-muted-foreground">Default Force</label>
                     <select
-                      value={defaultTier}
-                      onChange={(e) => setDefaultTier(e.target.value)}
+                      value={defaultForce}
+                      onChange={(e) => setDefaultForce(e.target.value)}
                       className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
                     >
                       <option value="standard">Standard</option>

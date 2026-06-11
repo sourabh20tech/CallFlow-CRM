@@ -12,7 +12,7 @@ export async function exportLeadsToExcel(
     Email: lead.email ?? "",
     Phone: lead.phone ?? "",
     Company: lead.company ?? "",
-    Tier: lead.tier,
+    Force: lead.force,
     Status: formatLeadStatus(lead.status),
     Source: lead.source ?? "",
     Agent: lead.assignedAgentName ?? "",

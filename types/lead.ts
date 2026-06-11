@@ -1,6 +1,8 @@
-import type { LeadStatus, LeadTier } from "@/types/database";
+import type { LeadStatus, LeadForce } from "@/types/database";
 
-export type { LeadStatus, LeadTier };
+export type { LeadStatus, LeadForce };
+/** @deprecated Use LeadForce instead */
+export type LeadTier = LeadForce;
 
 export interface Lead {
   id: string;
@@ -8,7 +10,7 @@ export interface Lead {
   email?: string;
   phone?: string;
   company?: string;
-  tier: LeadTier;
+  force: LeadForce;
   status: LeadStatus;
   source?: string;
   assignedAgentId?: string;
@@ -26,7 +28,7 @@ export interface CreateLeadInput {
   email?: string;
   phone?: string;
   company?: string;
-  tier?: LeadTier;
+  force?: LeadForce;
   status?: LeadStatus;
   source?: string;
   assignedAgentId?: string;
@@ -38,7 +40,7 @@ export interface UpdateLeadInput {
   email?: string | null;
   phone?: string | null;
   company?: string;
-  tier?: LeadTier;
+  force?: LeadForce;
   status?: LeadStatus;
   source?: string;
   assignedAgentId?: string | null;
@@ -49,7 +51,7 @@ export interface UpdateLeadInput {
 
 export interface LeadListFilters {
   status?: LeadStatus | "all";
-  tier?: LeadTier | "all";
+  force?: LeadForce | "all";
   assignedAgentId?: string | "all" | "unassigned";
   search?: string;
 }

@@ -23,7 +23,7 @@ function toDbFilters(filters?: LeadListFilters, agentId?: string): LeadFilters |
   const db: LeadFilters = {};
   if (agentId) db.assignedAgentId = agentId;
   if (filters?.status && filters.status !== "all") db.status = filters.status;
-  if (filters?.tier && filters.tier !== "all") db.tier = filters.tier;
+  if (filters?.force && filters.force !== "all") db.force = filters.force;
   if (filters?.assignedAgentId === "unassigned") db.unassignedOnly = true;
   else if (filters?.assignedAgentId && filters.assignedAgentId !== "all") {
     db.assignedAgentId = filters.assignedAgentId;

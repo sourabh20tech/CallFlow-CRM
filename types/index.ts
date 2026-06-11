@@ -2,7 +2,7 @@ export type { User, UserRole, Session, AuthState, Profile, LoginCredentials } fr
 export type { Call, CallStatus, CallDirection } from "./call";
 export type { Agent, AgentStatus } from "./agent";
 export type { Customer } from "./customer";
-export type { Lead, LeadStatus, LeadTier, CreateLeadInput, UpdateLeadInput } from "./lead";
+export type { Lead, LeadStatus, LeadForce, LeadTier, CreateLeadInput, UpdateLeadInput } from "./lead";
 export type {
   Followup,
   FollowupStatus,

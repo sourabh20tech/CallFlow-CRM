@@ -20,7 +20,7 @@ import type { TypedSupabaseClient } from "@/lib/supabase/typed-client";
 
 export interface LeadFilters {
   status?: LeadStatus;
-  tier?: import("@/types/database").LeadTier;
+  force?: import("@/types/database").LeadForce;
   assignedAgentId?: string;
   unassignedOnly?: boolean;
   search?: string;
@@ -43,7 +43,7 @@ export class LeadsDbService extends BaseDbService {
       .range(from, to);
 
     if (filters?.status) query = query.eq("status", filters.status);
-    if (filters?.tier) query = query.eq("tier", filters.tier);
+    if (filters?.force) query = query.eq("tier", filters.force);
     if (filters?.unassignedOnly) {
       query = query.is("assigned_agent_id", null);
     } else if (filters?.assignedAgentId) {

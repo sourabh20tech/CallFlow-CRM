@@ -48,7 +48,7 @@ export interface DashboardLeadRow {
   name: string;
   company?: string;
   email: string;
-  tier: "standard" | "premium" | "enterprise";
+  force: "standard" | "premium" | "enterprise";
   status: import("@/types/database").LeadStatus;
   lastContactAt: string;
 }

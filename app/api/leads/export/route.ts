@@ -10,14 +10,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filters: LeadListFilters = {
     status: (searchParams.get("status") as LeadListFilters["status"]) ?? "all",
-    tier: (searchParams.get("tier") as LeadListFilters["tier"]) ?? "all",
+    force: (searchParams.get("force") as LeadListFilters["force"]) ?? "all",
     assignedAgentId:
       (searchParams.get("assignedAgentId") as LeadListFilters["assignedAgentId"]) ?? "all",
     search: searchParams.get("search") ?? undefined,
   };
 
   if (filters.status === "all") delete filters.status;
-  if (filters.tier === "all") delete filters.tier;
+  if (filters.force === "all") delete filters.force;
   if (filters.assignedAgentId === "all") delete filters.assignedAgentId;
 
   try {
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       Email: lead.email ?? "",
       Phone: lead.phone ?? "",
       Company: lead.company ?? "",
-      Tier: lead.tier,
+      Force: lead.force,
       Status: lead.status,
       Agent: lead.assignedAgentName ?? "",
       "Next follow-up": lead.nextFollowUpAt ?? "",

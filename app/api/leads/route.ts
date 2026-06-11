@@ -13,14 +13,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filters: LeadListFilters = {
     status: (searchParams.get("status") as LeadListFilters["status"]) ?? "all",
-    tier: (searchParams.get("tier") as LeadListFilters["tier"]) ?? "all",
+    force: (searchParams.get("force") as LeadListFilters["force"]) ?? "all",
     assignedAgentId:
       (searchParams.get("assignedAgentId") as LeadListFilters["assignedAgentId"]) ?? "all",
     search: searchParams.get("search") ?? undefined,
   };
 
   if (filters.status === "all") delete filters.status;
-  if (filters.tier === "all") delete filters.tier;
+  if (filters.force === "all") delete filters.force;
   if (filters.assignedAgentId === "all") delete filters.assignedAgentId;
   if (!filters.search) delete filters.search;
 
@@ -70,11 +70,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const { nextFollowUpAt, assignedAgentId, email, phone, ...rest } = parsed.data;
+  const { nextFollowUpAt, assignedAgentId, email, phone, tier, ...rest } = parsed.data;
 
   try {
     const lead = await leadsService.create({
       ...rest,
+      force: tier,
       email: email?.trim() || undefined,
       phone: phone?.trim() || undefined,
       assignedAgentId: assignedAgentId ?? undefined,
