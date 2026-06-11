@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Download, Plus, RefreshCw, Upload, UserPlus } from "lucide-react";
@@ -7,15 +8,17 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/design-system/page-header";
 import { DataTableCard } from "@/components/design-system/data-table-card";
 import { SkeletonTable } from "@/components/design-system/skeletons";
-import { AddLeadModal } from "@/components/leads/add-lead-modal";
-import { BulkUploadModal } from "@/components/leads/bulk-upload-modal";
 import { BulkActionsBar } from "@/components/leads/bulk-actions-bar";
 import { LeadStatsRow } from "@/components/leads/lead-stats-row";
-import { EditLeadModal } from "@/components/leads/edit-lead-modal";
-import { LeadDetailSection } from "@/components/leads/lead-detail-section";
 import { LeadFiltersBar } from "@/components/leads/lead-filters";
 import { LeadTable } from "@/components/leads/lead-table";
 import type { LeadDetailFocus } from "@/components/leads/lead-row-actions";
+
+// Lazy-load heavy modals — only loaded when opened
+const AddLeadModal = dynamic(() => import("@/components/leads/add-lead-modal").then((m) => m.AddLeadModal), { ssr: false });
+const BulkUploadModal = dynamic(() => import("@/components/leads/bulk-upload-modal").then((m) => m.BulkUploadModal), { ssr: false });
+const EditLeadModal = dynamic(() => import("@/components/leads/edit-lead-modal").then((m) => m.EditLeadModal), { ssr: false });
+const LeadDetailSection = dynamic(() => import("@/components/leads/lead-detail-section").then((m) => m.LeadDetailSection), { ssr: false });
 import { LeadsEmptyState } from "@/components/leads/leads-empty-state";
 import { DeleteLeadModal } from "@/components/leads/delete-lead-modal";
 import { TablePagination } from "@/components/leads/table-pagination";

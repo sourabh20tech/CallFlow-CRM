@@ -9,11 +9,18 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       "lucide-react",
       "recharts",
+      "sonner",
+      "react-hook-form",
+      "zod",
       "@radix-ui/react-dialog",
       "@radix-ui/react-dropdown-menu",
       "@radix-ui/react-tabs",
       "@radix-ui/react-tooltip",
       "@radix-ui/react-select",
+      "@radix-ui/react-separator",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-label",
+      "class-variance-authority",
     ],
   },
 

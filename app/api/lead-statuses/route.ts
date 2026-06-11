@@ -10,7 +10,9 @@ export async function GET() {
 
   try {
     const statuses = await leadStatusesDbServiceServer.list();
-    return NextResponse.json({ statuses });
+    return NextResponse.json({ statuses }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=120" },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load statuses";
     return NextResponse.json({ error: message }, { status: 500 });

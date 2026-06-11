@@ -48,7 +48,7 @@ export class LeadsService {
     requireSupabaseConfigured("lead listing");
     return leadsDbServiceServer.list(toDbFilters(filters, options?.agentId), {
       page: options?.page,
-      pageSize: options?.pageSize ?? 100,
+      pageSize: options?.pageSize ?? 200,
     });
   }
 
