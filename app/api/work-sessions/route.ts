@@ -39,9 +39,11 @@ export async function GET(request: Request) {
       .lte("login_time", to)
       .order("login_time", { ascending: false });
 
-    // Agent isolation
+    // Agent isolation OR admin viewing specific agent
     if (auth.user.role === "agent") {
       query = query.eq("user_id", auth.user.id);
+    } else if (searchParams.get("userId")) {
+      query = query.eq("user_id", searchParams.get("userId"));
     }
 
     const { data, error } = await query;

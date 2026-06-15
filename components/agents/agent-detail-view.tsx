@@ -6,6 +6,7 @@ import { KeyRound, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AgentProfileCard } from "@/components/agents/agent-profile-card";
 import { AgentPerformanceOverview } from "@/components/agents/agent-performance-overview";
+import { AgentWorkTime } from "@/components/agents/agent-work-time";
 import { AssignedLeadsSection } from "@/components/agents/assigned-leads-section";
 import { EditAgentModal } from "@/components/agents/edit-agent-modal";
 import { ResetPasswordModal } from "@/components/agents/reset-password-modal";
@@ -107,6 +108,7 @@ export function AgentDetailView({ agent, leads, performance }: AgentDetailViewPr
       </div>
 
       <AgentPerformanceOverview agentName={agent.name} performance={performance} />
+      <AgentWorkTime agentProfileId={agent.profileId ?? ""} />
       <AssignedLeadsSection leads={leads} agentName={agent.name} />
 
       <EditAgentModal
