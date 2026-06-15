@@ -15,6 +15,7 @@ import { StatCard } from "@/components/design-system/stat-card";
 import { GlassCard } from "@/components/design-system/glass-card";
 import { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
 import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
+import { WorkTimeWidget } from "@/components/dashboard/work-time-widget";
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { Button } from "@/components/ui/button";
 import { useAgentPanel } from "@/hooks/use-agent-panel";
@@ -89,6 +90,8 @@ export function AgentDashboard() {
         <StatCard title="Active Calls" value={stats?.activeCalls ?? 0} icon={PhoneCall} />
         <StatCard title="Converted" value={stats?.convertedLeads ?? 0} icon={Trophy} />
       </div>
+
+      <WorkTimeWidget />
 
       <FollowupCenterWidget />
 
