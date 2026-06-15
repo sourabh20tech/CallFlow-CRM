@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { CalendarClock, CheckCircle2, Plus, UserX, Users } from "lucide-react";
 
 interface LeadStatsRowProps {
@@ -10,7 +11,7 @@ interface LeadStatsRowProps {
   unassigned: number;
 }
 
-export function LeadStatsRow({ total, newLeads, followUpDue, converted, unassigned }: LeadStatsRowProps) {
+export const LeadStatsRow = memo(function LeadStatsRow({ total, newLeads, followUpDue, converted, unassigned }: LeadStatsRowProps) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       <StatMini icon={Users} label="Total Leads" value={total} />
@@ -20,7 +21,7 @@ export function LeadStatsRow({ total, newLeads, followUpDue, converted, unassign
       <StatMini icon={UserX} label="Unassigned" value={unassigned} color="text-red-500" />
     </div>
   );
-}
+});
 
 function StatMini({
   icon: Icon,

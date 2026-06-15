@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Phone, PhoneCall, PhoneMissed, Sparkles } from "lucide-react";
 import { StatCard } from "@/components/design-system/stat-card";
 
@@ -13,7 +14,7 @@ interface CallStatsCardsProps {
   };
 }
 
-export function CallStatsCards({ stats }: CallStatsCardsProps) {
+export const CallStatsCards = memo(function CallStatsCards({ stats }: CallStatsCardsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard title="Total calls" value={stats.total} icon={Phone} description="In current view" />
@@ -37,4 +38,4 @@ export function CallStatsCards({ stats }: CallStatsCardsProps) {
       />
     </div>
   );
-}
+});

@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Compress responses for faster transfer
   compress: true,
 
+  // Power mode — faster builds and navigation
+  poweredByHeader: false,
+
   // Optimize package imports — tree-shake heavy libraries
   experimental: {
     optimizePackageImports: [
@@ -12,6 +15,9 @@ const nextConfig: NextConfig = {
       "sonner",
       "react-hook-form",
       "zod",
+      "zustand",
+      "clsx",
+      "tailwind-merge",
       "@radix-ui/react-dialog",
       "@radix-ui/react-dropdown-menu",
       "@radix-ui/react-tabs",
@@ -20,6 +26,7 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-separator",
       "@radix-ui/react-avatar",
       "@radix-ui/react-label",
+      "@radix-ui/react-slot",
       "class-variance-authority",
     ],
   },
@@ -46,6 +53,13 @@ const nextConfig: NextConfig = {
         source: "/:path*.(svg|ico|png|jpg|jpeg|webp|woff2|woff)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Cache API responses briefly for faster repeated navigation
+        source: "/api/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
         ],
       },
     ];
