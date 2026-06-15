@@ -1,7 +1,6 @@
 "use client";
 
 import { QuickDialPanel } from "@/components/calls/quick-dial-panel";
-import { AgentPanelQuickActions } from "@/components/agent-panel/agent-panel-quick-actions";
 import { MyLeadsSection } from "@/components/agent-panel/my-leads-section";
 import { TodayCallsSection } from "@/components/agent-panel/today-calls-section";
 import { PendingFollowupsSection } from "@/components/agent-panel/pending-followups-section";
@@ -45,7 +44,6 @@ export function AgentOverviewSection({
         </div>
         <div className="space-y-[var(--ds-stack-gap)]">
           <QuickDialPanel leads={data.dialLeads} onCallInitiated={onRefresh} />
-          <AgentPanelQuickActions />
         </div>
       </div>
       <PendingFollowupsSection

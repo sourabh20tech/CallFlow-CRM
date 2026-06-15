@@ -1,6 +1,5 @@
 export { AgentPanelDashboard } from "@/components/agent-panel/agent-panel-dashboard";
 export { AgentPanelStatsRow } from "@/components/agent-panel/agent-panel-stats-row";
-export { AgentPanelQuickActions } from "@/components/agent-panel/agent-panel-quick-actions";
 export { AgentPanelSectionHeader } from "@/components/agent-panel/agent-panel-section-header";
 export { AgentPanelEmptyState } from "@/components/agent-panel/agent-panel-empty-state";
 export { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
