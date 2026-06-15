@@ -432,7 +432,9 @@ export function CallsManagement({
           />
         </div>
 
-        <QuickDialPanel leads={dialLeads} onCallInitiated={() => void refreshCalls(true)} />
+        {isAdmin && (
+          <QuickDialPanel leads={dialLeads} onCallInitiated={() => void refreshCalls(true)} />
+        )}
       </div>
 
       <LogCallModal
