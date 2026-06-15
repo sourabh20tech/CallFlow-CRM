@@ -11,7 +11,6 @@ import { CallStatsCards } from "@/components/calls/call-stats-cards";
 import { CallHistorySection } from "@/components/calls/call-history-section";
 import { CallLogsTable } from "@/components/calls/call-logs-table";
 import { CallDetailPanel } from "@/components/calls/call-detail-panel";
-import { QuickDialPanel } from "@/components/calls/quick-dial-panel";
 import { LogCallModal } from "@/components/calls/log-call-modal";
 import { CallsEmptyState } from "@/components/calls/calls-empty-state";
 import {
@@ -431,10 +430,6 @@ export function CallsManagement({
             isUpdating={updatingId === selectedCall?.id}
           />
         </div>
-
-        {isAdmin && (
-          <QuickDialPanel leads={dialLeads} onCallInitiated={() => void refreshCalls(true)} />
-        )}
       </div>
 
       <LogCallModal
