@@ -219,65 +219,61 @@ export function InlineLeadStatus({
           );
         })}
 
-        {/* Add New Status — Admin only */}
-        {isAdmin && (
-          <>
-            <DropdownMenuSeparator />
-            {!showCreateForm ? (
-              <DropdownMenuItem
-                onClick={(e) => { e.preventDefault(); setShowCreateForm(true); }}
-                className="flex items-center gap-2 px-2.5 py-2 cursor-pointer text-primary"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span className="text-sm font-medium">Add New Status</span>
-              </DropdownMenuItem>
-            ) : (
-              <div className="px-2.5 py-2" onClick={(e) => e.stopPropagation()}>
-                <form onSubmit={(e) => void handleCreateStatus(e)} className="space-y-2">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={newLabel}
-                    onChange={(e) => setNewLabel(e.target.value)}
-                    placeholder="Status name..."
-                    maxLength={30}
-                    className="h-8 w-full rounded-md border border-border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+        {/* Add New Status */}
+        <DropdownMenuSeparator />
+        {!showCreateForm ? (
+          <DropdownMenuItem
+            onClick={(e) => { e.preventDefault(); setShowCreateForm(true); }}
+            className="flex items-center gap-2 px-2.5 py-2 cursor-pointer text-primary"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="text-sm font-medium">Add New Status</span>
+          </DropdownMenuItem>
+        ) : (
+          <div className="px-2.5 py-2" onClick={(e) => e.stopPropagation()}>
+            <form onSubmit={(e) => void handleCreateStatus(e)} className="space-y-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                placeholder="Status name..."
+                maxLength={30}
+                className="h-8 w-full rounded-md border border-border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <div className="flex items-center gap-1">
+                {PRESET_COLORS.slice(0, 6).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setNewColor(c)}
+                    className={cn(
+                      "h-5 w-5 rounded-full border-2 transition-transform",
+                      newColor === c ? "border-foreground scale-110" : "border-transparent",
+                    )}
+                    style={{ backgroundColor: c }}
                   />
-                  <div className="flex items-center gap-1">
-                    {PRESET_COLORS.slice(0, 6).map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setNewColor(c)}
-                        className={cn(
-                          "h-5 w-5 rounded-full border-2 transition-transform",
-                          newColor === c ? "border-foreground scale-110" : "border-transparent",
-                        )}
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="submit"
-                      disabled={!newLabel.trim() || isCreating}
-                      className="flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
-                    >
-                      {isCreating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                      Create
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setShowCreateForm(false); setNewLabel(""); }}
-                      className="flex h-7 items-center rounded-md px-2 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                </form>
+                ))}
               </div>
-            )}
-          </>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="submit"
+                  disabled={!newLabel.trim() || isCreating}
+                  className="flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                >
+                  {isCreating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                  Create
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowCreateForm(false); setNewLabel(""); }}
+                  className="flex h-7 items-center rounded-md px-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            </form>
+          </div>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
