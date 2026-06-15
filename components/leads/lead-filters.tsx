@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { FormInput } from "@/components/design-system/form-input";
 import { LEAD_STATUS_OPTIONS, LEAD_FORCE_OPTIONS } from "@/lib/leads/constants";
 import { useLeadStatuses } from "@/hooks/use-lead-statuses";
+import { useLeadSources } from "@/hooks/use-lead-sources";
 import { Button } from "@/components/ui/button";
 import type { LeadListFilters, LeadRosterAgent } from "@/types/lead";
 import { cn } from "@/lib/utils";
@@ -23,9 +24,13 @@ interface LeadFiltersBarProps {
 
 export function LeadFiltersBar({ filters, agents, isAdmin = true, onChange, onClear }: LeadFiltersBarProps) {
   const { statuses: dynamicStatuses } = useLeadStatuses();
+  const { sources: dynamicSources } = useLeadSources();
   const statusOptions = dynamicStatuses.length > 0
     ? dynamicStatuses.map((s) => ({ value: s.value, label: s.label }))
     : LEAD_STATUS_OPTIONS;
+  const sourceOptions = dynamicSources.length > 0
+    ? dynamicSources
+    : LEAD_FORCE_OPTIONS;
 
   const hasActiveFilters =
     Boolean(filters.search) ||
@@ -77,7 +82,7 @@ export function LeadFiltersBar({ filters, agents, isAdmin = true, onChange, onCl
           aria-label="Filter by source"
         >
           <option value="all">All Sources</option>
-          {LEAD_FORCE_OPTIONS.map((o) => (
+          {sourceOptions.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>

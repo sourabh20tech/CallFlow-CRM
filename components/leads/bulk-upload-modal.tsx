@@ -76,6 +76,14 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const [showAddStatus, setShowAddStatus] = useState(false);
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [isCreatingStatus, setIsCreatingStatus] = useState(false);
+  const [sourceOptions, setSourceOptions] = useState<{ value: string; label: string }[]>([
+    { value: "standard", label: "Standard" },
+    { value: "premium", label: "Premium" },
+    { value: "enterprise", label: "Enterprise" },
+  ]);
+  const [showAddSource, setShowAddSource] = useState(false);
+  const [newSourceLabel, setNewSourceLabel] = useState("");
+  const [isCreatingSource, setIsCreatingSource] = useState(false);
 
   const reset = () => {
     setStep("upload");
@@ -94,6 +102,18 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
       .then((data) => {
         if (data.statuses?.length) {
           setStatusOptions(data.statuses.map((s: { value: string; label: string }) => ({
+            value: s.value,
+            label: s.label,
+          })));
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/lead-sources")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.sources?.length) {
+          setSourceOptions(data.sources.map((s: { value: string; label: string }) => ({
             value: s.value,
             label: s.label,
           })));
@@ -122,6 +142,29 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
       toast.error(error instanceof Error ? error.message : "Create failed");
     } finally {
       setIsCreatingStatus(false);
+    }
+  };
+
+  const handleCreateSource = async () => {
+    if (!newSourceLabel.trim() || isCreatingSource) return;
+    setIsCreatingSource(true);
+    try {
+      const res = await fetch("/api/lead-sources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: newSourceLabel.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      toast.success(`Source "${newSourceLabel.trim()}" created`);
+      setSourceOptions((prev) => [...prev, { value: data.value, label: data.label }]);
+      setDefaultForce(data.value);
+      setNewSourceLabel("");
+      setShowAddSource(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Create failed");
+    } finally {
+      setIsCreatingSource(false);
     }
   };
 
@@ -520,10 +563,46 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                       onChange={(e) => setDefaultForce(e.target.value)}
                       className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
                     >
-                      <option value="standard">Standard</option>
-                      <option value="premium">Premium</option>
-                      <option value="enterprise">Enterprise</option>
+                      {sourceOptions.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
                     </select>
+                    {!showAddSource ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddSource(true)}
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add New Source
+                      </button>
+                    ) : (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={newSourceLabel}
+                          onChange={(e) => setNewSourceLabel(e.target.value)}
+                          placeholder="Source name..."
+                          maxLength={30}
+                          className="h-7 flex-1 rounded border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleCreateSource()}
+                          disabled={!newSourceLabel.trim() || isCreatingSource}
+                          className="h-7 rounded bg-primary px-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                        >
+                          {isCreatingSource ? "..." : "Save"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setShowAddSource(false); setNewSourceLabel(""); }}
+                          className="h-7 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
