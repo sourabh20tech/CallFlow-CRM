@@ -111,12 +111,10 @@ export function TodayCallsSection({ calls, onCallsChange, compact }: TodayCallsS
           <AgentPanelEmptyState
             icon={PhoneOff}
             title="No calls logged today"
-            description="Use Quick Dial on the overview tab to start outreach and log dispositions here."
-            actionLabel="Open Quick Dial"
+            description="Go to Calls page to start outreach and log dispositions."
+            actionLabel="Open Calls"
             onAction={() => {
-              window.location.hash = "";
-              const el = document.querySelector("[data-quick-dial]");
-              el?.scrollIntoView({ behavior: "smooth" });
+              window.location.href = "/dashboard/calls";
             }}
           />
         )}

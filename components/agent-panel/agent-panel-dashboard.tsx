@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/design-system/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { QuickDialPanel } from "@/components/calls/quick-dial-panel";
 import { AgentPanelStatsRow } from "@/components/agent-panel/agent-panel-stats-row";
 import { AgentOverviewSection } from "@/components/agent-panel/agent-overview-section";
 import { MyLeadsSection } from "@/components/agent-panel/my-leads-section";
@@ -143,15 +142,10 @@ export function AgentPanelDashboard({ initialData }: AgentPanelDashboardProps) {
         </TabsContent>
 
         <TabsContent value="calls" className="mt-0">
-          <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <TodayCallsSection
-                calls={panel.todayCalls}
-                onCallsChange={(todayCalls) => patchData((d) => ({ ...d, todayCalls }))}
-              />
-            </div>
-            <QuickDialPanel leads={panel.dialLeads} onCallInitiated={() => void handleRefresh()} />
-          </div>
+          <TodayCallsSection
+            calls={panel.todayCalls}
+            onCallsChange={(todayCalls) => patchData((d) => ({ ...d, todayCalls }))}
+          />
         </TabsContent>
 
         <TabsContent value="followups" className="mt-0">
