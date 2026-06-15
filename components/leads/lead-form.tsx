@@ -141,7 +141,7 @@ export function LeadForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <FormField label="Force" htmlFor="tier">
+        <FormField label="Source" htmlFor="tier">
           <select id="tier" className={selectClassName} {...register("tier")}>
             {LEAD_FORCE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>

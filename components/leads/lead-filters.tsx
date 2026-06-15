@@ -74,9 +74,9 @@ export function LeadFiltersBar({ filters, agents, isAdmin = true, onChange, onCl
               force: e.target.value as LeadListFilters["force"],
             })
           }
-          aria-label="Filter by force"
+          aria-label="Filter by source"
         >
-          <option value="all">All Forces</option>
+          <option value="all">All Sources</option>
           {LEAD_FORCE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}

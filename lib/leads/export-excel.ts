@@ -11,9 +11,9 @@ export async function exportLeadsToExcel(
     Name: lead.fullName,
     Email: lead.email ?? "",
     Phone: lead.phone ?? "",
-    Force: lead.force,
+    Source: lead.force,
     Status: formatLeadStatus(lead.status),
-    Source: lead.source ?? "",
+    "Lead Source": lead.source ?? "",
     Agent: lead.assignedAgentName ?? "",
     "Next follow-up": lead.nextFollowUpAt
       ? new Date(lead.nextFollowUpAt).toLocaleString()

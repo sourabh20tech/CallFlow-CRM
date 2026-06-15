@@ -42,7 +42,7 @@ export function LeadDetailSheet({
               variant={LEAD_STATUS_VARIANT[lead.status]}
               size="sm"
             />
-            <span className="capitalize">{lead.force} force</span>
+            <span className="capitalize">{lead.force} source</span>
           </div>
         </SheetHeader>
 

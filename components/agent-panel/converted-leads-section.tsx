@@ -44,7 +44,7 @@ export function ConvertedLeadsSection({ leads }: ConvertedLeadsSectionProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Force</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Converted</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

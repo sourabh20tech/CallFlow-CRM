@@ -44,7 +44,7 @@ export function AssignedLeadsSection({ leads, agentName }: AssignedLeadsSectionP
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Force</TableHead>
+              <TableHead>Source</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>

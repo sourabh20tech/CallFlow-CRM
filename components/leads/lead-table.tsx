@@ -78,7 +78,7 @@ export const LeadTable = memo(function LeadTable({
               )}
               <TableHead>Lead</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="hidden lg:table-cell">Force</TableHead>
+              <TableHead className="hidden lg:table-cell">Source</TableHead>
               <TableHead className="hidden xl:table-cell">Agent</TableHead>
               <TableHead className="hidden lg:table-cell">Follow-up</TableHead>
               <TableHead className="hidden sm:table-cell">Updated</TableHead>

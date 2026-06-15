@@ -35,7 +35,7 @@ export function LatestLeadsTable({ leads }: LatestLeadsTableProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Lead</TableHead>
-            <TableHead>Force</TableHead>
+            <TableHead>Source</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="hidden md:table-cell">Last contact</TableHead>
           </TableRow>

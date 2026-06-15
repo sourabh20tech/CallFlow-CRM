@@ -462,7 +462,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
 
               {/* Default Status & Tier dropdowns */}
               <div className="space-y-3 rounded-xl border border-border p-4">
-                <p className="text-sm font-medium">Default Values (for rows without Status/Force)</p>
+                <p className="text-sm font-medium">Default Values (for rows without Status/Source)</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs text-muted-foreground">Default Status</label>
@@ -514,7 +514,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                     )}
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">Default Force</label>
+                    <label className="mb-1 block text-xs text-muted-foreground">Default Source</label>
                     <select
                       value={defaultForce}
                       onChange={(e) => setDefaultForce(e.target.value)}
