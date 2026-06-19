@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LogOut, Settings, User } from "lucide-react";
+import { ChevronDown, LogOut, Moon, Settings, Sun, User } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,6 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
@@ -34,8 +38,10 @@ function getInitials(name?: string, email?: string) {
 export function UserMenu() {
   const router = useRouter();
   const { user, signOut, isAdmin } = useAuth();
+  const { theme, setTheme } = useTheme();
   const isClient = useIsClient();
   const displayUser = isClient ? user : null;
+  const activeTheme = isClient ? (theme === "system" ? "light" : theme) : "light";
 
   const handleSignOut = async () => {
     await signOut();
@@ -93,6 +99,28 @@ export function UserMenu() {
             </Link>
           </DropdownMenuItem>
         )}
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            {activeTheme === "dark" ? (
+              <Moon className="mr-2 h-4 w-4" />
+            ) : (
+              <Sun className="mr-2 h-4 w-4" />
+            )}
+            Theme
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2">
+              <Sun className="h-4 w-4" />
+              Light Mode
+              {activeTheme === "light" && <span className="ml-auto text-xs text-primary">✓</span>}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2">
+              <Moon className="h-4 w-4" />
+              Dark Mode
+              {activeTheme === "dark" && <span className="ml-auto text-xs text-primary">✓</span>}
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}
