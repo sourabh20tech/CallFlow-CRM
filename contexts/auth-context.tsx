@@ -211,6 +211,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // End active work session before signing out
+      try {
+        await fetch("/api/work-sessions", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "end" }),
+        });
+      } catch {
+        // Non-critical — proceed with sign out
+      }
+
       await authService.signOut();
       setUser(null);
       setSession(null);

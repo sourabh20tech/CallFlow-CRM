@@ -26,7 +26,7 @@ export function AgentWorkTime({ agentProfileId }: AgentWorkTimeProps) {
   const [data, setData] = useState<{
     totalSeconds: number;
     loginCount: number;
-    activeSession: { loginTime: string; durationSeconds: number } | null;
+    activeSession: { loginTime: string; activeSeconds: number } | null;
     sessions: any[];
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);

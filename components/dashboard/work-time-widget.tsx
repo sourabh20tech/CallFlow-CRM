@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Clock, LogIn } from "lucide-react";
 import { GlassCard } from "@/components/design-system/glass-card";
+import { useWorkSession } from "@/hooks/use-work-session";
 
 function formatDuration(seconds: number): string {
+  if (seconds <= 0) return "0h 00m";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m`;
+  return `${h}h ${String(m).padStart(2, "0")}m`;
 }
 
 function formatTime(iso: string): string {
@@ -15,51 +17,58 @@ function formatTime(iso: string): string {
 }
 
 export function WorkTimeWidget() {
-  const [data, setData] = useState<{
+  const { loginTime, activeSeconds: sessionActiveSeconds, isActive } = useWorkSession();
+
+  const [todayData, setTodayData] = useState<{
     totalSeconds: number;
     loginCount: number;
-    activeSession: { loginTime: string; durationSeconds: number } | null;
   } | null>(null);
-  const [liveDuration, setLiveDuration] = useState(0);
 
-  const load = useCallback(async () => {
+  // Local live display counter synced from the hook
+  const [displaySeconds, setDisplaySeconds] = useState(0);
+  const isVisibleRef = useRef(!document.hidden);
+
+  // Fetch today's summary (previous completed sessions)
+  const loadToday = useCallback(async () => {
     try {
       const res = await fetch("/api/work-sessions?date=today");
       if (!res.ok) return;
       const json = await res.json();
-      setData(json);
-      if (json.activeSession) {
-        setLiveDuration(json.activeSession.durationSeconds);
-      }
+      setTodayData({ totalSeconds: json.totalSeconds, loginCount: json.loginCount });
     } catch {}
   }, []);
 
   useEffect(() => {
-    void load();
-    // Start session on mount
-    fetch("/api/work-sessions", { method: "POST" }).catch(() => {});
+    void loadToday();
+  }, [loadToday]);
 
-    // End session on page unload
-    const handleUnload = () => {
-      navigator.sendBeacon("/api/work-sessions", JSON.stringify({ action: "end" }));
+  // Live counter for current session display — ticks only when visible
+  useEffect(() => {
+    if (!isActive) return;
+    setDisplaySeconds(sessionActiveSeconds);
+
+    const handleVisibility = () => {
+      isVisibleRef.current = !document.hidden;
     };
-    window.addEventListener("beforeunload", handleUnload);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    const timer = setInterval(() => {
+      if (isVisibleRef.current) {
+        setDisplaySeconds((prev) => prev + 1);
+      }
+    }, 1000);
 
     return () => {
-      window.removeEventListener("beforeunload", handleUnload);
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [load]);
+  }, [isActive, sessionActiveSeconds]);
 
-  // Live timer
-  useEffect(() => {
-    if (!data?.activeSession) return;
-    const timer = setInterval(() => {
-      setLiveDuration((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [data?.activeSession]);
+  if (!todayData) return null;
 
-  if (!data) return null;
+  // Today's total = server total (includes active session estimate from server)
+  // For display, show server total minus current active from server + our live counter
+  const todayTotal = todayData.totalSeconds;
 
   return (
     <GlassCard variant="default" padding="sm">
@@ -69,22 +78,26 @@ export function WorkTimeWidget() {
         </div>
         <div className="flex-1">
           <p className="text-xs text-muted-foreground">Today&apos;s Work Time</p>
-          <p className="text-lg font-semibold tabular-nums">{formatDuration(data.totalSeconds)}</p>
+          <p className="text-lg font-semibold tabular-nums">{formatDuration(todayTotal)}</p>
         </div>
         <div className="text-right">
-          {data.activeSession && (
+          {isActive && (
             <>
               <p className="text-[11px] text-muted-foreground">Session</p>
-              <p className="text-sm font-medium tabular-nums text-primary">{formatDuration(liveDuration)}</p>
+              <p className="text-sm font-medium tabular-nums text-primary">
+                {formatDuration(displaySeconds)}
+              </p>
             </>
           )}
         </div>
       </div>
-      {data.activeSession && (
+      {isActive && loginTime && (
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
           <LogIn className="h-3 w-3" />
-          Login: {formatTime(data.activeSession.loginTime)}
-          <span className="ml-auto">{data.loginCount} session{data.loginCount !== 1 ? "s" : ""} today</span>
+          Login: {formatTime(loginTime)}
+          <span className="ml-auto">
+            {todayData.loginCount} session{todayData.loginCount !== 1 ? "s" : ""} today
+          </span>
         </div>
       )}
     </GlassCard>
