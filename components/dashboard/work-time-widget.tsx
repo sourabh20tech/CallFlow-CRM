@@ -17,18 +17,18 @@ function formatTime(iso: string): string {
 }
 
 export function WorkTimeWidget() {
-  const { loginTime, activeSeconds: sessionActiveSeconds, isActive } = useWorkSession();
+  const { loginTime, activeSeconds, isActive } = useWorkSession();
 
   const [todayData, setTodayData] = useState<{
     totalSeconds: number;
     loginCount: number;
   } | null>(null);
 
-  // Local live display counter synced from the hook
+  // Local live display counter
   const [displaySeconds, setDisplaySeconds] = useState(0);
   const isVisibleRef = useRef(!document.hidden);
 
-  // Fetch today's summary (previous completed sessions)
+  // Fetch today's total from server
   const loadToday = useCallback(async () => {
     try {
       const res = await fetch("/api/work-sessions?date=today");
@@ -40,12 +40,18 @@ export function WorkTimeWidget() {
 
   useEffect(() => {
     void loadToday();
+    // Refresh total every 2 min
+    const interval = setInterval(() => void loadToday(), 120_000);
+    return () => clearInterval(interval);
   }, [loadToday]);
 
-  // Live counter for current session display — ticks only when visible
+  // Live session counter
   useEffect(() => {
-    if (!isActive) return;
-    setDisplaySeconds(sessionActiveSeconds);
+    if (!isActive) {
+      setDisplaySeconds(0);
+      return;
+    }
+    setDisplaySeconds(activeSeconds);
 
     const handleVisibility = () => {
       isVisibleRef.current = !document.hidden;
@@ -62,13 +68,9 @@ export function WorkTimeWidget() {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [isActive, sessionActiveSeconds]);
+  }, [isActive, activeSeconds]);
 
   if (!todayData) return null;
-
-  // Today's total = server total (includes active session estimate from server)
-  // For display, show server total minus current active from server + our live counter
-  const todayTotal = todayData.totalSeconds;
 
   return (
     <GlassCard variant="default" padding="sm">
@@ -78,7 +80,7 @@ export function WorkTimeWidget() {
         </div>
         <div className="flex-1">
           <p className="text-xs text-muted-foreground">Today&apos;s Work Time</p>
-          <p className="text-lg font-semibold tabular-nums">{formatDuration(todayTotal)}</p>
+          <p className="text-lg font-semibold tabular-nums">{formatDuration(todayData.totalSeconds)}</p>
         </div>
         <div className="text-right">
           {isActive && (

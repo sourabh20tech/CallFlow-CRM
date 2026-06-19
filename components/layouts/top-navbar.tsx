@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Breadcrumbs } from "@/components/layouts/breadcrumbs";
 import { NotificationsMenu } from "@/components/layouts/notifications-menu";
 import { UserMenu } from "@/components/layouts/user-menu";
+import { WorkTimerBadge } from "@/components/layouts/work-timer-badge";
 import { useAppStore } from "@/store/app-store";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -96,6 +97,7 @@ export function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
         )}
 
         <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <WorkTimerBadge />
           <NotificationsMenu />
           <UserMenu />
         </div>

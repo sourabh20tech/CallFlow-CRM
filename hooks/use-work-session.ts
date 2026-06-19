@@ -1,185 +1,181 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-const HEARTBEAT_INTERVAL_MS = 60_000; // Send heartbeat every 60s
+const HEARTBEAT_INTERVAL_MS = 60_000; // 60s
 
-interface WorkSessionState {
+// ─── Singleton session manager ───────────────────────────────────────────────
+// Ensures only one session is started regardless of how many components use the hook.
+
+interface SessionState {
   sessionId: string | null;
   loginTime: string | null;
   activeSeconds: number;
   isActive: boolean;
 }
 
-/**
- * Hook that manages work session lifecycle:
- * - Starts a session on mount (login)
- * - Tracks only ACTIVE time (tab visible + window focused)
- * - Sends heartbeat to server every 60s with accumulated active seconds
- * - Ends session on explicit logout or beforeunload
- */
-export function useWorkSession() {
-  const [state, setState] = useState<WorkSessionState>({
-    sessionId: null,
-    loginTime: null,
-    activeSeconds: 0,
-    isActive: false,
-  });
+let globalState: SessionState = {
+  sessionId: null,
+  loginTime: null,
+  activeSeconds: 0,
+  isActive: false,
+};
 
-  // Refs for tracking without re-renders
-  const activeSecondsRef = useRef(0);
-  const isVisibleRef = useRef(!document.hidden);
-  const lastTickRef = useRef(Date.now());
-  const tickIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sessionStartedRef = useRef(false);
+let listeners: Set<() => void> = new Set();
+let initialized = false;
+let activeSecondsCounter = 0;
+let isVisible = typeof document !== "undefined" ? !document.hidden : true;
+let lastTick = Date.now();
+let tickTimer: ReturnType<typeof setInterval> | null = null;
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
-  // Start tracking active time
-  const startTicking = useCallback(() => {
-    if (tickIntervalRef.current) return;
-    lastTickRef.current = Date.now();
-    tickIntervalRef.current = setInterval(() => {
-      if (isVisibleRef.current) {
-        const now = Date.now();
-        const delta = Math.floor((now - lastTickRef.current) / 1000);
-        if (delta > 0 && delta < 5) {
-          // Only count reasonable deltas (< 5s to avoid sleep/suspend gaps)
-          activeSecondsRef.current += delta;
+function notify() {
+  listeners.forEach((l) => l());
+}
+
+function setState(partial: Partial<SessionState>) {
+  globalState = { ...globalState, ...partial };
+  notify();
+}
+
+function startTicking() {
+  if (tickTimer) return;
+  lastTick = Date.now();
+  tickTimer = setInterval(() => {
+    if (isVisible) {
+      const now = Date.now();
+      const delta = Math.floor((now - lastTick) / 1000);
+      if (delta > 0 && delta < 5) {
+        activeSecondsCounter += delta;
+        // Update state every 5 ticks to avoid excessive re-renders
+        if (activeSecondsCounter % 5 === 0 || delta >= 2) {
+          setState({ activeSeconds: activeSecondsCounter });
         }
-        lastTickRef.current = now;
-      } else {
-        // Not visible — just update the tick reference without adding time
-        lastTickRef.current = Date.now();
       }
-    }, 1000);
-  }, []);
-
-  const stopTicking = useCallback(() => {
-    if (tickIntervalRef.current) {
-      clearInterval(tickIntervalRef.current);
-      tickIntervalRef.current = null;
+      lastTick = now;
+    } else {
+      lastTick = Date.now();
     }
-  }, []);
+  }, 1000);
+}
 
-  // Send heartbeat to server
-  const sendHeartbeat = useCallback(async () => {
-    try {
-      await fetch("/api/work-sessions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "heartbeat",
-          activeSeconds: activeSecondsRef.current,
-        }),
-      });
-    } catch {
-      // Silently fail
-    }
-  }, []);
+function stopTicking() {
+  if (tickTimer) {
+    clearInterval(tickTimer);
+    tickTimer = null;
+  }
+}
 
-  // End session
-  const endSession = useCallback(async () => {
-    stopTicking();
-    if (heartbeatIntervalRef.current) {
-      clearInterval(heartbeatIntervalRef.current);
-      heartbeatIntervalRef.current = null;
-    }
-
-    try {
-      await fetch("/api/work-sessions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "end",
-          activeSeconds: activeSecondsRef.current,
-        }),
-      });
-    } catch {
-      // Silently fail
-    }
-
-    setState((prev) => ({ ...prev, isActive: false }));
-  }, [stopTicking]);
-
-  // End session via sendBeacon (for beforeunload)
-  const endSessionBeacon = useCallback(() => {
-    const payload = JSON.stringify({
-      action: "end",
-      activeSeconds: activeSecondsRef.current,
+async function sendHeartbeat() {
+  try {
+    await fetch("/api/work-sessions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "heartbeat", activeSeconds: activeSecondsCounter }),
     });
-    // Use sendBeacon — goes to a dedicated endpoint that can handle it
-    navigator.sendBeacon(
-      "/api/work-sessions/beacon",
-      new Blob([payload], { type: "application/json" }),
-    );
+  } catch {}
+}
+
+function endSessionBeacon() {
+  const payload = JSON.stringify({ action: "end", activeSeconds: activeSecondsCounter });
+  navigator.sendBeacon(
+    "/api/work-sessions/beacon",
+    new Blob([payload], { type: "application/json" }),
+  );
+}
+
+async function initSession() {
+  if (initialized) return;
+  initialized = true;
+
+  try {
+    const res = await fetch("/api/work-sessions", { method: "POST" });
+    if (!res.ok) return;
+    const data = await res.json();
+    const session = data.session;
+    if (session) {
+      activeSecondsCounter = session.active_seconds ?? 0;
+      setState({
+        sessionId: session.id,
+        loginTime: session.login_time,
+        activeSeconds: activeSecondsCounter,
+        isActive: true,
+      });
+      startTicking();
+
+      heartbeatTimer = setInterval(() => {
+        void sendHeartbeat();
+        setState({ activeSeconds: activeSecondsCounter });
+      }, HEARTBEAT_INTERVAL_MS);
+    }
+  } catch {}
+
+  // Visibility tracking
+  const handleVisibility = () => {
+    isVisible = !document.hidden;
+    if (!document.hidden) {
+      lastTick = Date.now();
+    }
+  };
+
+  const handleBeforeUnload = () => {
+    endSessionBeacon();
+  };
+
+  document.addEventListener("visibilitychange", handleVisibility);
+  window.addEventListener("beforeunload", handleBeforeUnload);
+}
+
+async function endSessionGlobal() {
+  stopTicking();
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+
+  try {
+    await fetch("/api/work-sessions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "end", activeSeconds: activeSecondsCounter }),
+    });
+  } catch {}
+
+  setState({ isActive: false });
+  initialized = false; // Allow re-init on next login
+}
+
+// ─── External store for React ────────────────────────────────────────────────
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+
+function getSnapshot(): SessionState {
+  return globalState;
+}
+
+// ─── Hook ────────────────────────────────────────────────────────────────────
+
+export function useWorkSession() {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const initRef = useRef(false);
+
+  useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+    void initSession();
   }, []);
 
-  // Start session on mount
-  useEffect(() => {
-    if (sessionStartedRef.current) return;
-    sessionStartedRef.current = true;
-
-    const startSession = async () => {
-      try {
-        const res = await fetch("/api/work-sessions", { method: "POST" });
-        if (!res.ok) return;
-        const data = await res.json();
-        const session = data.session;
-        if (session) {
-          activeSecondsRef.current = session.active_seconds ?? 0;
-          setState({
-            sessionId: session.id,
-            loginTime: session.login_time,
-            activeSeconds: session.active_seconds ?? 0,
-            isActive: true,
-          });
-          startTicking();
-
-          // Start heartbeat
-          heartbeatIntervalRef.current = setInterval(() => {
-            void sendHeartbeat();
-            setState((prev) => ({
-              ...prev,
-              activeSeconds: activeSecondsRef.current,
-            }));
-          }, HEARTBEAT_INTERVAL_MS);
-        }
-      } catch {
-        // Silently fail
-      }
-    };
-
-    void startSession();
-
-    // Visibility change — pause/resume tracking
-    const handleVisibility = () => {
-      isVisibleRef.current = !document.hidden;
-      if (!document.hidden) {
-        lastTickRef.current = Date.now();
-      }
-    };
-
-    // Before unload — end session via beacon
-    const handleBeforeUnload = () => {
-      endSessionBeacon();
-    };
-
-    document.addEventListener("visibilitychange", handleVisibility);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      stopTicking();
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current);
-      }
-    };
-  }, [startTicking, stopTicking, sendHeartbeat, endSessionBeacon]);
+  const endSession = useCallback(async () => {
+    await endSessionGlobal();
+  }, []);
 
   return {
     ...state,
-    activeSeconds: activeSecondsRef.current,
+    // Always return the live counter for display purposes
+    activeSeconds: activeSecondsCounter,
     endSession,
   };
 }
