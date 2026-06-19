@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Loader2, Plus, X } from "lucide-react";
+import { Check, Loader2, Plus, Settings2, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatLeadStatus } from "@/lib/leads/constants";
+import { ManageStatusesModal } from "@/components/leads/manage-statuses-modal";
 import { useAuth } from "@/hooks/use-auth";
 import type { Lead, LeadStatus } from "@/types/lead";
 import type { LeadStatusConfig } from "@/types/lead-status-config";
@@ -35,6 +36,7 @@ export function LeadStatusActions({ lead, onUpdated, compact }: LeadStatusAction
   const [newLabel, setNewLabel] = useState("");
   const [newColor, setNewColor] = useState("#8b5cf6");
   const [isCreating, setIsCreating] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -137,14 +139,24 @@ export function LeadStatusActions({ lead, onUpdated, compact }: LeadStatusAction
 
         {/* Add New Status button — Admin only */}
         {isAdmin && !showCreate && (
-          <button
-            type="button"
-            onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-          >
-            <Plus className="h-3 w-3" />
-            Add Status
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              <Plus className="h-3 w-3" />
+              Add Status
+            </button>
+            <button
+              type="button"
+              onClick={() => setManageOpen(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
+            >
+              <Settings2 className="h-3 w-3" />
+              Manage
+            </button>
+          </>
         )}
       </div>
 
@@ -187,6 +199,20 @@ export function LeadStatusActions({ lead, onUpdated, compact }: LeadStatusAction
             <X className="h-3.5 w-3.5" />
           </button>
         </form>
+      )}
+
+      {isAdmin && (
+        <ManageStatusesModal
+          open={manageOpen}
+          onOpenChange={setManageOpen}
+          statuses={statuses}
+          onStatusesChanged={() => {
+            fetch("/api/lead-statuses")
+              .then((res) => res.json())
+              .then((data) => { if (data.statuses?.length) setStatuses(data.statuses); })
+              .catch(() => {});
+          }}
+        />
       )}
     </div>
   );

@@ -100,7 +100,10 @@ export class LeadStatusesDbService extends BaseDbService {
     const supabase = await this.db(client);
 
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (input.label !== undefined) patch.label = input.label.trim();
+    if (input.label !== undefined) {
+      patch.label = input.label.trim();
+      patch.value = toValue(input.label);
+    }
     if (input.color !== undefined) patch.color = input.color;
     if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
 

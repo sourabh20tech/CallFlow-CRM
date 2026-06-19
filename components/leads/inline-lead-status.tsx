@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Loader2, Plus, X } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, Settings2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ManageStatusesModal } from "@/components/leads/manage-statuses-modal";
 import {
   LEAD_STATUS_VARIANT,
   formatLeadStatus,
@@ -81,6 +82,7 @@ export function InlineLeadStatus({
   const [newLabel, setNewLabel] = useState("");
   const [newColor, setNewColor] = useState("#8b5cf6");
   const [isCreating, setIsCreating] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -163,6 +165,7 @@ export function InlineLeadStatus({
   const currentColor = currentConfig?.color ?? "#8b5cf6";
 
   return (
+    <>
     <DropdownMenu open={open} onOpenChange={(v) => { setOpen(v); if (!v) setShowCreateForm(false); }}>
       <DropdownMenuTrigger asChild disabled={isSaving}>
         <button
@@ -224,13 +227,22 @@ export function InlineLeadStatus({
           <>
             <DropdownMenuSeparator />
             {!showCreateForm ? (
-              <DropdownMenuItem
-                onClick={(e) => { e.preventDefault(); setShowCreateForm(true); }}
-                className="flex items-center gap-2 px-2.5 py-2 cursor-pointer text-primary"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span className="text-sm font-medium">Add New Status</span>
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem
+                  onClick={(e) => { e.preventDefault(); setShowCreateForm(true); }}
+                  className="flex items-center gap-2 px-2.5 py-2 cursor-pointer text-primary"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="text-sm font-medium">Add New Status</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => { e.preventDefault(); setOpen(false); setManageOpen(true); }}
+                  className="flex items-center gap-2 px-2.5 py-2 cursor-pointer text-muted-foreground"
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                  <span className="text-sm">Manage Statuses</span>
+                </DropdownMenuItem>
+              </>
             ) : (
               <div className="px-2.5 py-2" onClick={(e) => e.stopPropagation()}>
                 <form onSubmit={(e) => void handleCreateStatus(e)} className="space-y-2">
@@ -281,5 +293,18 @@ export function InlineLeadStatus({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+
+    {isAdmin && (
+      <ManageStatusesModal
+        open={manageOpen}
+        onOpenChange={setManageOpen}
+        statuses={statuses}
+        onStatusesChanged={() => {
+          invalidateStatusCache();
+          void fetchStatuses().then(setStatuses);
+        }}
+      />
+    )}
+    </>
   );
 }
