@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuthApi } from "@/lib/api/require-auth";
+import { requireAdminApi } from "@/lib/api/require-admin";
 import { leadStatusesDbServiceServer } from "@/services/db/lead-statuses.service";
 
 /** GET /api/lead-statuses — List all statuses (available to all authenticated users) */
@@ -18,9 +19,9 @@ export async function GET() {
   }
 }
 
-/** POST /api/lead-statuses — Create a custom status (admin and agents) */
+/** POST /api/lead-statuses — Create a custom status (admin only) */
 export async function POST(request: Request) {
-  const auth = await requireAuthApi();
+  const auth = await requireAdminApi();
   if (auth.error) return auth.error;
 
   let body: unknown;
