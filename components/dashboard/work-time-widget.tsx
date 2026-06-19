@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Clock, LogIn } from "lucide-react";
 import { GlassCard } from "@/components/design-system/glass-card";
 import { useWorkSession } from "@/hooks/use-work-session";
@@ -24,10 +24,6 @@ export function WorkTimeWidget() {
     loginCount: number;
   } | null>(null);
 
-  // Local live display counter
-  const [displaySeconds, setDisplaySeconds] = useState(0);
-  const isVisibleRef = useRef(!document.hidden);
-
   // Fetch today's total from server
   const loadToday = useCallback(async () => {
     try {
@@ -44,31 +40,6 @@ export function WorkTimeWidget() {
     const interval = setInterval(() => void loadToday(), 120_000);
     return () => clearInterval(interval);
   }, [loadToday]);
-
-  // Live session counter
-  useEffect(() => {
-    if (!isActive) {
-      setDisplaySeconds(0);
-      return;
-    }
-    setDisplaySeconds(activeSeconds);
-
-    const handleVisibility = () => {
-      isVisibleRef.current = !document.hidden;
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    const timer = setInterval(() => {
-      if (isVisibleRef.current) {
-        setDisplaySeconds((prev) => prev + 1);
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [isActive, activeSeconds]);
 
   if (!todayData) return null;
 
@@ -87,7 +58,7 @@ export function WorkTimeWidget() {
             <>
               <p className="text-[11px] text-muted-foreground">Session</p>
               <p className="text-sm font-medium tabular-nums text-primary">
-                {formatDuration(displaySeconds)}
+                {formatDuration(activeSeconds)}
               </p>
             </>
           )}

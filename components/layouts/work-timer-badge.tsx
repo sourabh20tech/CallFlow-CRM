@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useWorkSession } from "@/hooks/use-work-session";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -13,41 +12,13 @@ function formatCompact(seconds: number): string {
 
 /**
  * Compact work timer badge shown in the header for agents.
- * Only renders for agent role, not for admin.
+ * Shows live active session time. Only visible for agent role.
  */
 export function WorkTimerBadge() {
   const { role } = useAuth();
-  const { isActive, activeSeconds: hookSeconds } = useWorkSession();
-  const [displaySeconds, setDisplaySeconds] = useState(0);
-  const isVisibleRef = useRef(!document.hidden);
+  const { isActive, activeSeconds } = useWorkSession();
 
-  // Sync from hook and tick live
-  useEffect(() => {
-    if (!isActive) {
-      setDisplaySeconds(0);
-      return;
-    }
-
-    setDisplaySeconds(hookSeconds);
-
-    const handleVisibility = () => {
-      isVisibleRef.current = !document.hidden;
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    const timer = setInterval(() => {
-      if (isVisibleRef.current) {
-        setDisplaySeconds((prev) => prev + 1);
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [isActive, hookSeconds]);
-
-  // Only show for agents
+  // Only show for agents with active session
   if (role !== "agent" || !isActive) return null;
 
   return (
@@ -60,7 +31,7 @@ export function WorkTimerBadge() {
         <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
       </span>
       <span className="text-xs font-medium tabular-nums text-emerald-700 dark:text-emerald-300">
-        {formatCompact(displaySeconds)}
+        {formatCompact(activeSeconds)}
       </span>
     </div>
   );

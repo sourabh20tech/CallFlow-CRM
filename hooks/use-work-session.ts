@@ -46,14 +46,12 @@ function startTicking() {
       const now = Date.now();
       const delta = Math.floor((now - lastTick) / 1000);
       if (delta > 0 && delta < 5) {
+        // Only count reasonable deltas (< 5s to avoid sleep/suspend gaps)
         activeSecondsCounter += delta;
-        // Update state every 5 ticks to avoid excessive re-renders
-        if (activeSecondsCounter % 5 === 0 || delta >= 2) {
-          setState({ activeSeconds: activeSecondsCounter });
-        }
       }
       lastTick = now;
     } else {
+      // Not visible — reset tick to avoid catching up later
       lastTick = Date.now();
     }
   }, 1000);
@@ -168,14 +166,24 @@ export function useWorkSession() {
     void initSession();
   }, []);
 
+  // Force re-render every second when active for live display
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    if (!state.isActive) return;
+    const timer = setInterval(() => forceUpdate((n) => n + 1), 1000);
+    return () => clearInterval(timer);
+  }, [state.isActive]);
+
   const endSession = useCallback(async () => {
     await endSessionGlobal();
   }, []);
 
   return {
-    ...state,
-    // Always return the live counter for display purposes
-    activeSeconds: activeSecondsCounter,
+    sessionId: state.sessionId,
+    loginTime: state.loginTime,
+    isActive: state.isActive,
+    // Return the live counter (updated by the forceUpdate above)
+    activeSeconds: state.isActive ? activeSecondsCounter : 0,
     endSession,
   };
 }
