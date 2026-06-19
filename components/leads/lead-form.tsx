@@ -159,23 +159,11 @@ export function LeadForm({
         </FormField>
       </div>
 
-      <FormField label="Source" htmlFor="source">
-        <FormInput id="source" {...register("source")} placeholder="Website, referral…" />
-      </FormField>
-
       <FormField label="Assigned agent" htmlFor="assignedAgentId">
         <AssignAgentSelect
           agents={agents}
           value={assignedAgentId}
           onChange={(id) => setValue("assignedAgentId", id)}
-        />
-      </FormField>
-
-      <FormField label="Next follow-up" htmlFor="nextFollowUpAt">
-        <FormInput
-          id="nextFollowUpAt"
-          type="datetime-local"
-          {...register("nextFollowUpAt")}
         />
       </FormField>
 
