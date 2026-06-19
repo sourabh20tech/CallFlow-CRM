@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/design-system/form-field";
 import { FormInput } from "@/components/design-system/form-input";
 import { AssignAgentSelect } from "@/components/leads/assign-agent-select";
+import { ManageSourcesModal } from "@/components/leads/manage-sources-modal";
 import { LEAD_STATUS_OPTIONS, LEAD_FORCE_OPTIONS } from "@/lib/leads/constants";
 import { useLeadSources } from "@/hooks/use-lead-sources";
 import { useAuth } from "@/hooks/use-auth";
@@ -181,11 +182,12 @@ export function LeadForm({
   );
 }
 
-/** Source dropdown with "+ Add New Source" for admin */
+/** Source dropdown with "+ Add New Source" and "Manage Sources" for admin */
 function SourceSelect({ register }: { register: any }) {
   const { role } = useAuth();
   const isAdmin = role === "admin";
-  const { sources, setSources } = useLeadSources();
+  const { sources, refresh } = useLeadSources();
+  const [manageOpen, setManageOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [creating, setCreating] = useState(false);
@@ -202,9 +204,9 @@ function SourceSelect({ register }: { register: any }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
       toast.success(`Source "${newLabel.trim()}" created`);
-      setSources((prev) => [...prev, { id: data.id, label: data.label, value: data.value }]);
       setNewLabel("");
       setShowCreate(false);
+      void refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Create failed");
     } finally {
@@ -219,15 +221,27 @@ function SourceSelect({ register }: { register: any }) {
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      {isAdmin && !showCreate && (
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
-          className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-        >
-          <Plus className="h-3 w-3" />
-          Add New Source
-        </button>
+      {isAdmin && (
+        <div className="mt-1.5 flex items-center gap-3">
+          {!showCreate && (
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
+              <Plus className="h-3 w-3" />
+              Add New Source
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setManageOpen(true)}
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            <Settings2 className="h-3 w-3" />
+            Manage Sources
+          </button>
+        </div>
       )}
       {isAdmin && showCreate && (
         <div className="mt-2 flex items-center gap-1.5">
@@ -238,6 +252,10 @@ function SourceSelect({ register }: { register: any }) {
             placeholder="Source name..."
             maxLength={30}
             className="h-7 flex-1 rounded border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); void handleCreate(); }
+              if (e.key === "Escape") { setShowCreate(false); setNewLabel(""); }
+            }}
           />
           <button
             type="button"
@@ -255,6 +273,14 @@ function SourceSelect({ register }: { register: any }) {
             ✕
           </button>
         </div>
+      )}
+      {isAdmin && (
+        <ManageSourcesModal
+          open={manageOpen}
+          onOpenChange={setManageOpen}
+          sources={sources}
+          onSourcesChanged={() => void refresh()}
+        />
       )}
     </div>
   );

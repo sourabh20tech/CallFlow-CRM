@@ -4,9 +4,9 @@ import { requireAdminApi } from "@/lib/api/require-admin";
 
 // In-memory fallback when DB table doesn't exist
 const DEFAULT_SOURCES = [
-  { id: "src-1", label: "Standard", value: "standard" },
-  { id: "src-2", label: "Premium", value: "premium" },
-  { id: "src-3", label: "Enterprise", value: "enterprise" },
+  { id: "src-1", label: "Standard", value: "standard", isSystem: true },
+  { id: "src-2", label: "Premium", value: "premium", isSystem: true },
+  { id: "src-3", label: "Enterprise", value: "enterprise", isSystem: true },
 ];
 
 /** GET /api/lead-sources — List all sources */
@@ -33,6 +33,7 @@ export async function GET() {
       id: r.id,
       label: r.label,
       value: r.value,
+      isSystem: r.is_system ?? false,
     }));
 
     return NextResponse.json({ sources }, {
