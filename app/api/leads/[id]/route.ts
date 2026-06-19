@@ -30,7 +30,11 @@ export async function GET(_request: Request, { params }: RouteParams) {
       await agentPanelService.assertLeadOwnedByAgent(id, ctx.agentId);
     }
 
-    const notes = await leadsService.getNotes(id);
+    const notes = await leadsService.getNotes(
+      id,
+      auth.user.role === "agent",
+      auth.user.role === "agent" ? auth.user.id : undefined,
+    );
     return NextResponse.json({ lead, notes });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load lead";

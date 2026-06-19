@@ -17,10 +17,15 @@ const demoDialLeads: DialLead[] = [
   { id: "cust-2", name: "Michael Chen", phone: "+15552345678", company: "TechFlow" },
 ];
 
-export async function getDialLeads(): Promise<DialLead[]> {
+/**
+ * Fetch leads available for dial/selection.
+ * If agentId is provided, only returns leads assigned to that agent.
+ */
+export async function getDialLeads(agentId?: string): Promise<DialLead[]> {
   if (isSupabaseConfigured()) {
     try {
-      const result = await leadsDbServiceServer.list({}, { page: 1, pageSize: 50 });
+      const filters = agentId ? { assignedAgentId: agentId } : {};
+      const result = await leadsDbServiceServer.list(filters, { page: 1, pageSize: 50 });
       return result.data.map((l) => ({
         id: l.id,
         name: l.fullName,

@@ -1,5 +1,4 @@
 import { resolveAgentIdForUser } from "@/lib/agents/resolve-current-agent";
-import { getDialLeads } from "@/lib/calls/dial-leads";
 import { requireSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 import { agentsService } from "@/services/agents.service";
@@ -128,12 +127,8 @@ export class AgentPanelService {
       phone: l.phone,
       company: l.company,
     }));
-    const allDial = await safe("dial leads", () => getDialLeads(), []);
-    const dialIds = new Set(assignedDial.map((d) => d.id));
-    const dialLeads = [
-      ...assignedDial,
-      ...allDial.filter((d) => !dialIds.has(d.id)),
-    ].slice(0, 12);
+    // Agent should only see their own assigned leads for dialing
+    const dialLeads = assignedDial.slice(0, 12);
 
     return {
       agentId,
