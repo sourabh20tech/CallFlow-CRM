@@ -35,7 +35,12 @@ export class NotesDbService extends BaseDbService {
     return supabase.from(LEAD_NOTES_TABLE);
   }
 
-  async listByLead(leadId: string, client?: TypedSupabaseClient, excludeInternal = false): Promise<Note[]> {
+  async listByLead(
+    leadId: string,
+    client?: TypedSupabaseClient,
+    excludeInternal = false,
+    agentUserId?: string,
+  ): Promise<Note[]> {
     if (!leadId?.trim()) return [];
 
     const supabase = await this.db(client);
@@ -59,7 +64,21 @@ export class NotesDbService extends BaseDbService {
       return [];
     }
 
-    return ((result.data ?? []) as NoteWithAuthor[]).map(mapNoteRow);
+    let notes = ((result.data ?? []) as NoteWithAuthor[]).map(mapNoteRow);
+
+    // Agent privacy filtering: agents can only see their own notes + shared notes
+    if (agentUserId) {
+      notes = notes.filter((note) => {
+        // Agent can always see their own notes
+        if (note.authorId === agentUserId) return true;
+        // Agent can see notes marked as "shared"
+        if (note.visibility === "shared") return true;
+        // Hide private notes from other agents
+        return false;
+      });
+    }
+
+    return notes;
   }
 
   async listByCallLog(callLogId: string, client?: TypedSupabaseClient): Promise<Note[]> {
@@ -118,6 +137,7 @@ export class NotesDbService extends BaseDbService {
       content: input.content.trim(),
       is_pinned: input.isPinned ?? false,
       note_type: input.noteType ?? "public",
+      visibility: input.visibility ?? "private",
     };
 
     try {

@@ -45,7 +45,15 @@ export async function GET(_request: Request, { params }: RouteParams) {
   const access = await assertCallAccess(auth.user, id);
   if (access.error) return access.error;
 
-  const notes = await callsService.getNotes(id);
+  let notes = await callsService.getNotes(id);
+
+  // For agents, filter notes to only show their own + shared notes
+  if (auth.user.role === "agent") {
+    notes = notes.filter(
+      (note) => note.authorId === auth.user.id || note.visibility === "shared",
+    );
+  }
+
   return NextResponse.json({ call: access.call, notes });
 }
 

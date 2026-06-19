@@ -16,7 +16,7 @@ const demoNotesByCall: Record<string, Note[]> = {
       authorId: "demo-agent",
       authorName: "Alex Morgan",
       content: "Discussed enterprise pricing force.",
-      isPinned: true, noteType: "public" as const,
+      isPinned: true, noteType: "public" as const, visibility: "shared" as const,
       createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
       updatedAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
     },
@@ -87,7 +87,7 @@ export function addDemoCallNote(callId: string, content: string, authorName = "Y
     authorId: "demo-user",
     authorName,
     content,
-    isPinned: false, noteType: "public" as const,
+    isPinned: false, noteType: "public" as const, visibility: "private" as const,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

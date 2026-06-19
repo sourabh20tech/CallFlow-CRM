@@ -185,6 +185,12 @@ export function LeadNotesPanel({
                           Internal
                         </span>
                       )}
+                      {note.visibility === "private" && note.noteType !== "internal" && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full border border-slate-400/30 bg-slate-100/60 px-1.5 py-0 text-[10px] font-medium text-slate-500 dark:bg-slate-800/40 dark:text-slate-400">
+                          <Lock className="h-2.5 w-2.5" />
+                          Private
+                        </span>
+                      )}
                       {note.isPinned && (
                         <Pin className="h-3.5 w-3.5 text-amber-500" aria-label="Pinned" />
                       )}

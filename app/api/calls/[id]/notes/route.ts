@@ -12,7 +12,15 @@ export async function GET(_request: Request, { params }: RouteParams) {
   if (auth.error) return auth.error;
 
   const { id } = await params;
-  const notes = await callsService.getNotes(id);
+  let notes = await callsService.getNotes(id);
+
+  // For agents, filter notes to only show their own + shared notes
+  if (auth.user.role === "agent") {
+    notes = notes.filter(
+      (note) => note.authorId === auth.user.id || note.visibility === "shared",
+    );
+  }
+
   return NextResponse.json(notes);
 }
 

@@ -158,6 +158,7 @@ export function mapNoteRow(row: NoteRow | NoteWithAuthor): Note {
     authorAvatarUrl: withAuthor.profiles?.avatar_url ?? undefined,
     content: row.content,
     noteType: (row as NoteRow & { note_type?: string }).note_type === "internal" ? "internal" : "public",
+    visibility: (row as any).visibility === "shared" ? "shared" : "private",
     isPinned: row.is_pinned,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
