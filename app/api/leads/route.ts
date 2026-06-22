@@ -57,6 +57,8 @@ export async function GET(request: Request) {
       pageSize: result.pageSize,
       totalPages: result.totalPages,
       agents,
+    }, {
+      headers: { "Cache-Control": "private, max-age=5, stale-while-revalidate=30" },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load leads";

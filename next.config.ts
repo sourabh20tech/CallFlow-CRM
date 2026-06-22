@@ -28,7 +28,15 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-label",
       "@radix-ui/react-slot",
       "class-variance-authority",
+      "@tanstack/react-table",
+      "jspdf",
+      "xlsx",
     ],
+    // Enable PPR for faster page loads
+    staleTimes: {
+      dynamic: 30, // Cache dynamic pages for 30s in router
+      static: 180, // Cache static pages for 3 minutes
+    },
   },
 
   async redirects() {

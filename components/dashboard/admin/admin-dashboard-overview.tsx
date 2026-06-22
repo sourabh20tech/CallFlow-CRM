@@ -1,18 +1,33 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/design-system/page-header";
 import { AdminKpiRow, AdminKpiSummary } from "@/components/dashboard/admin/admin-kpi-row";
-import { AdminChartsSection } from "@/components/dashboard/admin/admin-charts-section";
-import { AdminActivitySection } from "@/components/dashboard/admin/admin-activity-section";
-import { AdminLatestLeadsSection } from "@/components/dashboard/admin/admin-latest-leads-section";
 import { AdminDashboardSkeleton } from "@/components/dashboard/admin/admin-dashboard-skeleton";
-import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useIsClient } from "@/hooks/use-is-client";
 import { pageSection } from "@/lib/design-system/styles";
 import { Button } from "@/components/ui/button";
+
+// Lazy-load heavy sections — charts and activity load after KPIs render
+const AdminChartsSection = dynamic(
+  () => import("@/components/dashboard/admin/admin-charts-section").then((m) => m.AdminChartsSection),
+  { ssr: false },
+);
+const AdminActivitySection = dynamic(
+  () => import("@/components/dashboard/admin/admin-activity-section").then((m) => m.AdminActivitySection),
+  { ssr: false },
+);
+const AdminLatestLeadsSection = dynamic(
+  () => import("@/components/dashboard/admin/admin-latest-leads-section").then((m) => m.AdminLatestLeadsSection),
+  { ssr: false },
+);
+const FollowupCenterWidget = dynamic(
+  () => import("@/components/dashboard/followup-center-widget").then((m) => m.FollowupCenterWidget),
+  { ssr: false },
+);
 
 const REFRESH_INTERVAL = undefined as number | undefined;
 
