@@ -114,6 +114,20 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Agent can only create follow-ups for their own assigned leads
+    if (auth.user.role === "agent" && parsed.data.leadId) {
+      const agentId = await resolveAgentId(auth.user.id);
+      if (!agentId) {
+        return NextResponse.json({ error: "Agent profile not found" }, { status: 403 });
+      }
+      const { agentPanelService } = await import("@/services/agent-panel.service");
+      try {
+        await agentPanelService.assertLeadOwnedByAgent(parsed.data.leadId, agentId);
+      } catch {
+        return NextResponse.json({ error: "You do not have access to this lead" }, { status: 403 });
+      }
+    }
+
     const dueAt = new Date(parsed.data.dueAt).toISOString();
     const followup = await followupsService.create({
       ...parsed.data,

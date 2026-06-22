@@ -98,6 +98,16 @@ export async function POST(request: Request) {
           ? await resolveAgentId(auth.user.id)
           : parsed.data.agentId;
 
+    // Agent can only log calls for their own assigned leads
+    if (auth.user.role === "agent" && parsed.data.leadId && agentId) {
+      const { agentPanelService } = await import("@/services/agent-panel.service");
+      try {
+        await agentPanelService.assertLeadOwnedByAgent(parsed.data.leadId, agentId);
+      } catch {
+        return NextResponse.json({ error: "You do not have access to this lead" }, { status: 403 });
+      }
+    }
+
     const call = await callsService.create({
       leadId: parsed.data.leadId,
       direction: parsed.data.direction,
