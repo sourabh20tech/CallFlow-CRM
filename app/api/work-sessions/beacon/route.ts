@@ -4,8 +4,8 @@ import { requireAuthApi } from "@/lib/api/require-auth";
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/work-sessions/beacon — Handle sendBeacon calls on page unload.
- * Ends the active session with the final active_seconds value.
+ * POST /api/work-sessions/beacon — Handle sendBeacon on page unload/close.
+ * Closes the active session using the higher of client vs DB active_seconds.
  */
 export async function POST(request: Request) {
   const auth = await requireAuthApi();
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    // Fallback — just end the session
+    // Fallback — just end with DB value
   }
 
   try {
@@ -23,7 +23,6 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const now = new Date();
 
-    // Find active session
     const { data: active } = await (supabase as any)
       .from("work_sessions")
       .select("id, login_time, active_seconds")
@@ -35,22 +34,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "No active session" });
     }
 
-    // Use the client-reported activeSeconds or fall back to stored value
-    const finalActiveSeconds = typeof body.activeSeconds === "number"
+    const dbSeconds = active.active_seconds ?? 0;
+    const clientSeconds = typeof body.activeSeconds === "number"
       ? Math.max(0, body.activeSeconds)
-      : (active.active_seconds ?? 0);
+      : 0;
 
-    // Fallback: if no active_seconds tracked, calculate from login time
-    const elapsed = Math.floor((now.getTime() - new Date(active.login_time).getTime()) / 1000);
-    const duration = finalActiveSeconds > 0 ? finalActiveSeconds : Math.max(0, elapsed);
+    // Use the HIGHER value — prevents data loss from race conditions
+    const finalSeconds = Math.max(dbSeconds, clientSeconds);
 
     await (supabase as any)
       .from("work_sessions")
       .update({
         is_active: false,
         logout_time: now.toISOString(),
-        duration_seconds: duration,
-        active_seconds: finalActiveSeconds,
+        duration_seconds: finalSeconds,
+        active_seconds: finalSeconds,
       })
       .eq("id", active.id);
 

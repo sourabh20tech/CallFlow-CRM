@@ -3,6 +3,8 @@ import { requireAuthApi } from "@/lib/api/require-auth";
 
 export const dynamic = "force-dynamic";
 
+const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes — if heartbeat older, session is stale
+
 /** GET /api/work-sessions — Get sessions for the user (or all for admin) */
 export async function GET(request: Request) {
   const auth = await requireAuthApi();
@@ -15,7 +17,6 @@ export async function GET(request: Request) {
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
 
-    // Date range
     const now = new Date();
     let from: string;
     const to: string = now.toISOString();
@@ -39,7 +40,6 @@ export async function GET(request: Request) {
       .lte("login_time", to)
       .order("login_time", { ascending: false });
 
-    // Agent isolation OR admin viewing specific agent
     if (auth.user.role === "agent") {
       query = query.eq("user_id", auth.user.id);
     } else if (searchParams.get("userId")) {
@@ -51,26 +51,20 @@ export async function GET(request: Request) {
 
     const sessions = (data ?? []) as any[];
 
-    // Calculate totals — use only stored duration_seconds for closed sessions
+    // Calculate totals from database values only
     let totalSeconds = 0;
     let loginCount = 0;
     for (const s of sessions) {
       loginCount++;
-      if (s.duration_seconds && s.duration_seconds > 0) {
+      if (!s.is_active && s.duration_seconds > 0) {
+        // Closed session — use stored duration
         totalSeconds += s.duration_seconds;
-      } else if (s.is_active && s.login_time) {
-        // Active session — use active_seconds (tracked time) if available,
-        // otherwise calculate from login_time as fallback
-        if (s.active_seconds && s.active_seconds > 0) {
-          totalSeconds += s.active_seconds;
-        } else {
-          const elapsed = Math.floor((Date.now() - new Date(s.login_time).getTime()) / 1000);
-          totalSeconds += Math.max(0, elapsed);
-        }
+      } else if (s.is_active) {
+        // Active session — use active_seconds from DB (last heartbeat value)
+        totalSeconds += Math.max(0, s.active_seconds ?? 0);
       }
     }
 
-    // Find active session
     const activeSession = sessions.find((s: any) => s.is_active);
 
     return NextResponse.json({
@@ -91,7 +85,16 @@ export async function GET(request: Request) {
   }
 }
 
-/** POST /api/work-sessions — Start a new session (login) */
+/**
+ * POST /api/work-sessions — Start or resume a session.
+ * 
+ * Key behavior:
+ * - If an active session exists AND its last heartbeat is recent (< 5 min), RESUME it.
+ * - If an active session exists but is stale (> 5 min), CLOSE it and create new.
+ * - If no active session, create new.
+ * 
+ * This prevents page refresh from creating duplicate sessions or losing time.
+ */
 export async function POST(request: Request) {
   const auth = await requireAuthApi();
   if (auth.error) return auth.error;
@@ -109,22 +112,40 @@ export async function POST(request: Request) {
       if (match) agentId = match.id;
     } catch {}
 
-    // Check if there's already an active session
+    // Check for existing active session
     const { data: existingActive } = await (supabase as any)
       .from("work_sessions")
-      .select("id, login_time, active_seconds")
+      .select("id, login_time, active_seconds, last_heartbeat")
       .eq("user_id", auth.user.id)
       .eq("is_active", true)
       .maybeSingle();
 
-    // If active session exists, close it properly with calculated duration
     if (existingActive) {
-      const loginTime = new Date(existingActive.login_time).getTime();
-      const elapsed = Math.floor((Date.now() - loginTime) / 1000);
-      // Use active_seconds if tracked, otherwise cap at elapsed time
-      const duration = existingActive.active_seconds && existingActive.active_seconds > 0
+      const lastBeat = existingActive.last_heartbeat
+        ? new Date(existingActive.last_heartbeat).getTime()
+        : new Date(existingActive.login_time).getTime();
+      const sinceLastBeat = Date.now() - lastBeat;
+
+      if (sinceLastBeat < STALE_THRESHOLD_MS) {
+        // Session is still fresh — RESUME it (don't create new)
+        return NextResponse.json({
+          session: {
+            id: existingActive.id,
+            login_time: existingActive.login_time,
+            active_seconds: existingActive.active_seconds ?? 0,
+            is_active: true,
+            resumed: true,
+          },
+        }, { status: 200 });
+      }
+
+      // Session is stale — close it with its tracked active_seconds
+      const duration = existingActive.active_seconds > 0
         ? existingActive.active_seconds
-        : Math.min(elapsed, 28800); // Cap at 8 hours max for stale sessions
+        : Math.min(
+            Math.floor((Date.now() - new Date(existingActive.login_time).getTime()) / 1000),
+            28800,
+          );
 
       await (supabase as any)
         .from("work_sessions")
@@ -188,39 +209,39 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ message: "No active session" });
     }
 
-    // Heartbeat — just update active_seconds
+    // Heartbeat — update active_seconds in DB
     if (body.action === "heartbeat" && typeof body.activeSeconds === "number") {
       const newActiveSeconds = Math.max(0, body.activeSeconds);
+      // Sanity check: active_seconds should never decrease
+      const safeSeconds = Math.max(newActiveSeconds, active.active_seconds ?? 0);
       await (supabase as any)
         .from("work_sessions")
-        .update({ active_seconds: newActiveSeconds, last_heartbeat: now.toISOString() })
+        .update({ active_seconds: safeSeconds, last_heartbeat: now.toISOString() })
         .eq("id", active.id);
 
-      return NextResponse.json({ success: true, activeSeconds: newActiveSeconds });
+      return NextResponse.json({ success: true, activeSeconds: safeSeconds });
     }
 
-    // End session — use tracked active_seconds as the duration
-    const activeSeconds = active.active_seconds ?? 0;
-    // If client sends final activeSeconds, prefer that
-    const finalActiveSeconds = typeof body.activeSeconds === "number"
+    // End session
+    const dbActiveSeconds = active.active_seconds ?? 0;
+    const clientActiveSeconds = typeof body.activeSeconds === "number"
       ? Math.max(0, body.activeSeconds)
-      : activeSeconds;
+      : 0;
 
-    // Fallback: if no active_seconds tracked, calculate from login time
-    const elapsed = Math.floor((now.getTime() - new Date(active.login_time).getTime()) / 1000);
-    const duration = finalActiveSeconds > 0 ? finalActiveSeconds : Math.max(0, elapsed);
+    // Use the HIGHER of client-reported vs DB-stored (prevents data loss)
+    const finalSeconds = Math.max(dbActiveSeconds, clientActiveSeconds);
 
     await (supabase as any)
       .from("work_sessions")
       .update({
         is_active: false,
         logout_time: now.toISOString(),
-        duration_seconds: duration,
-        active_seconds: finalActiveSeconds,
+        duration_seconds: finalSeconds,
+        active_seconds: finalSeconds,
       })
       .eq("id", active.id);
 
-    return NextResponse.json({ success: true, duration });
+    return NextResponse.json({ success: true, duration: finalSeconds });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to end session";
     return NextResponse.json({ error: message }, { status: 500 });

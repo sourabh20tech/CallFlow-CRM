@@ -1,9 +1,10 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { useWorkSession } from "@/hooks/use-work-session";
 import { useAuth } from "@/hooks/use-auth";
 
-function formatCompact(seconds: number): string {
+function fmt(seconds: number): string {
   if (seconds <= 0) return "0h 00m";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -11,27 +12,48 @@ function formatCompact(seconds: number): string {
 }
 
 /**
- * Compact work timer badge shown in the header for agents.
- * Shows live active session time. Only visible for agent role.
+ * Compact work timer badge in the header for agents.
+ * Shows: 🟢 Active: session time | Today: total time
  */
 export function WorkTimerBadge() {
   const { role } = useAuth();
   const { isActive, activeSeconds } = useWorkSession();
+  const [todaySeconds, setTodaySeconds] = useState(0);
+
+  const loadToday = useCallback(async () => {
+    try {
+      const res = await fetch("/api/work-sessions?date=today");
+      if (!res.ok) return;
+      const { totalSeconds } = await res.json();
+      setTodaySeconds(totalSeconds ?? 0);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (role !== "agent") return;
+    void loadToday();
+    const interval = setInterval(() => void loadToday(), 120_000);
+    return () => clearInterval(interval);
+  }, [role, loadToday]);
 
   // Only show for agents with active session
   if (role !== "agent" || !isActive) return null;
 
   return (
     <div
-      className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 dark:border-emerald-800 dark:bg-emerald-950/40 sm:flex"
-      title="Active work time this session"
+      className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 dark:border-emerald-800 dark:bg-emerald-950/40 sm:flex"
+      title={`Session: ${fmt(activeSeconds)} | Today: ${fmt(todaySeconds)}`}
     >
       <span className="relative flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
       </span>
       <span className="text-xs font-medium tabular-nums text-emerald-700 dark:text-emerald-300">
-        {formatCompact(activeSeconds)}
+        {fmt(activeSeconds)}
+      </span>
+      <span className="text-[10px] text-emerald-600/60 dark:text-emerald-400/60">|</span>
+      <span className="text-[10px] tabular-nums text-emerald-600/80 dark:text-emerald-400/70">
+        Today {fmt(todaySeconds)}
       </span>
     </div>
   );
