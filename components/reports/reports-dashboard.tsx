@@ -12,6 +12,7 @@ import { ReportsSummaryCards } from "@/components/reports/reports-summary-cards"
 import { ReportsExportActions } from "@/components/reports/reports-export-actions";
 import { ReportsDashboardSkeleton } from "@/components/reports/reports-dashboard-skeleton";
 import { toDatetimeLocalValue } from "@/lib/followups/datetime";
+import { useAuth } from "@/hooks/use-auth";
 import type {
   LiveDashboardStats,
   ReportDatePreset,
@@ -57,6 +58,8 @@ interface ReportsDashboardProps {
 }
 
 export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
   const [data, setData] = useState(initialData);
   const [preset, setPreset] = useState<ReportDatePreset>(initialData.range.preset ?? "7d");
   const [customFrom, setCustomFrom] = useState(() =>
@@ -167,7 +170,7 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
               <RefreshCw className={isRefreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
               Refresh
             </Button>
-            <ReportsExportActions data={data} />
+            {isAdmin && <ReportsExportActions data={data} />}
           </div>
         }
       />
