@@ -9,6 +9,7 @@ import { AgentPanelEmptyState } from "@/components/agent-panel/agent-panel-empty
 import { MyLeadsToolbar } from "@/components/agent-panel/my-leads-toolbar";
 import { LeadDetailSheet } from "@/components/agent-panel/lead-detail-sheet";
 import { LeadQuickCallButton } from "@/components/agent-panel/lead-quick-call-button";
+import { LeadQuickFollowupButton } from "@/components/agent-panel/lead-quick-followup-button";
 import { WhatsAppChatButton } from "@/components/shared/whatsapp-chat-button";
 import { LEAD_STATUS_VARIANT, formatLeadStatus } from "@/lib/leads/constants";
 import { filterAgentLeads } from "@/lib/agent-panel/lead-lookup";
@@ -145,6 +146,11 @@ export function MyLeadsSection({
                           message={WHATSAPP_TEMPLATES.greeting}
                           label={`WhatsApp ${lead.fullName}`}
                         />
+                        <LeadQuickFollowupButton
+                          leadId={lead.id}
+                          leadName={lead.fullName}
+                          onFollowupCreated={onRefresh}
+                        />
                         <Button variant="ghost" size="sm" onClick={() => openLead(lead)}>
                           Details
                           <ChevronRight className="ml-1 h-4 w-4" />
@@ -198,8 +204,14 @@ export function MyLeadsSection({
                     className="flex-1"
                     iconOnly={false}
                   />
+                  <LeadQuickFollowupButton
+                    leadId={lead.id}
+                    leadName={lead.fullName}
+                    onFollowupCreated={onRefresh}
+                    className="flex-1"
+                  />
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => openLead(lead)}>
-                    Notes & status
+                    Details
                   </Button>
                 </div>
               </li>
