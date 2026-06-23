@@ -277,7 +277,8 @@ export function buildKpis(
   const totalAnswered = daily.reduce((s, d) => s + d.answered, 0);
   const totalLeads = leadConversion.reduce((s, m) => s + m.leads, 0);
   const totalConverted = leadConversion.reduce((s, m) => s + m.converted, 0);
-  const totalFund = sales.reduce((s, m) => s + m.fund, 0);
+  // Use real fund data from lead_funds table
+  const totalFund = raw.funds.reduce((s, f) => s + Number(f.amount), 0);
   const stats = raw.dashboardStats;
 
   const liveTotalLeads = stats?.total_leads ?? totalLeads;

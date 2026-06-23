@@ -52,12 +52,21 @@ export interface AnalyticsAgentRow {
   calls_handled: number;
 }
 
+export interface AnalyticsFundRow {
+  id: string;
+  lead_id: string;
+  agent_id: string;
+  amount: number;
+  created_at: string;
+}
+
 export interface AnalyticsRawData {
   dashboardStats: DashboardStatsRow | null;
   leads: AnalyticsLeadRow[];
   calls: AnalyticsCallRow[];
   followups: AnalyticsFollowupRow[];
   agents: AnalyticsAgentRow[];
+  funds: AnalyticsFundRow[];
 }
 
 export class AnalyticsDbService extends BaseDbService {
@@ -67,16 +76,17 @@ export class AnalyticsDbService extends BaseDbService {
     const to = range.to;
     const today = new Date().toISOString().slice(0, 10);
 
-    const [dashboardStats, leads, calls, followups, agents] = await Promise.all([
+    const [dashboardStats, leads, calls, followups, agents, funds] = await Promise.all([
       // For agent-scoped reports, skip the global dashboard stats
       agentId ? Promise.resolve(null) : this.refreshDashboardStats(supabase, today),
       this.fetchLeads(supabase, from, to, agentId),
       this.fetchCalls(supabase, from, to, agentId),
       this.fetchFollowups(supabase, from, to, agentId),
       agentId ? Promise.resolve([]) : this.fetchAgents(supabase),
+      this.fetchFunds(supabase, from, to, agentId),
     ]);
 
-    return { dashboardStats, leads, calls, followups, agents };
+    return { dashboardStats, leads, calls, followups, agents, funds };
   }
 
   async fetchLiveStats(client?: TypedSupabaseClient): Promise<DashboardStatsRow | null> {
@@ -217,6 +227,39 @@ export class AnalyticsDbService extends BaseDbService {
       avg_handle_time_seconds: row.avg_handle_time_seconds,
       calls_handled: row.calls_handled,
     }));
+  }
+
+  private async fetchFunds(
+    supabase: TypedSupabaseClient,
+    from: string,
+    to: string,
+    agentId?: string,
+  ): Promise<AnalyticsFundRow[]> {
+    try {
+      let query = (supabase as any)
+        .from("lead_funds")
+        .select("id, lead_id, agent_id, amount, created_at")
+        .gte("created_at", from)
+        .lte("created_at", to);
+
+      if (agentId) {
+        // For agent reports, show funds from leads assigned to the agent
+        const { data: agentLeads } = await supabase
+          .from("leads")
+          .select("id")
+          .eq("assigned_agent_id", agentId)
+          .is("deleted_at", null);
+        const leadIds = (agentLeads ?? []).map((l: { id: string }) => l.id);
+        if (leadIds.length === 0) return [];
+        query = query.in("lead_id", leadIds);
+      }
+
+      const { data, error } = await query.limit(2000);
+      if (error) return [];
+      return (data ?? []) as AnalyticsFundRow[];
+    } catch {
+      return [];
+    }
   }
 }
 
