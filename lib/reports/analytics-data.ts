@@ -58,19 +58,6 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
     };
   });
 
-  const sales = leadConversion.map((m, i) => {
-    const r = seededRandom(seed + i * 11);
-    const deals = m.converted;
-    const avgDealSize = Math.round(1200 + r * 2800);
-    return {
-      period: m.month,
-      fund: deals * avgDealSize,
-      deals,
-      pipeline: Math.round(m.leads * avgDealSize * (1.2 + r * 0.5)),
-      avgDealSize,
-    };
-  });
-
   const performance = daily.slice(0, Math.min(daily.length, 14)).map((d, i) => {
     const r = seededRandom(seed + i * 3);
     return {
@@ -81,22 +68,11 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
     };
   });
 
-  const hourlyVolume = [
-    "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm", "5pm",
-  ].map((hour, i) => {
-    const r = seededRandom(seed + i * 5);
-    return {
-      hour,
-      inbound: Math.round(20 + r * 45),
-      outbound: Math.round(10 + r * 30),
-    };
-  });
-
   const totalCalls = daily.reduce((s, d) => s + d.calls, 0);
   const totalAnswered = daily.reduce((s, d) => s + d.answered, 0);
   const totalLeads = leadConversion.reduce((s, m) => s + m.leads, 0);
   const totalConverted = leadConversion.reduce((s, m) => s + m.converted, 0);
-  const totalFund = sales.reduce((s, m) => s + m.fund, 0);
+  const totalFund = 0;
 
   const followups = {
     total: Math.round(24 + seededRandom(seed) * 40),
@@ -121,7 +97,7 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
         ? Math.round((totalConverted / totalLeads) * 1000) / 10
         : 0,
       totalFund,
-      fundChange: Number((8 + seededRandom(seed) * 12).toFixed(1)),
+      fundChange: 0,
       avgHandleTime: Math.round(
         performance.reduce((s, p) => s + p.handleTime, 0) / (performance.length || 1),
       ),
@@ -133,9 +109,7 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
     daily,
     leadConversion,
     agentPerformance,
-    sales,
     performance,
-    hourlyVolume,
     followups,
     generatedAt: new Date().toISOString(),
     source: "demo",

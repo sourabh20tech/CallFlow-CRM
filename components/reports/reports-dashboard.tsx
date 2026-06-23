@@ -37,8 +37,8 @@ const ReportsAgentsSection = dynamic(
   () => import("@/components/reports/sections/reports-agents-section").then((m) => m.ReportsAgentsSection),
   { ssr: false, loading: () => <SectionSkeleton /> },
 );
-const ReportsSalesPerformanceSection = dynamic(
-  () => import("@/components/reports/sections/reports-sales-performance-section").then((m) => m.ReportsSalesPerformanceSection),
+const ReportsPerformanceSection = dynamic(
+  () => import("@/components/reports/charts/performance-analytics-chart").then((m) => ({ default: ({ performance, chartKey }: { performance: any; chartKey: string }) => <m.PerformanceAnalyticsChart data={performance} chartKey={`perf-${chartKey}`} /> })),
   { ssr: false, loading: () => <SectionSkeleton /> },
 );
 const ReportsFollowupsSection = dynamic(
@@ -151,7 +151,7 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
     <div className={pageSection}>
       <PageHeader
         title="Reports & Analytics"
-        description="Daily reports, lead conversion, agent performance, sales and performance graphs"
+        description="Daily reports, lead conversion, agent performance, and analytics"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -202,9 +202,6 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
           <TabsTrigger value="followups" className="text-xs sm:text-sm">
             Follow-ups
           </TabsTrigger>
-          <TabsTrigger value="sales" className="text-xs sm:text-sm">
-            Sales
-          </TabsTrigger>
           <TabsTrigger value="performance" className="text-xs sm:text-sm">
             Performance
           </TabsTrigger>
@@ -230,21 +227,10 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
           <ReportsFollowupsSection followups={data.followups} chartKey={chartKey} />
         </TabsContent>
 
-        <TabsContent value="sales" className="mt-0">
-          <ReportsSalesPerformanceSection
-            sales={data.sales}
-            performance={data.performance}
-            chartKey={chartKey}
-            variant="sales"
-          />
-        </TabsContent>
-
         <TabsContent value="performance" className="mt-0">
-          <ReportsSalesPerformanceSection
-            sales={data.sales}
+          <ReportsPerformanceSection
             performance={data.performance}
             chartKey={chartKey}
-            variant="performance"
           />
         </TabsContent>
       </Tabs>

@@ -312,16 +312,14 @@ export function buildReportsBundleFromRaw(
   const daily = aggregateDailyCalls(raw, range);
   const leadConversion = aggregateLeadConversion(raw, range);
   const agentPerformance = aggregateAgentPerformance(raw);
-  const sales = aggregateSales(leadConversion, raw);
   const performance = aggregatePerformance(daily, raw, range);
-  const hourlyVolume = aggregateHourlyVolume(raw);
   const followups = aggregateFollowups(raw);
   const kpis = buildKpis(
     raw,
     daily,
     leadConversion,
     agentPerformance,
-    sales,
+    [],
     performance,
     followups,
   );
@@ -332,9 +330,7 @@ export function buildReportsBundleFromRaw(
     daily,
     leadConversion,
     agentPerformance,
-    sales,
     performance,
-    hourlyVolume,
     followups,
     generatedAt: new Date().toISOString(),
     source: "supabase",

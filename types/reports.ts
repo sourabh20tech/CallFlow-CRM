@@ -78,9 +78,7 @@ export interface ReportsBundle {
   daily: DailyCallsDataPoint[];
   leadConversion: LeadConversionDataPoint[];
   agentPerformance: AgentPerformanceDataPoint[];
-  sales: SalesAnalyticsPoint[];
   performance: PerformanceAnalyticsPoint[];
-  hourlyVolume: HourlyVolumePoint[];
   followups: FollowupAnalyticsSummary;
   generatedAt: string;
   source?: "supabase" | "demo";

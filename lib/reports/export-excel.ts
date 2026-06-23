@@ -67,20 +67,6 @@ export async function exportReportsToExcel(
   XLSX.utils.book_append_sheet(
     wb,
     XLSX.utils.json_to_sheet(
-      data.sales.map((r) => ({
-        Period: r.period,
-        fund: formatCurrency(r.fund),
-        Deals: r.deals,
-        Pipeline: formatCurrency(r.pipeline),
-        "Avg deal size": formatCurrency(r.avgDealSize),
-      })),
-    ),
-    "Sales Analytics",
-  );
-
-  XLSX.utils.book_append_sheet(
-    wb,
-    XLSX.utils.json_to_sheet(
       data.performance.map((r) => ({
         Period: r.period,
         "Handle time (sec)": r.handleTime,
@@ -89,19 +75,6 @@ export async function exportReportsToExcel(
       })),
     ),
     "Performance",
-  );
-
-  XLSX.utils.book_append_sheet(
-    wb,
-    XLSX.utils.json_to_sheet(
-      data.hourlyVolume.map((r) => ({
-        Hour: r.hour,
-        Inbound: r.inbound,
-        Outbound: r.outbound,
-        Total: r.inbound + r.outbound,
-      })),
-    ),
-    "Hourly Volume",
   );
 
   const name =
