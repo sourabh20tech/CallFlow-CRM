@@ -176,7 +176,7 @@ export function aggregateSales(
     const deals = m.converted;
     return {
       period: m.month,
-      revenue: 0,
+      fund: 0,
       deals,
       pipeline: 0,
       avgDealSize: 0,
@@ -285,7 +285,7 @@ export function buildKpis(
   const totalAnswered = daily.reduce((s, d) => s + d.answered, 0);
   const totalLeads = leadConversion.reduce((s, m) => s + m.leads, 0);
   const totalConverted = leadConversion.reduce((s, m) => s + m.converted, 0);
-  const totalRevenue = sales.reduce((s, m) => s + m.revenue, 0);
+  const totalFund = sales.reduce((s, m) => s + m.fund, 0);
   const stats = raw.dashboardStats;
 
   const liveTotalLeads = stats?.total_leads ?? totalLeads;
@@ -300,8 +300,8 @@ export function buildKpis(
     totalCalls: stats?.total_calls ?? totalCalls,
     answeredRate: totalCalls ? Math.round((totalAnswered / totalCalls) * 1000) / 10 : 0,
     conversionRate: liveConversionRate,
-    totalRevenue,
-    revenueChange: 0,
+    totalFund,
+    fundChange: 0,
     avgHandleTime: Math.round(
       performance.reduce((s, p) => s + p.handleTime, 0) / (performance.length || 1),
     ),

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Loader2, Plus, Settings2, X } from "lucide-react";
 import { toast } from "sonner";
+import { ConvertLeadModal } from "@/components/leads/convert-lead-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,6 +84,7 @@ export function InlineLeadStatus({
   const [newColor, setNewColor] = useState("#8b5cf6");
   const [isCreating, setIsCreating] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -97,6 +99,14 @@ export function InlineLeadStatus({
 
   const handleStatus = async (statusValue: string) => {
     if (statusValue === lead.status || isSaving) return;
+
+    // Intercept "converted" — show fund modal instead of direct update
+    if (statusValue === "converted") {
+      setOpen(false);
+      setConvertOpen(true);
+      return;
+    }
+
     setOpen(false);
     setShowCreateForm(false);
     setIsSaving(true);
@@ -305,6 +315,14 @@ export function InlineLeadStatus({
         }}
       />
     )}
+
+    <ConvertLeadModal
+      open={convertOpen}
+      onOpenChange={setConvertOpen}
+      lead={lead}
+      isAdmin={isAdmin}
+      onConverted={onStatusChange}
+    />
     </>
   );
 }

@@ -81,7 +81,7 @@ export function SalesAnalyticsChart({ data, chartKey }: SalesAnalyticsChartProps
         </ComposedChart>
       </ResponsiveContainer>
       <p className="mt-2 text-center text-xs text-muted-foreground">
-        Total revenue: {formatCurrency(data.reduce((s, d) => s + d.revenue, 0))}
+        Total fund: {formatCurrency(data.reduce((s, d) => s + d.fund, 0))}
       </p>
     </ChartShell>
   );

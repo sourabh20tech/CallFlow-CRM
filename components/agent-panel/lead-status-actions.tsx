@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, Plus, Settings2, X } from "lucide-react";
 import { toast } from "sonner";
+import { ConvertLeadModal } from "@/components/leads/convert-lead-modal";
 import { formatLeadStatus } from "@/lib/leads/constants";
 import { ManageStatusesModal } from "@/components/leads/manage-statuses-modal";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,6 +38,7 @@ export function LeadStatusActions({ lead, onUpdated, compact }: LeadStatusAction
   const [newColor, setNewColor] = useState("#8b5cf6");
   const [isCreating, setIsCreating] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -54,6 +56,13 @@ export function LeadStatusActions({ lead, onUpdated, compact }: LeadStatusAction
 
   const handleStatus = async (statusValue: string) => {
     if (statusValue === lead.status || isSaving) return;
+
+    // Intercept "converted" — show fund modal
+    if (statusValue === "converted") {
+      setConvertOpen(true);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const url = isAdmin
@@ -214,6 +223,14 @@ export function LeadStatusActions({ lead, onUpdated, compact }: LeadStatusAction
           }}
         />
       )}
+
+      <ConvertLeadModal
+        open={convertOpen}
+        onOpenChange={setConvertOpen}
+        lead={lead}
+        isAdmin={isAdmin}
+        onConverted={onUpdated}
+      />
     </div>
   );
 }

@@ -51,8 +51,8 @@ export async function exportReportsToPdf(data: ReportsBundle, filename?: string)
   addLine("Total calls", data.kpis.totalCalls);
   addLine("Answered rate (%)", data.kpis.answeredRate);
   addLine("Conversion rate (%)", data.kpis.conversionRate);
-  addLine("Total revenue", formatCurrency(data.kpis.totalRevenue));
-  addLine("Revenue change (%)", data.kpis.revenueChange);
+  addLine("Total Fund", formatCurrency(data.kpis.totalFund));
+  addLine("Fund change (%)", data.kpis.fundChange);
   addLine("Avg handle time (sec)", data.kpis.avgHandleTime);
   addLine("Avg satisfaction", data.kpis.avgSatisfaction);
   addLine("Active agents", data.kpis.activeAgents);

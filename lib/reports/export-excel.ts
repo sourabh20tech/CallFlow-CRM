@@ -19,8 +19,8 @@ export async function exportReportsToExcel(
     ["Total calls", data.kpis.totalCalls],
     ["Answered rate (%)", data.kpis.answeredRate],
     ["Conversion rate (%)", data.kpis.conversionRate],
-    ["Total revenue", formatCurrency(data.kpis.totalRevenue)],
-    ["Revenue change (%)", data.kpis.revenueChange],
+    ["Total Fund", formatCurrency(data.kpis.totalFund)],
+    ["Fund change (%)", data.kpis.fundChange],
     ["Avg handle time (sec)", data.kpis.avgHandleTime],
     ["Avg satisfaction", data.kpis.avgSatisfaction],
     ["Active agents", data.kpis.activeAgents],
@@ -71,7 +71,7 @@ export async function exportReportsToExcel(
     XLSX.utils.json_to_sheet(
       data.sales.map((r) => ({
         Period: r.period,
-        Revenue: formatCurrency(r.revenue),
+        fund: formatCurrency(r.fund),
         Deals: r.deals,
         Pipeline: formatCurrency(r.pipeline),
         "Avg deal size": formatCurrency(r.avgDealSize),

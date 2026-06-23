@@ -65,7 +65,7 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
     const avgDealSize = Math.round(1200 + r * 2800);
     return {
       period: m.month,
-      revenue: deals * avgDealSize,
+      fund: deals * avgDealSize,
       deals,
       pipeline: Math.round(m.leads * avgDealSize * (1.2 + r * 0.5)),
       avgDealSize,
@@ -98,7 +98,7 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
   const totalAnswered = daily.reduce((s, d) => s + d.answered, 0);
   const totalLeads = leadConversion.reduce((s, m) => s + m.leads, 0);
   const totalConverted = leadConversion.reduce((s, m) => s + m.converted, 0);
-  const totalRevenue = sales.reduce((s, m) => s + m.revenue, 0);
+  const totalFund = sales.reduce((s, m) => s + m.fund, 0);
 
   const followups = {
     total: Math.round(24 + seededRandom(seed) * 40),
@@ -122,8 +122,8 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
       conversionRate: totalLeads
         ? Math.round((totalConverted / totalLeads) * 1000) / 10
         : 0,
-      totalRevenue,
-      revenueChange: Number((8 + seededRandom(seed) * 12).toFixed(1)),
+      totalFund,
+      fundChange: Number((8 + seededRandom(seed) * 12).toFixed(1)),
       avgHandleTime: Math.round(
         performance.reduce((s, p) => s + p.handleTime, 0) / (performance.length || 1),
       ),

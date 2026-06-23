@@ -42,8 +42,8 @@ export interface ReportsKpiSummary {
   totalCalls: number;
   answeredRate: number;
   conversionRate: number;
-  totalRevenue: number;
-  revenueChange: number;
+  totalFund: number;
+  fundChange: number;
   avgHandleTime: number;
   avgSatisfaction: number;
   activeAgents: number;
@@ -54,7 +54,7 @@ export interface ReportsKpiSummary {
 
 export interface SalesAnalyticsPoint {
   period: string;
-  revenue: number;
+  fund: number;
   deals: number;
   pipeline: number;
   avgDealSize: number;

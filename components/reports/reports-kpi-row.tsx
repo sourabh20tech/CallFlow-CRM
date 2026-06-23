@@ -27,9 +27,9 @@ export function ReportsKpiRow({ kpis }: ReportsKpiRowProps) {
       />
       <StatCard
         title="Revenue"
-        value={formatCurrency(kpis.totalRevenue)}
+        value={formatCurrency(kpis.totalFund)}
         icon={IndianRupee}
-        trend={{ value: kpis.revenueChange, label: "vs prior period" }}
+        trend={{ value: kpis.fundChange, label: "vs prior period" }}
       />
       <StatCard
         title="Avg handle time"
