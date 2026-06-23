@@ -41,7 +41,7 @@ export function WorkTimerBadge() {
 
   return (
     <div
-      className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 dark:border-emerald-800 dark:bg-emerald-950/40 sm:flex"
+      className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 dark:border-emerald-800 dark:bg-emerald-950/40 sm:gap-2 sm:px-2.5 sm:py-1"
       title={`Session: ${fmt(activeSeconds)} | Today: ${fmt(todaySeconds)}`}
     >
       <span className="relative flex h-2 w-2">
@@ -51,8 +51,8 @@ export function WorkTimerBadge() {
       <span className="text-xs font-medium tabular-nums text-emerald-700 dark:text-emerald-300">
         {fmt(activeSeconds)}
       </span>
-      <span className="text-[10px] text-emerald-600/60 dark:text-emerald-400/60">|</span>
-      <span className="text-[10px] tabular-nums text-emerald-600/80 dark:text-emerald-400/70">
+      <span className="hidden text-[10px] text-emerald-600/60 dark:text-emerald-400/60 sm:inline">|</span>
+      <span className="hidden text-[10px] tabular-nums text-emerald-600/80 dark:text-emerald-400/70 sm:inline">
         Today {fmt(todaySeconds)}
       </span>
     </div>

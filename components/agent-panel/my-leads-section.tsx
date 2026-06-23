@@ -189,7 +189,7 @@ export function MyLeadsSection({
                     size="sm"
                   />
                 </button>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <LeadQuickCallButton
                     leadId={lead.id}
                     leadName={lead.fullName}

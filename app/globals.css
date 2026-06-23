@@ -660,7 +660,8 @@ body {
 
   /* Full-width inputs on mobile */
   select,
-  input[type="date"] {
+  input[type="date"],
+  input[type="datetime-local"] {
     width: 100%;
     min-width: 0;
   }
@@ -684,7 +685,7 @@ body {
     border-radius: var(--radius);
   }
 
-  /* Modals: full-width on mobile */
+  /* Modals: full-width on mobile, scrollable */
   [role="dialog"] {
     max-width: calc(100vw - 1.5rem) !important;
     max-height: calc(100dvh - 2rem) !important;
@@ -702,6 +703,22 @@ body {
 
   .ds-h3 {
     font-size: 1rem;
+  }
+
+  /* Filter selects stack on mobile */
+  select {
+    max-width: 100% !important;
+  }
+
+  /* Table actions - compact on mobile */
+  td button {
+    min-width: 0;
+  }
+
+  /* Dropdowns: constrain to viewport */
+  [role="menu"],
+  [data-radix-popper-content-wrapper] {
+    max-width: calc(100vw - 1.5rem) !important;
   }
 }
 
@@ -726,5 +743,40 @@ img, video, svg, canvas {
 
   .ds-page-header button {
     font-size: 0.75rem;
+  }
+
+  /* Stats grid: 2 columns max on very small screens */
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Extra small screens (320-375px) */
+@media (max-width: 375px) {
+  :root {
+    --ds-page-padding-x: 0.5rem;
+    --ds-page-padding-y: 0.5rem;
+  }
+
+  .ds-h1 {
+    font-size: 1.125rem;
+  }
+
+  /* Single column for very narrow */
+  [class*="grid-cols-2"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Table: allow horizontal scroll with smaller min-width */
+  .ds-table-wrap table {
+    min-width: 28rem;
+  }
+}
+
+/* Large screens optimization */
+@media (min-width: 1920px) {
+  :root {
+    --ds-content-max: 96rem;
+    --ds-page-padding-x: 2.5rem;
   }
 }
