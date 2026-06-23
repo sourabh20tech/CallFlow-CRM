@@ -55,11 +55,12 @@ export async function POST(request: Request, { params }: RouteParams) {
       convertedAt: new Date().toISOString(),
     });
 
-    // Store fund record
+    // Store fund record — use admin client to bypass RLS
+    const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
     const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const dbClient = isAdminClientConfigured() ? createAdminSupabaseClient() : await createClient();
 
-    await (supabase as any)
+    await (dbClient as any)
       .from("lead_funds")
       .insert({
         lead_id: id,

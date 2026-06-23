@@ -6,6 +6,12 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+async function getDbClient() {
+  const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+  const { createClient } = await import("@/lib/supabase/server");
+  return isAdminClientConfigured() ? createAdminSupabaseClient() : await createClient();
+}
+
 /** GET /api/leads/[id]/funds — Get fund history for a lead */
 export async function GET(_request: Request, { params }: RouteParams) {
   const auth = await requireAuthApi();
@@ -24,8 +30,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       }
     }
 
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
 
     const { data, error } = await (supabase as any)
       .from("lead_funds")
@@ -77,8 +82,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       }
     }
 
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
 
     const { data, error } = await (supabase as any)
       .from("lead_funds")

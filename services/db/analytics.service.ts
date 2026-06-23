@@ -236,7 +236,11 @@ export class AnalyticsDbService extends BaseDbService {
     agentId?: string,
   ): Promise<AnalyticsFundRow[]> {
     try {
-      let query = (supabase as any)
+      // Use admin client to bypass RLS on lead_funds table
+      const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+      const client = isAdminClientConfigured() ? createAdminSupabaseClient() : supabase;
+
+      let query = (client as any)
         .from("lead_funds")
         .select("id, lead_id, agent_id, amount, created_at")
         .gte("created_at", from)
@@ -244,12 +248,12 @@ export class AnalyticsDbService extends BaseDbService {
 
       if (agentId) {
         // For agent reports, show funds from leads assigned to the agent
-        const { data: agentLeads } = await supabase
+        const { data: agentLeads } = await (client as any)
           .from("leads")
           .select("id")
           .eq("assigned_agent_id", agentId)
           .is("deleted_at", null);
-        const leadIds = (agentLeads ?? []).map((l: { id: string }) => l.id);
+        const leadIds = ((agentLeads ?? []) as { id: string }[]).map((l) => l.id);
         if (leadIds.length === 0) return [];
         query = query.in("lead_id", leadIds);
       }
