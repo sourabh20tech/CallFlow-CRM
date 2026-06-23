@@ -343,7 +343,7 @@ export function LeadsManagement({
         }
       />
 
-      <LeadStatsRow {...leadStats} />
+      <LeadStatsRow {...leadStats} isAdmin={isAdmin} />
 
       {canManage && selectedLeadIds.size > 0 && (
         <BulkActionsBar

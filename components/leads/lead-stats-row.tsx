@@ -9,16 +9,26 @@ interface LeadStatsRowProps {
   followUpDue: number;
   converted: number;
   unassigned: number;
+  isAdmin?: boolean;
 }
 
-export const LeadStatsRow = memo(function LeadStatsRow({ total, newLeads, followUpDue, converted, unassigned }: LeadStatsRowProps) {
+export const LeadStatsRow = memo(function LeadStatsRow({
+  total,
+  newLeads,
+  followUpDue,
+  converted,
+  unassigned,
+  isAdmin = false,
+}: LeadStatsRowProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${isAdmin ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
       <StatMini icon={Users} label="Total Leads" value={total} />
       <StatMini icon={Plus} label="New" value={newLeads} color="text-blue-500" />
       <StatMini icon={CalendarClock} label="Follow-Up Due" value={followUpDue} color="text-amber-500" />
       <StatMini icon={CheckCircle2} label="Converted" value={converted} color="text-emerald-500" />
-      <StatMini icon={UserX} label="Unassigned" value={unassigned} color="text-red-500" />
+      {isAdmin && (
+        <StatMini icon={UserX} label="Unassigned" value={unassigned} color="text-red-500" />
+      )}
     </div>
   );
 });
