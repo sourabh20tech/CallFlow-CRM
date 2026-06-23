@@ -4,14 +4,21 @@ import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { useWhatsAppTemplate, resolveTemplate } from "@/hooks/use-whatsapp-template";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 interface WhatsAppChatButtonProps {
   phone?: string;
+  /** Fallback message if no agent template is set */
   message?: string;
   label?: string;
   className?: string;
   iconOnly?: boolean;
+  /** Lead data for template variable substitution */
+  leadName?: string;
+  leadStatus?: string;
+  leadSource?: string;
 }
 
 export function WhatsAppChatButton({
@@ -20,8 +27,25 @@ export function WhatsAppChatButton({
   label = "WhatsApp",
   className,
   iconOnly = true,
+  leadName,
+  leadStatus,
+  leadSource,
 }: WhatsAppChatButtonProps) {
-  const url = buildWhatsAppUrl(phone, message);
+  const { user } = useAuth();
+  const { template } = useWhatsAppTemplate();
+
+  // Resolve template with lead variables
+  const resolvedMessage = resolveTemplate(template, {
+    name: leadName ?? "",
+    phone: phone ?? "",
+    status: leadStatus ?? "",
+    source: leadSource ?? "",
+    agentName: user?.fullName ?? "",
+  });
+
+  // Use resolved template, or fallback to passed message
+  const finalMessage = resolvedMessage || message;
+  const url = buildWhatsAppUrl(phone, finalMessage);
   if (!url) return null;
 
   return (

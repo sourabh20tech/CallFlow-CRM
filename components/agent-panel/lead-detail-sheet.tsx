@@ -64,6 +64,7 @@ export function LeadDetailSheet({
               label={`WhatsApp ${lead.fullName}`}
               iconOnly={false}
               className="w-full sm:w-auto"
+              leadName={lead.fullName}
             />
             <LeadQuickFollowupButton
               leadId={lead.id}

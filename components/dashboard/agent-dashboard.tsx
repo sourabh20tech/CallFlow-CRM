@@ -16,6 +16,7 @@ import { GlassCard } from "@/components/design-system/glass-card";
 import { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
 import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
 import { WorkTimeWidget } from "@/components/dashboard/work-time-widget";
+import { WhatsAppTemplateCard } from "@/components/dashboard/whatsapp-template-card";
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { Button } from "@/components/ui/button";
 import { useAgentPanel } from "@/hooks/use-agent-panel";
@@ -94,6 +95,8 @@ export function AgentDashboard() {
       <WorkTimeWidget />
 
       <FollowupCenterWidget />
+
+      <WhatsAppTemplateCard />
 
       <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-3">
         <GlassCard variant="default" padding="md" className="lg:col-span-3">

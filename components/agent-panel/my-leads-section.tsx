@@ -145,6 +145,7 @@ export function MyLeadsSection({
                           phone={lead.phone}
                           message={WHATSAPP_TEMPLATES.greeting}
                           label={`WhatsApp ${lead.fullName}`}
+                          leadName={lead.fullName}
                         />
                         <LeadQuickFollowupButton
                           leadId={lead.id}
@@ -203,6 +204,7 @@ export function MyLeadsSection({
                     label={`WhatsApp ${lead.fullName}`}
                     className="flex-1"
                     iconOnly={false}
+                    leadName={lead.fullName}
                   />
                   <LeadQuickFollowupButton
                     leadId={lead.id}
