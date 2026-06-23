@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuthApi } from "@/lib/api/require-auth";
+import { logActivity } from "@/lib/activity/log-activity";
 
 export const dynamic = "force-dynamic";
 
@@ -172,6 +173,17 @@ export async function POST(request: Request) {
 
     if (error) throw new Error(error.message);
 
+    // Log login activity
+    logActivity({
+      userId: auth.user.id,
+      userName: auth.user.fullName ?? "User",
+      role: auth.user.role as "admin" | "agent",
+      actionType: "login",
+      actionDescription: `${auth.user.fullName ?? "User"} logged in`,
+      entityType: "user",
+      entityId: data.id,
+    });
+
     return NextResponse.json({ session: data }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to start session";
@@ -240,6 +252,17 @@ export async function PATCH(request: Request) {
         active_seconds: finalSeconds,
       })
       .eq("id", active.id);
+
+    // Log logout activity
+    logActivity({
+      userId: auth.user.id,
+      userName: auth.user.fullName ?? "User",
+      role: auth.user.role as "admin" | "agent",
+      actionType: "logout",
+      actionDescription: `${auth.user.fullName ?? "User"} logged out`,
+      entityType: "user",
+      entityId: active.id,
+    });
 
     return NextResponse.json({ success: true, duration: finalSeconds });
   } catch (error) {

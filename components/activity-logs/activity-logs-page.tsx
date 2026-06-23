@@ -52,7 +52,24 @@ function getRelativeTime(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString(undefined, { dateStyle: "short" });
 }
 
-const ACTION_TYPE_OPTIONS = [
+// Agent-visible action types only
+const AGENT_ACTION_TYPE_OPTIONS = [
+  { value: "", label: "All Actions" },
+  { value: "login", label: "Login" },
+  { value: "logout", label: "Logout" },
+  { value: "lead_assigned", label: "Lead Assigned" },
+  { value: "lead_status_changed", label: "Status Changed" },
+  { value: "lead_updated", label: "Lead Updated" },
+  { value: "call_logged", label: "Call Logged" },
+  { value: "call_updated", label: "Call Updated" },
+  { value: "followup_created", label: "Follow-Up Created" },
+  { value: "followup_updated", label: "Follow-Up Updated" },
+  { value: "followup_completed", label: "Follow-Up Completed" },
+  { value: "note_added", label: "Note Added" },
+];
+
+// Full admin action types
+const ADMIN_ACTION_TYPE_OPTIONS = [
   { value: "", label: "All Actions" },
   { value: "login", label: "Login" },
   { value: "logout", label: "Logout" },
@@ -205,7 +222,7 @@ export function ActivityLogsPage() {
             onChange={(e) => { setActionType(e.target.value); setPage(1); }}
             className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
           >
-            {ACTION_TYPE_OPTIONS.map((o) => (
+            {(isAdmin ? ADMIN_ACTION_TYPE_OPTIONS : AGENT_ACTION_TYPE_OPTIONS).map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
