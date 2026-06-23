@@ -88,7 +88,7 @@ export class AgentPanelService {
     const myLeadsWithNotes = await withNoteCounts(myLeads);
     const convertedLeads = myLeadsWithNotes.filter((l) => l.status === "converted");
     const activeLeads = myLeadsWithNotes.filter(
-      (l) => !["converted", "not_interested", "closed"].includes(l.status),
+      (l) => l.status !== "converted",
     );
 
     const todayCalls = await safe(

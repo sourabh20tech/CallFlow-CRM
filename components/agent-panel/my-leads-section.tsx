@@ -55,14 +55,14 @@ export function MyLeadsSection({
       l.id === updated.id ? { ...updated, noteCount: l.noteCount } : l,
     );
     const filtered =
-      ["converted", "not_interested", "closed"].includes(updated.status)
+      updated.status === "converted"
         ? next.filter((l) => l.id !== updated.id)
         : next;
     onLeadsChange(filtered);
     setSelected((prev) =>
       prev?.id === updated.id ? { ...updated, noteCount: prev.noteCount } : prev,
     );
-    if (["converted", "not_interested", "closed"].includes(updated.status)) {
+    if (updated.status === "converted") {
       setSheetOpen(false);
       onRefresh();
     }
