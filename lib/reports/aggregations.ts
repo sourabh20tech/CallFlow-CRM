@@ -102,7 +102,7 @@ export function aggregateLeadConversion(
 export function aggregateAgentPerformance(raw: AnalyticsRawData): AgentPerformanceDataPoint[] {
   const byAgent = new Map<
     string,
-    { name: string; calls: number; conversions: number; satisfaction: number }
+    { name: string; calls: number; conversions: number }
   >();
 
   for (const agent of raw.agents) {
@@ -110,7 +110,6 @@ export function aggregateAgentPerformance(raw: AnalyticsRawData): AgentPerforman
       name: agent.full_name,
       calls: 0,
       conversions: 0,
-      satisfaction: agent.satisfaction_score ?? 4.5,
     });
   }
 
@@ -136,7 +135,6 @@ export function aggregateAgentPerformance(raw: AnalyticsRawData): AgentPerforman
       name: a.name,
       calls: a.calls,
       conversions: a.conversions,
-      satisfaction: Number(a.satisfaction.toFixed(1)),
     }));
 }
 
@@ -219,14 +217,8 @@ export function aggregatePerformance(
       ? Number(((d.answered / d.calls) * 100).toFixed(1))
       : 0;
 
-    const agentSat =
-      raw.agents.length > 0
-        ? raw.agents.reduce((s, a) => s + (a.satisfaction_score ?? 4.5), 0) / raw.agents.length
-        : 0;
-
     return {
       period: d.day,
-      satisfaction: Number((agentSat + (i % 3) * 0.05).toFixed(1)),
       handleTime: avg,
       resolutionRate,
       firstCallResolution: Number((resolutionRate * 0.82).toFixed(1)),
@@ -304,12 +296,6 @@ export function buildKpis(
     fundChange: 0,
     avgHandleTime: Math.round(
       performance.reduce((s, p) => s + p.handleTime, 0) / (performance.length || 1),
-    ),
-    avgSatisfaction: Number(
-      (
-        agentPerformance.reduce((s, a) => s + a.satisfaction, 0) /
-        (agentPerformance.length || 1)
-      ).toFixed(1),
     ),
     activeAgents: stats?.active_agents ?? agentPerformance.length,
     // Always use live count — dashboard_stats cache may be stale

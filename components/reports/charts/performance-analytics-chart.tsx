@@ -25,7 +25,7 @@ export function PerformanceAnalyticsChart({ data, chartKey }: PerformanceAnalyti
   return (
     <ChartShell
       title="Performance analytics"
-      description="CSAT, resolution rate, and first-call resolution trends"
+      description="Handle time, resolution rate, and first-call resolution trends"
       chartKey={chartKey}
       className="lg:col-span-2"
     >
@@ -33,7 +33,7 @@ export function PerformanceAnalyticsChart({ data, chartKey }: PerformanceAnalyti
         <LineChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" vertical={false} />
           <XAxis dataKey="period" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
-          <YAxis yAxisId="left" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} domain={[3.5, 5]} />
+          <YAxis yAxisId="left" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
           <YAxis
             yAxisId="right"
             orientation="right"
@@ -57,16 +57,6 @@ export function PerformanceAnalyticsChart({ data, chartKey }: PerformanceAnalyti
             )}
           />
           <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-          <Line
-            yAxisId="left"
-            type="monotone"
-            dataKey="satisfaction"
-            name="CSAT"
-            stroke="hsl(262, 83%, 58%)"
-            strokeWidth={2}
-            dot={{ r: 3 }}
-            animationDuration={ANIM}
-          />
           <Line
             yAxisId="right"
             type="monotone"

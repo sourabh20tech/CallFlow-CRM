@@ -22,7 +22,6 @@ export async function exportReportsToExcel(
     ["Total Fund", formatCurrency(data.kpis.totalFund)],
     ["Fund change (%)", data.kpis.fundChange],
     ["Avg handle time (sec)", data.kpis.avgHandleTime],
-    ["Avg satisfaction", data.kpis.avgSatisfaction],
     ["Active agents", data.kpis.activeAgents],
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryRows), "Summary");
@@ -60,7 +59,6 @@ export async function exportReportsToExcel(
         Agent: r.name,
         Calls: r.calls,
         Conversions: r.conversions,
-        "CSAT (/5)": r.satisfaction,
       })),
     ),
     "Agent Performance",
@@ -85,7 +83,6 @@ export async function exportReportsToExcel(
     XLSX.utils.json_to_sheet(
       data.performance.map((r) => ({
         Period: r.period,
-        "CSAT (/5)": r.satisfaction,
         "Handle time (sec)": r.handleTime,
         "Resolution %": r.resolutionRate,
         "FCR %": r.firstCallResolution,

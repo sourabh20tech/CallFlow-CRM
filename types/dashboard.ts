@@ -32,7 +32,6 @@ export interface AgentPerformanceDataPoint {
   name: string;
   calls: number;
   conversions: number;
-  satisfaction: number;
 }
 
 export interface DashboardActivity {

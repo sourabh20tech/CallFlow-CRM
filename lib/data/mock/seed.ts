@@ -231,10 +231,10 @@ export const leadConversionData: LeadConversionDataPoint[] = [
 ];
 
 export const agentPerformanceData: AgentPerformanceDataPoint[] = [
-  { name: "Alex", calls: 142, conversions: 38, satisfaction: 4.8 },
-  { name: "Jordan", calls: 98, conversions: 24, satisfaction: 4.6 },
-  { name: "Taylor", calls: 167, conversions: 45, satisfaction: 4.9 },
-  { name: "Casey", calls: 76, conversions: 18, satisfaction: 4.4 },
+  { name: "Alex", calls: 142, conversions: 38 },
+  { name: "Jordan", calls: 98, conversions: 24 },
+  { name: "Taylor", calls: 167, conversions: 45 },
+  { name: "Casey", calls: 76, conversions: 18 },
 ];
 
 export const recentActivities: DashboardActivity[] = [

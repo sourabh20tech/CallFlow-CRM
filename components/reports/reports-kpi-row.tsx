@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Headphones, IndianRupee, Percent, Star, Users } from "lucide-react";
+import { CalendarClock, Headphones, IndianRupee, Percent, Users } from "lucide-react";
 import { StatCard } from "@/components/design-system/stat-card";
 import { statsGrid } from "@/lib/design-system/styles";
 import { formatCurrency, formatNumber } from "@/utils/format";
@@ -36,12 +36,6 @@ export function ReportsKpiRow({ kpis }: ReportsKpiRowProps) {
         value={`${Math.floor(kpis.avgHandleTime / 60)}:${String(kpis.avgHandleTime % 60).padStart(2, "0")}`}
         icon={Headphones}
         description="Per completed call"
-      />
-      <StatCard
-        title="Team CSAT"
-        value={`${kpis.avgSatisfaction}/5`}
-        icon={Star}
-        description={`${kpis.activeAgents} active agents`}
       />
       {kpis.pendingFollowups !== undefined && (
         <StatCard

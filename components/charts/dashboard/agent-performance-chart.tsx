@@ -5,7 +5,6 @@ import {
   CartesianGrid,
   ComposedChart,
   Legend,
-  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -26,7 +25,7 @@ export function AgentPerformanceChart({ data }: AgentPerformanceChartProps) {
   return (
     <ChartCard
       title="Agent Performance"
-      description="Calls, conversions, and CSAT by agent"
+      description="Calls and conversions by agent"
     >
       <ChartViewport className="h-[280px] w-full min-h-[240px] sm:h-[320px]">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
@@ -43,15 +42,6 @@ export function AgentPerformanceChart({ data }: AgentPerformanceChartProps) {
               tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              domain={[3.5, 5]}
-              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v) => v.toFixed(1)}
             />
             <Tooltip
               content={({ active, payload, label }) => (
@@ -82,17 +72,6 @@ export function AgentPerformanceChart({ data }: AgentPerformanceChartProps) {
               name="Conversions"
               fill="hsl(221, 83%, 53%)"
               radius={[6, 6, 0, 0]}
-              isAnimationActive
-              animationDuration={ANIM_DURATION}
-            />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="satisfaction"
-              name="CSAT"
-              stroke="hsl(38, 92%, 50%)"
-              strokeWidth={2}
-              dot={{ r: 4, fill: "hsl(38, 92%, 50%)" }}
               isAnimationActive
               animationDuration={ANIM_DURATION}
             />

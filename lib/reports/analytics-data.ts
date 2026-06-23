@@ -44,18 +44,17 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
   });
 
   const agentPerformance = [
-    { name: "Alex Morgan", calls: 142, conversions: 38, satisfaction: 4.8 },
-    { name: "Jordan Lee", calls: 98, conversions: 24, satisfaction: 4.6 },
-    { name: "Taylor Brooks", calls: 167, conversions: 45, satisfaction: 4.9 },
-    { name: "Casey Rivera", calls: 76, conversions: 18, satisfaction: 4.4 },
-    { name: "Riley Chen", calls: 112, conversions: 31, satisfaction: 4.7 },
+    { name: "Alex Morgan", calls: 142, conversions: 38 },
+    { name: "Jordan Lee", calls: 98, conversions: 24 },
+    { name: "Taylor Brooks", calls: 167, conversions: 45 },
+    { name: "Casey Rivera", calls: 76, conversions: 18 },
+    { name: "Riley Chen", calls: 112, conversions: 31 },
   ].map((a, i) => {
     const scale = 0.85 + seededRandom(seed + i) * 0.3;
     return {
       name: a.name,
       calls: Math.round(a.calls * scale),
       conversions: Math.round(a.conversions * scale),
-      satisfaction: Number((a.satisfaction * (0.95 + seededRandom(seed + i + 1) * 0.1)).toFixed(1)),
     };
   });
 
@@ -76,7 +75,6 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
     const r = seededRandom(seed + i * 3);
     return {
       period: d.day,
-      satisfaction: Number((4.2 + r * 0.7).toFixed(1)),
       handleTime: Math.round(240 + r * 120),
       resolutionRate: Number((88 + r * 8).toFixed(1)),
       firstCallResolution: Number((72 + r * 15).toFixed(1)),
@@ -126,12 +124,6 @@ export function buildReportsBundle(range: ReportDateRange): ReportsBundle {
       fundChange: Number((8 + seededRandom(seed) * 12).toFixed(1)),
       avgHandleTime: Math.round(
         performance.reduce((s, p) => s + p.handleTime, 0) / (performance.length || 1),
-      ),
-      avgSatisfaction: Number(
-        (
-          agentPerformance.reduce((s, a) => s + a.satisfaction, 0) /
-          (agentPerformance.length || 1)
-        ).toFixed(1),
       ),
       activeAgents: agentPerformance.length,
       pendingFollowups: followups.pending + followups.inProgress,

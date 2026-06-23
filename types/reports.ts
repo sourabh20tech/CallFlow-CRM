@@ -45,7 +45,6 @@ export interface ReportsKpiSummary {
   totalFund: number;
   fundChange: number;
   avgHandleTime: number;
-  avgSatisfaction: number;
   activeAgents: number;
   pendingFollowups?: number;
   totalLeads?: number;
@@ -62,7 +61,6 @@ export interface SalesAnalyticsPoint {
 
 export interface PerformanceAnalyticsPoint {
   period: string;
-  satisfaction: number;
   handleTime: number;
   resolutionRate: number;
   firstCallResolution: number;
