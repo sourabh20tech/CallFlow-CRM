@@ -1,38 +1,77 @@
 import type { ReportDatePreset, ReportDateRange } from "@/types/reports";
 
-export const REPORT_PRESETS: { value: ReportDatePreset; label: string; days: number }[] = [
-  { value: "7d", label: "Last 7 days", days: 7 },
-  { value: "30d", label: "Last 30 days", days: 30 },
-  { value: "90d", label: "Last 90 days", days: 90 },
-  { value: "custom", label: "Custom", days: 0 },
+export const REPORT_PRESETS: { value: ReportDatePreset; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "this_week", label: "This Week" },
+  { value: "this_month", label: "This Month" },
+  { value: "custom", label: "Custom Range" },
 ];
 
+/**
+ * Resolve a preset to an exact date range.
+ * Uses proper calendar logic:
+ * - Today: current day 00:00 → 23:59
+ * - Yesterday: previous day 00:00 → 23:59
+ * - This Week: Monday 00:00 → Sunday 23:59 (ISO week)
+ * - This Month: 1st of month 00:00 → last day 23:59
+ * - Custom: user-provided dates
+ */
 export function resolveDateRange(
   preset: ReportDatePreset,
   customFrom?: string,
   customTo?: string,
 ): ReportDateRange {
-  const to = customTo ? new Date(customTo) : new Date();
-  to.setHours(23, 59, 59, 999);
+  const now = new Date();
 
   if (preset === "custom" && customFrom && customTo) {
-    return {
-      from: new Date(customFrom).toISOString(),
-      to: to.toISOString(),
-      preset,
-    };
+    const from = new Date(customFrom);
+    from.setHours(0, 0, 0, 0);
+    const to = new Date(customTo);
+    to.setHours(23, 59, 59, 999);
+    return { from: from.toISOString(), to: to.toISOString(), preset };
   }
 
-  const days = REPORT_PRESETS.find((p) => p.value === preset)?.days ?? 7;
-  const from = new Date(to);
-  from.setDate(from.getDate() - days + 1);
-  from.setHours(0, 0, 0, 0);
+  if (preset === "today") {
+    const from = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    return { from: from.toISOString(), to: to.toISOString(), preset };
+  }
 
-  return {
-    from: from.toISOString(),
-    to: to.toISOString(),
-    preset,
-  };
+  if (preset === "yesterday") {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const from = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0);
+    const to = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999);
+    return { from: from.toISOString(), to: to.toISOString(), preset };
+  }
+
+  if (preset === "this_week") {
+    // ISO week: Monday → Sunday
+    const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    return { from: monday.toISOString(), to: sunday.toISOString(), preset };
+  }
+
+  if (preset === "this_month") {
+    const from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    // Last day of month: day 0 of next month
+    const to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    return { from: from.toISOString(), to: to.toISOString(), preset };
+  }
+
+  // Fallback: today
+  const from = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  return { from: from.toISOString(), to: to.toISOString(), preset: "today" };
 }
 
 export function formatRangeLabel(range: ReportDateRange): string {

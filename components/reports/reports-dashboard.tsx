@@ -16,7 +16,6 @@ import { useAuth } from "@/hooks/use-auth";
 import type {
   LiveDashboardStats,
   ReportDatePreset,
-  ReportPeriod,
   ReportsBundle,
 } from "@/types/reports";
 import { pageSection } from "@/lib/design-system/styles";
@@ -61,7 +60,7 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
   const { role } = useAuth();
   const isAdmin = role === "admin";
   const [data, setData] = useState(initialData);
-  const [preset, setPreset] = useState<ReportDatePreset>(initialData.range.preset ?? "7d");
+  const [preset, setPreset] = useState<ReportDatePreset>(initialData.range.preset ?? "this_week");
   const [customFrom, setCustomFrom] = useState(() =>
     toDatetimeLocalValue(initialData.range.from).slice(0, 10),
   );
@@ -71,10 +70,9 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [activePeriod, setActivePeriod] = useState<ReportPeriod | null>(null);
   const [liveStats, setLiveStats] = useState<LiveDashboardStats | null>(null);
   const skipNextFetch = useRef(true);
-  const filterKey = `${preset}-${activePeriod ?? ""}-${customFrom}-${customTo}`;
+  const filterKey = `${preset}-${customFrom}-${customTo}`;
 
   const chartKey = `${filterKey}-${data.range.from}-${data.range.to}`;
 
@@ -84,14 +82,10 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
       else setIsRefreshing(true);
       try {
         const params = new URLSearchParams();
-        if (activePeriod) {
-          params.set("period", activePeriod);
-        } else {
-          params.set("preset", preset);
-          if (preset === "custom") {
-            params.set("from", customFrom);
-            params.set("to", customTo);
-          }
+        params.set("preset", preset);
+        if (preset === "custom") {
+          params.set("from", customFrom);
+          params.set("to", customTo);
         }
         const res = await fetch(`/api/reports?${params.toString()}`);
         if (!res.ok) throw new Error("Failed to load reports");
@@ -104,7 +98,7 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
         setIsRefreshing(false);
       }
     },
-    [preset, customFrom, customTo, activePeriod],
+    [preset, customFrom, customTo],
   );
 
   const fetchLiveStats = useCallback(async () => {
@@ -180,9 +174,7 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
         range={data.range}
         customFrom={customFrom}
         customTo={customTo}
-        activePeriod={activePeriod}
         onPresetChange={setPreset}
-        onPeriodChange={setActivePeriod}
         onCustomFromChange={setCustomFrom}
         onCustomToChange={setCustomTo}
       />

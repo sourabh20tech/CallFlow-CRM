@@ -28,11 +28,11 @@ export class ReportsService {
     if (options.period) {
       return resolveDateRangeFromPeriod(options.period);
     }
-    return resolveDateRange(options.preset ?? "7d", options.customFrom, options.customTo);
+    return resolveDateRange(options.preset ?? "this_week", options.customFrom, options.customTo);
   }
 
   async getReports(
-    preset: ReportDatePreset = "7d",
+    preset: ReportDatePreset = "this_week",
     customFrom?: string,
     customTo?: string,
     period?: ReportPeriod,

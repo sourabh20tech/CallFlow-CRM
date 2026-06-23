@@ -9,7 +9,7 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
-  const data = await reportsService.getReports("7d");
+  const data = await reportsService.getReports("this_week");
 
   return <ReportsDashboard initialData={data} />;
 }

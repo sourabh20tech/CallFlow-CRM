@@ -1,34 +1,18 @@
 import type { ReportDatePreset, ReportDateRange, ReportPeriod } from "@/types/reports";
+import { resolveDateRange } from "@/lib/reports/date-range";
 
 export type { ReportPeriod };
 
-const PERIOD_DAYS: Record<ReportPeriod, number> = {
-  day: 1,
-  week: 7,
-  month: 30,
-};
-
 const PERIOD_PRESET: Record<ReportPeriod, ReportDatePreset> = {
-  day: "7d",
-  week: "7d",
-  month: "30d",
+  day: "today",
+  week: "this_week",
+  month: "this_month",
 };
 
-/** Maps API `period` (day|week|month) to an inclusive UTC date range. */
+/** Maps API `period` (day|week|month) to a calendar-based date range. */
 export function resolveDateRangeFromPeriod(period: ReportPeriod): ReportDateRange {
-  const days = PERIOD_DAYS[period];
-  const to = new Date();
-  to.setHours(23, 59, 59, 999);
-
-  const from = new Date(to);
-  from.setDate(from.getDate() - days + 1);
-  from.setHours(0, 0, 0, 0);
-
-  return {
-    from: from.toISOString(),
-    to: to.toISOString(),
-    preset: PERIOD_PRESET[period],
-  };
+  const preset = PERIOD_PRESET[period];
+  return resolveDateRange(preset);
 }
 
 export function isReportPeriod(value: string | null): value is ReportPeriod {

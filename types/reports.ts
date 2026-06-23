@@ -4,7 +4,7 @@ import type {
   LeadConversionDataPoint,
 } from "@/types/dashboard";
 
-export type ReportDatePreset = "7d" | "30d" | "90d" | "custom";
+export type ReportDatePreset = "today" | "yesterday" | "this_week" | "this_month" | "custom";
 
 export type ReportPeriod = "day" | "week" | "month";
 

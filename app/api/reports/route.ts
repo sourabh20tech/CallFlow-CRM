@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const periodParam = searchParams.get("period");
   const period = isReportPeriod(periodParam) ? periodParam : undefined;
-  const preset = (searchParams.get("preset") as ReportDatePreset) ?? "7d";
+  const preset = (searchParams.get("preset") as ReportDatePreset) ?? "this_week";
   const from = searchParams.get("from") ?? undefined;
   const to = searchParams.get("to") ?? undefined;
 

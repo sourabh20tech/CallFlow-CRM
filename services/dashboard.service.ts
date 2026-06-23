@@ -57,7 +57,7 @@ export class DashboardService {
     return {
       from: from.toISOString(),
       to: to.toISOString(),
-      preset: "7d",
+      preset: "this_week",
     };
   }
 
