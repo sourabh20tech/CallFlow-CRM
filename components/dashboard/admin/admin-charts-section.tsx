@@ -5,15 +5,10 @@ import { BarChart3 } from "lucide-react";
 import type {
   AgentPerformanceDataPoint,
   DailyCallsDataPoint,
-  LeadConversionDataPoint,
 } from "@/types/dashboard";
 
 const DailyCallsChart = dynamic(
   () => import("@/components/charts/dashboard/daily-calls-chart").then((m) => m.DailyCallsChart),
-  { ssr: false, loading: () => <ChartSkeleton /> },
-);
-const LeadConversionChart = dynamic(
-  () => import("@/components/charts/dashboard/lead-conversion-chart").then((m) => m.LeadConversionChart),
   { ssr: false, loading: () => <ChartSkeleton /> },
 );
 const AgentPerformanceChart = dynamic(
@@ -29,7 +24,6 @@ function ChartSkeleton() {
 
 interface AdminChartsSectionProps {
   dailyCalls: DailyCallsDataPoint[];
-  leadConversion: LeadConversionDataPoint[];
   agentPerformance: AgentPerformanceDataPoint[];
   /** Changes on refresh to re-trigger chart animations */
   chartKey?: string;
@@ -37,7 +31,6 @@ interface AdminChartsSectionProps {
 
 export function AdminChartsSection({
   dailyCalls,
-  leadConversion,
   agentPerformance,
   chartKey,
 }: AdminChartsSectionProps) {
@@ -51,20 +44,15 @@ export function AdminChartsSection({
         </div>
         <div>
           <h2 className="text-sm font-semibold tracking-tight">Analytics</h2>
-          <p className="text-xs text-muted-foreground">Calls, conversion, and team performance</p>
+          <p className="text-xs text-muted-foreground">Calls and team performance</p>
         </div>
       </div>
 
-      <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-2">
-        <div className="reports-chart-animate" style={{ animationDelay: "0ms" }}>
-          <DailyCallsChart data={dailyCalls} gradientId={`admin-daily${suffix}`} />
-        </div>
-        <div className="reports-chart-animate" style={{ animationDelay: "80ms" }}>
-          <LeadConversionChart data={leadConversion} />
-        </div>
+      <div className="reports-chart-animate" style={{ animationDelay: "0ms" }}>
+        <DailyCallsChart data={dailyCalls} gradientId={`admin-daily${suffix}`} />
       </div>
 
-      <div className="reports-chart-animate" style={{ animationDelay: "160ms" }}>
+      <div className="reports-chart-animate" style={{ animationDelay: "80ms" }}>
         <AgentPerformanceChart key={`agent${suffix}`} data={agentPerformance} />
       </div>
     </section>

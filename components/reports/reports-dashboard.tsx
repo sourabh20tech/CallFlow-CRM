@@ -29,10 +29,6 @@ const ReportsDailySection = dynamic(
   () => import("@/components/reports/sections/reports-daily-section").then((m) => m.ReportsDailySection),
   { ssr: false, loading: () => <SectionSkeleton /> },
 );
-const ReportsConversionSection = dynamic(
-  () => import("@/components/reports/sections/reports-conversion-section").then((m) => m.ReportsConversionSection),
-  { ssr: false, loading: () => <SectionSkeleton /> },
-);
 const ReportsAgentsSection = dynamic(
   () => import("@/components/reports/sections/reports-agents-section").then((m) => m.ReportsAgentsSection),
   { ssr: false, loading: () => <SectionSkeleton /> },
@@ -193,9 +189,6 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
           <TabsTrigger value="daily" className="text-xs sm:text-sm">
             Daily
           </TabsTrigger>
-          <TabsTrigger value="conversion" className="text-xs sm:text-sm">
-            Conversion
-          </TabsTrigger>
           <TabsTrigger value="agents" className="text-xs sm:text-sm">
             Agents
           </TabsTrigger>
@@ -213,10 +206,6 @@ export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
 
         <TabsContent value="daily" className="mt-0">
           <ReportsDailySection data={data} chartKey={chartKey} />
-        </TabsContent>
-
-        <TabsContent value="conversion" className="mt-0">
-          <ReportsConversionSection data={data.leadConversion} chartKey={chartKey} />
         </TabsContent>
 
         <TabsContent value="agents" className="mt-0">

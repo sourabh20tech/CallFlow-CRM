@@ -84,7 +84,6 @@ export function AdminDashboardOverview() {
 
       <AdminChartsSection
         dailyCalls={data.dailyCalls}
-        leadConversion={data.leadConversion}
         agentPerformance={data.agentPerformance}
         chartKey={chartKey}
       />

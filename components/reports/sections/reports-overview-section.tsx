@@ -2,7 +2,6 @@
 
 import { BarChart3 } from "lucide-react";
 import { DailyReportChart } from "@/components/reports/charts/daily-report-chart";
-import { ConversionReportChart } from "@/components/reports/charts/conversion-report-chart";
 import { AgentReportChart } from "@/components/reports/charts/agent-report-chart";
 import { PerformanceAnalyticsChart } from "@/components/reports/charts/performance-analytics-chart";
 import type { ReportsBundle } from "@/types/reports";
@@ -27,9 +26,8 @@ export function ReportsOverviewSection({ data, chartKey }: ReportsOverviewSectio
 
       <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-2">
         <DailyReportChart data={data.daily} chartKey={`daily-${chartKey}`} />
-        <ConversionReportChart data={data.leadConversion} chartKey={`conv-${chartKey}`} />
+        <AgentReportChart data={data.agentPerformance} chartKey={`agent-${chartKey}`} />
       </div>
-      <AgentReportChart data={data.agentPerformance} chartKey={`agent-${chartKey}`} />
       <PerformanceAnalyticsChart data={data.performance} chartKey={`perf-${chartKey}`} />
     </section>
   );
