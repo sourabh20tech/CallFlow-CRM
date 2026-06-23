@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, Clock, Download, LogIn, RefreshCw, Search, TrendingUp, Users } from "lucide-react";
+import { Activity, Clock, Download, LogIn, RefreshCw, Search, Trash2, TrendingUp, Users } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/design-system/page-header";
 import { GlassCard } from "@/components/design-system/glass-card";
@@ -94,8 +94,9 @@ const ADMIN_ACTION_TYPE_OPTIONS = [
 ];
 
 export function ActivityLogsPage() {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdmin = role === "admin";
+  const auth = { user };
 
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -170,6 +171,36 @@ export function ActivityLogsPage() {
     }
   };
 
+  const handleBulkDelete = async (olderThanDays: number) => {
+    if (!confirm(`Delete non-critical logs older than ${olderThanDays} days? This action is reversible.`)) return;
+    try {
+      const res = await fetch("/api/activity-logs/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ olderThanDays }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Delete failed");
+      toast.success(`${data.deleted} log${data.deleted !== 1 ? "s" : ""} archived`);
+      void loadLogs();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Delete failed");
+    }
+  };
+
+  const handleDeleteSingle = async (id: string) => {
+    try {
+      const res = await fetch(`/api/activity-logs/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Delete failed");
+      toast.success("Log archived");
+      setLogs((prev) => prev.filter((l) => l.id !== id));
+      setTotal((prev) => prev - 1);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Cannot delete this log");
+    }
+  };
+
   return (
     <div className={pageSection}>
       <PageHeader
@@ -190,6 +221,10 @@ export function ActivityLogsPage() {
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void handleExport("xlsx")}>
                   <Download className="h-4 w-4" />
                   Excel
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => void handleBulkDelete(90)}>
+                  <Trash2 className="h-4 w-4" />
+                  Clean 90d+
                 </Button>
               </>
             )}
@@ -340,6 +375,21 @@ export function ActivityLogsPage() {
                         )}
                       </div>
                     </div>
+
+                    {/* Delete button — non-critical logs only */}
+                    {!["login", "logout", "lead_assigned", "lead_status_changed", "agent_created", "agent_deactivated"].includes(log.actionType) && (
+                      (isAdmin || log.userId === auth.user?.id) && (
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteSingle(log.id)}
+                          className="mt-1 shrink-0 rounded p-1 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                          title="Archive this log"
+                          aria-label="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )
+                    )}
                   </div>
                 );
               })}

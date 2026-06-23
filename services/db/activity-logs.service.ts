@@ -60,6 +60,7 @@ export class ActivityLogsDbService extends BaseDbService {
     let query = (supabase as any)
       .from("activity_logs")
       .select("*", { count: "exact" })
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .range(from, to);
 
@@ -115,6 +116,92 @@ export class ActivityLogsDbService extends BaseDbService {
     const { data, error } = await query;
     if (error) return [];
     return ((data ?? []) as ActivityLogRow[]).map(mapRow);
+  }
+
+  /** Critical action types that cannot be deleted (audit records) */
+  private static PROTECTED_ACTIONS = new Set([
+    "login",
+    "logout",
+    "lead_assigned",
+    "lead_status_changed",
+    "agent_created",
+    "agent_deactivated",
+  ]);
+
+  /** Soft-delete a single activity log */
+  async softDelete(id: string, userId: string, isAdmin: boolean, client?: TypedSupabaseClient): Promise<void> {
+    const supabase = await this.db(client);
+
+    // Fetch the log to verify ownership and type
+    const { data: row, error: fetchError } = await (supabase as any)
+      .from("activity_logs")
+      .select("id, user_id, action_type")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (fetchError || !row) throw new Error("Activity log not found");
+
+    // Check if it's a protected action
+    if (ActivityLogsDbService.PROTECTED_ACTIONS.has(row.action_type)) {
+      throw new Error("Cannot delete audit records (login, logout, assignments, conversions)");
+    }
+
+    // Agent can only delete own logs
+    if (!isAdmin && row.user_id !== userId) {
+      throw new Error("You can only delete your own activity logs");
+    }
+
+    const { error } = await (supabase as any)
+      .from("activity_logs")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) throw new Error(error.message);
+  }
+
+  /** Bulk soft-delete by IDs (admin only) */
+  async bulkSoftDelete(ids: string[], client?: TypedSupabaseClient): Promise<number> {
+    const supabase = await this.db(client);
+
+    // Only delete non-protected logs
+    const { data: rows } = await (supabase as any)
+      .from("activity_logs")
+      .select("id, action_type")
+      .in("id", ids)
+      .is("deleted_at", null);
+
+    const deletableIds = ((rows ?? []) as { id: string; action_type: string }[])
+      .filter((r) => !ActivityLogsDbService.PROTECTED_ACTIONS.has(r.action_type))
+      .map((r) => r.id);
+
+    if (deletableIds.length === 0) return 0;
+
+    const { error } = await (supabase as any)
+      .from("activity_logs")
+      .update({ deleted_at: new Date().toISOString() })
+      .in("id", deletableIds);
+
+    if (error) throw new Error(error.message);
+    return deletableIds.length;
+  }
+
+  /** Bulk soft-delete by date (admin only) — delete non-critical logs older than given date */
+  async softDeleteOlderThan(beforeDate: string, client?: TypedSupabaseClient): Promise<number> {
+    const supabase = await this.db(client);
+
+    const protectedList = Array.from(ActivityLogsDbService.PROTECTED_ACTIONS);
+
+    const { count, error } = await (supabase as any)
+      .from("activity_logs")
+      .update({ deleted_at: new Date().toISOString() })
+      .lt("created_at", beforeDate)
+      .is("deleted_at", null)
+      .not("action_type", "in", `(${protectedList.join(",")})`)
+      .select("id", { count: "exact", head: true });
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
   }
 }
 
