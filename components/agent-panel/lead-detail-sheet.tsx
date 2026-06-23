@@ -5,6 +5,7 @@ import { StatusChip } from "@/components/design-system/status-chip";
 import { LEAD_STATUS_VARIANT, formatLeadStatus } from "@/lib/leads/constants";
 import { LeadNotesPanel } from "@/components/agent-panel/lead-notes-panel";
 import { LeadQuickCallButton } from "@/components/agent-panel/lead-quick-call-button";
+import { LeadQuickFollowupButton } from "@/components/agent-panel/lead-quick-followup-button";
 import { LeadStatusActions } from "@/components/agent-panel/lead-status-actions";
 import { WhatsAppChatButton } from "@/components/shared/whatsapp-chat-button";
 import { LeadContactBlock } from "@/components/agent-panel/lead-contact-block";
@@ -49,7 +50,7 @@ export function LeadDetailSheet({
         <div className="mt-6 space-y-6">
           <LeadContactBlock email={lead.email} phone={lead.phone} />
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <LeadQuickCallButton
               leadId={lead.id}
               leadName={lead.fullName}
@@ -62,6 +63,12 @@ export function LeadDetailSheet({
               message={WHATSAPP_TEMPLATES.greeting}
               label={`WhatsApp ${lead.fullName}`}
               iconOnly={false}
+              className="w-full sm:w-auto"
+            />
+            <LeadQuickFollowupButton
+              leadId={lead.id}
+              leadName={lead.fullName}
+              onFollowupCreated={onCallInitiated}
               className="w-full sm:w-auto"
             />
           </div>
