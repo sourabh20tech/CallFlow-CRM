@@ -27,7 +27,7 @@ export function SalesAnalyticsChart({ data, chartKey }: SalesAnalyticsChartProps
   return (
     <ChartShell
       title="Sales analytics"
-      description="Revenue, pipeline value, and deal volume"
+      description="Fund, pipeline value, and deal volume"
       chartKey={chartKey}
       className="lg:col-span-2"
     >
@@ -57,7 +57,7 @@ export function SalesAnalyticsChart({ data, chartKey }: SalesAnalyticsChartProps
                 payload={payload?.map((p) => ({
                   name: p.name as string,
                   value:
-                    p.dataKey === "revenue" || p.dataKey === "pipeline"
+                    p.dataKey === "fund" || p.dataKey === "pipeline"
                       ? formatCurrency(Number(p.value))
                       : (p.value as number),
                   color: p.color as string,
@@ -69,8 +69,8 @@ export function SalesAnalyticsChart({ data, chartKey }: SalesAnalyticsChartProps
           <Area
             yAxisId="left"
             type="monotone"
-            dataKey="revenue"
-            name="Revenue"
+            dataKey="fund"
+            name="Fund"
             stroke="hsl(142, 71%, 45%)"
             fill="url(#repRevGrad)"
             strokeWidth={2}

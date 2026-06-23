@@ -26,7 +26,7 @@ export function ReportsKpiRow({ kpis }: ReportsKpiRowProps) {
         description="Leads to won deals"
       />
       <StatCard
-        title="Revenue"
+        title="Fund"
         value={formatCurrency(kpis.totalFund)}
         icon={IndianRupee}
         trend={{ value: kpis.fundChange, label: "vs prior period" }}

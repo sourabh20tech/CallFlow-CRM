@@ -170,7 +170,7 @@ export function aggregateSales(
   leadConversion: LeadConversionDataPoint[],
   raw: AnalyticsRawData,
 ): SalesAnalyticsPoint[] {
-  // Revenue/pipeline values are intentionally zero unless real monetary
+  // Fund/pipeline values are intentionally zero unless real monetary
   // fields are persisted in the database.
   return leadConversion.map((m) => {
     const deals = m.converted;
