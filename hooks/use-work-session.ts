@@ -3,15 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
- * Work Session Tracking Hook — Complete Rebuild
+ * Work Session Tracking — Call Center Mode
  * 
  * Architecture:
- * - Database is the single source of truth for duration.
- * - Client tracks active_seconds locally and syncs to DB via heartbeat.
- * - On page refresh: server resumes existing session (no new session created).
- * - Timer only counts when document is visible (tab active + focused).
- * - Heartbeat sends to server every 30s to persist active time.
- * - On logout/browser close: final active_seconds sent to close session.
+ * - Timer counts ALL time from login to logout (not just tab-visible time).
+ * - Agents work across CRM, WhatsApp, phone calls — all counts as work.
+ * - Heartbeat every 30s keeps session alive and syncs active_seconds to DB.
+ * - Daily reset: server handles date boundaries.
+ * - On page refresh: server resumes existing session.
+ * - On logout/browser close: final seconds sent to close session.
  */
 
 const HEARTBEAT_MS = 30_000; // 30 seconds
@@ -23,7 +23,6 @@ let _sessionId: string | null = null;
 let _loginTime: string | null = null;
 let _isActive = false;
 let _activeSeconds = 0;
-let _isVisible = typeof document !== "undefined" ? !document.hidden : true;
 let _lastTickMs = Date.now();
 let _tickTimer: ReturnType<typeof setInterval> | null = null;
 let _heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -32,15 +31,17 @@ let _heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
 function tick() {
   if (!_isActive) return;
-  
+
   const now = Date.now();
-  if (_isVisible) {
-    const deltaMs = now - _lastTickMs;
-    // Only count if delta is reasonable (1-4 seconds).
-    // Rejects: sleep recovery, laptop lid open, huge gaps.
-    if (deltaMs >= 900 && deltaMs < 4500) {
-      _activeSeconds += Math.round(deltaMs / 1000);
-    }
+  const deltaMs = now - _lastTickMs;
+
+  // Count all time while session is active (no visibility check).
+  // Only reject huge gaps (> 5 min) which indicate sleep/suspend.
+  if (deltaMs >= 900 && deltaMs < 300_000) {
+    _activeSeconds += Math.round(deltaMs / 1000);
+  } else if (deltaMs >= 300_000) {
+    // After a long gap (sleep/laptop closed), just add 1 second to keep ticking
+    _activeSeconds += 1;
   }
   _lastTickMs = now;
 }
@@ -72,12 +73,6 @@ async function heartbeat() {
 }
 
 function setupListeners() {
-  const onVisibility = () => {
-    _isVisible = !document.hidden;
-    // Reset lastTick to prevent catching up accumulated hidden time
-    _lastTickMs = Date.now();
-  };
-
   const onBeforeUnload = () => {
     // Send final active_seconds via beacon (fire-and-forget)
     const payload = JSON.stringify({ action: "end", activeSeconds: _activeSeconds });
@@ -87,7 +82,6 @@ function setupListeners() {
     );
   };
 
-  document.addEventListener("visibilitychange", onVisibility);
   window.addEventListener("beforeunload", onBeforeUnload);
 }
 
@@ -152,7 +146,6 @@ export function useWorkSession() {
   // Re-render every second for live display when active
   useEffect(() => {
     if (!_isActive && !_sessionId) {
-      // Not yet initialized — poll until ready
       const poll = setInterval(() => {
         if (_isActive) rerender((n) => n + 1);
       }, 500);
