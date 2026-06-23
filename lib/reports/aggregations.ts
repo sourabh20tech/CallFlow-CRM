@@ -312,7 +312,8 @@ export function buildKpis(
       ).toFixed(1),
     ),
     activeAgents: stats?.active_agents ?? agentPerformance.length,
-    pendingFollowups: stats?.pending_followups ?? followups.pending + followups.inProgress,
+    // Always use live count — dashboard_stats cache may be stale
+    pendingFollowups: followups.pending + followups.inProgress,
     totalLeads: liveTotalLeads,
     convertedLeads: liveConverted,
   };

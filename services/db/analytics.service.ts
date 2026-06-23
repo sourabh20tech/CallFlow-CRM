@@ -157,19 +157,39 @@ export class AnalyticsDbService extends BaseDbService {
     to: string,
     agentId?: string,
   ): Promise<AnalyticsFollowupRow[]> {
-    let query = supabase
+    // Fetch ALL pending/in_progress follow-ups (regardless of date) + completed within range
+    // This ensures overdue follow-ups from before the range are still counted
+    let pendingQuery = supabase
       .from(TABLES.FOLLOW_UPS)
       .select("id, status, due_at, assigned_agent_id, completed_at")
       .is("deleted_at", null)
+      .in("status", ["pending", "in_progress"]);
+
+    if (agentId) {
+      pendingQuery = pendingQuery.eq("assigned_agent_id", agentId);
+    }
+
+    let completedQuery = supabase
+      .from(TABLES.FOLLOW_UPS)
+      .select("id, status, due_at, assigned_agent_id, completed_at")
+      .is("deleted_at", null)
+      .in("status", ["completed", "cancelled"])
       .gte("due_at", from)
       .lte("due_at", to);
 
     if (agentId) {
-      query = query.eq("assigned_agent_id", agentId);
+      completedQuery = completedQuery.eq("assigned_agent_id", agentId);
     }
 
-    const data = await handleQueryOrThrow(query.limit(2000));
-    return (data ?? []) as AnalyticsFollowupRow[];
+    const [pendingData, completedData] = await Promise.all([
+      handleQueryOrThrow(pendingQuery.limit(2000)),
+      handleQueryOrThrow(completedQuery.limit(2000)),
+    ]);
+
+    return [
+      ...((pendingData ?? []) as AnalyticsFollowupRow[]),
+      ...((completedData ?? []) as AnalyticsFollowupRow[]),
+    ];
   }
 
   private async fetchAgents(supabase: TypedSupabaseClient): Promise<AnalyticsAgentRow[]> {
