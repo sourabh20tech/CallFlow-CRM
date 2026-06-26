@@ -32,8 +32,9 @@ export function DeleteAgentModal({
         <ModalHeader>
           <ModalTitle>Delete agent?</ModalTitle>
           <ModalDescription>
-            This removes {agent?.name ?? "this agent"} and their agent record. Assigned leads will
-            be unlinked. This action cannot be undone.
+            Are you sure you want to permanently delete {agent?.name ?? "this agent"}&apos;s login
+            account? The agent will no longer be able to log in. Historical CRM records (leads,
+            calls, notes) will remain for reporting. This action cannot be undone.
           </ModalDescription>
         </ModalHeader>
         <ModalFooter>

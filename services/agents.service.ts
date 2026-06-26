@@ -68,10 +68,26 @@ export class AgentsService {
   async delete(id: string): Promise<void> {
     requireSupabaseConfigured("agent deletion");
     const agent = await agentsDbServiceServer.getById(id);
-    await agentsDbServiceServer.softDelete(id);
-    if (agent.profileId && isAdminClientConfigured()) {
-      await agentsAdminService.setAgentAuthEnabled(agent.profileId, false);
+
+    // Check for active assigned leads
+    const { leadsDbServiceServer } = await import("@/services/db/leads.service");
+    const activeLeads = await leadsDbServiceServer.list(
+      { assignedAgentId: id },
+      { page: 1, pageSize: 1 },
+    );
+    if (activeLeads.total > 0) {
+      throw new Error(
+        `This agent still has ${activeLeads.total} active lead${activeLeads.total !== 1 ? "s" : ""}. Please reassign or close all active leads before deleting.`,
+      );
     }
+
+    // Step 1: Delete from Supabase Auth (must succeed first)
+    if (agent.profileId && isAdminClientConfigured()) {
+      await agentsAdminService.deleteAgentAuth(agent.profileId);
+    }
+
+    // Step 2: Soft-delete the agent record (keeps historical data)
+    await agentsDbServiceServer.softDelete(id);
   }
 
   async resetPassword(id: string, input: ResetAgentPasswordInput): Promise<void> {
