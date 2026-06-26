@@ -81,18 +81,21 @@ export class AgentsService {
       );
     }
 
-    // Step 1: Delete from Supabase Auth (must succeed first)
     if (!agent.profileId) {
       throw new Error("Agent has no linked authentication account (profileId missing).");
     }
 
-    if (isAdminClientConfigured()) {
-      await agentsAdminService.deleteAgentAuth(agent.profileId);
-    } else {
+    if (!isAdminClientConfigured()) {
       throw new Error("Cannot delete agent: SUPABASE_SERVICE_ROLE_KEY is not configured.");
     }
 
-    // Step 2: Soft-delete the agent record (keeps historical data)
+    // Step 1: Delete from Supabase Auth
+    await agentsAdminService.deleteAgentAuth(agent.profileId);
+
+    // Step 2: Delete profile record (prevents "duplicate key" on email reuse)
+    await agentsAdminService.deleteProfile(agent.profileId);
+
+    // Step 3: Soft-delete the agent record (keeps historical CRM data)
     await agentsDbServiceServer.softDelete(id);
   }
 

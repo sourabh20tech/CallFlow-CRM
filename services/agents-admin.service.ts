@@ -41,16 +41,29 @@ export class AgentsAdminService {
     const isActive = input.isActive ?? true;
     const department = input.department ?? "General";
 
-    // Check email uniqueness — only among ACTIVE agents (not deleted ones)
+    // Check email uniqueness — skip profiles of deleted agents
     const { data: existingProfile } = await admin
       .from("profiles")
-      .select("id, agents!inner(id, deleted_at)")
+      .select("id")
       .eq("email", email)
-      .is("agents.deleted_at", null)
       .maybeSingle();
 
     if (existingProfile) {
-      throw new AgentEmailExistsError();
+      // Check if this profile belongs to a deleted agent
+      const { data: activeAgent } = await admin
+        .from("agents")
+        .select("id")
+        .eq("profile_id", existingProfile.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (activeAgent) {
+        // Active agent exists with this email
+        throw new AgentEmailExistsError();
+      }
+
+      // Profile is orphaned (deleted agent) — remove it to allow reuse
+      await admin.from("profiles").delete().eq("id", existingProfile.id);
     }
 
     let userId: string | null = null;
@@ -236,6 +249,18 @@ export class AgentsAdminService {
       throw new Error(`Failed to delete authentication account: ${error.message}`);
     }
   }
-}
 
+  /** Delete the profile record to free up the email for reuse */
+  async deleteProfile(profileId: string): Promise<void> {
+    if (!isAdminClientConfigured()) return;
+
+    const admin = createAdminSupabaseClient();
+    const { error } = await admin.from("profiles").delete().eq("id", profileId);
+
+    if (error) {
+      // Non-fatal — profile might already be gone via cascade
+      console.warn("[agents-admin] deleteProfile:", error.message);
+    }
+  }
+}
 export const agentsAdminService = new AgentsAdminService();
