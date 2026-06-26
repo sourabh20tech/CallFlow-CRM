@@ -31,10 +31,36 @@ export class AgentsDbService extends BaseDbService {
 
     const data = await handleQueryOrThrow(query);
     const rows = (data ?? []) as AgentWithProfile[];
+
+    // Fetch active work sessions to determine live online/offline status
+    const { data: activeSessions } = await supabase
+      .from("work_sessions")
+      .select("user_id, last_heartbeat")
+      .eq("is_active", true);
+
+    const onlineUserIds = new Set<string>();
+    const HEARTBEAT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+    const now = Date.now();
+
+    for (const session of (activeSessions ?? []) as { user_id: string; last_heartbeat: string | null }[]) {
+      // Consider online if heartbeat within last 5 minutes
+      const lastBeat = session.last_heartbeat ? new Date(session.last_heartbeat).getTime() : 0;
+      if (now - lastBeat < HEARTBEAT_TIMEOUT_MS) {
+        onlineUserIds.add(session.user_id);
+      }
+    }
+
     const withCounts = await Promise.all(
       rows.map(async (row) => {
         const count = await this.getAssignedLeadCount(row.id, supabase);
-        return mapAgentRow(row, { assignedLeadsCount: count });
+        const agent = mapAgentRow(row, { assignedLeadsCount: count });
+        // Override status with live presence
+        if (agent.profileId && onlineUserIds.has(agent.profileId)) {
+          agent.status = "available";
+        } else {
+          agent.status = "offline";
+        }
+        return agent;
       }),
     );
     return withCounts;
@@ -54,7 +80,26 @@ export class AgentsDbService extends BaseDbService {
 
     const row = requireRow(data as AgentWithProfile | null, "Agent", id);
     const count = await this.getAssignedLeadCount(id, supabase);
-    return mapAgentRow(row, { assignedLeadsCount: count });
+    const agent = mapAgentRow(row, { assignedLeadsCount: count });
+
+    // Check live presence from work_sessions
+    if (agent.profileId) {
+      const { data: session } = await supabase
+        .from("work_sessions")
+        .select("last_heartbeat")
+        .eq("user_id", agent.profileId)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      const HEARTBEAT_TIMEOUT_MS = 5 * 60 * 1000;
+      const lastBeat = (session as any)?.last_heartbeat
+        ? new Date((session as any).last_heartbeat).getTime()
+        : 0;
+
+      agent.status = (Date.now() - lastBeat < HEARTBEAT_TIMEOUT_MS) ? "available" : "offline";
+    }
+
+    return agent;
   }
 
   async getByProfileId(profileId: string, client?: TypedSupabaseClient): Promise<Agent | null> {
