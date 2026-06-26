@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FollowupReminderListener } from "@/components/followups/followup-reminder-listener";
+import { AgentInactivityGuard } from "@/components/auth/agent-inactivity-guard";
 import { Sidebar } from "@/components/layouts/sidebar";
 import { MobileNav } from "@/components/layouts/mobile-nav";
 import { TopNavbar } from "@/components/layouts/top-navbar";
@@ -18,6 +19,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <div className="flex min-h-[100dvh] bg-transparent">
       <FollowupReminderListener />
+      <AgentInactivityGuard />
       <Sidebar />
       <MobileNav open={mobileOpen} onOpenChange={setMobileOpen} />
 
