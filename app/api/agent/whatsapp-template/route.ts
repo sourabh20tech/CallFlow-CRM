@@ -5,20 +5,25 @@ export const dynamic = "force-dynamic";
 
 const DEFAULT_TEMPLATE = "Hello {name},\nThank you for your interest.\nRegards, {agent_name}";
 
+/** Get a Supabase client that bypasses RLS (service role if available) */
+async function getDbClient() {
+  const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+  const { createClient } = await import("@/lib/supabase/server");
+  return isAdminClientConfigured() ? createAdminSupabaseClient() : await createClient();
+}
+
 /** GET /api/agent/whatsapp-template — Get agent's WhatsApp template */
 export async function GET(request: Request) {
   const auth = await requireAuthApi();
   if (auth.error) return auth.error;
 
   const { searchParams } = new URL(request.url);
-  // Admin can view any agent's template by passing userId
   const targetUserId = auth.user.role === "admin" && searchParams.get("userId")
     ? searchParams.get("userId")!
     : auth.user.id;
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
 
     const { data } = await (supabase as any)
       .from("agent_whatsapp_templates")
@@ -32,7 +37,6 @@ export async function GET(request: Request) {
       updatedAt: data?.updated_at ?? null,
     });
   } catch {
-    // Table might not exist — return default
     return NextResponse.json({ template: DEFAULT_TEMPLATE, isDefault: true, updatedAt: null });
   }
 }
@@ -58,8 +62,7 @@ export async function PUT(request: Request) {
   const targetUserId = auth.user.role === "admin" && userId ? userId : auth.user.id;
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
 
     // Upsert — create or update
     const { data, error } = await (supabase as any)
@@ -88,8 +91,7 @@ export async function DELETE(request: Request) {
   const targetUserId = auth.user.id;
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
 
     await (supabase as any)
       .from("agent_whatsapp_templates")
