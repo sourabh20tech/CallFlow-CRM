@@ -14,6 +14,7 @@ import {
 } from "@/components/design-system/modal";
 import { FormField } from "@/components/design-system/form-field";
 import { FormInput } from "@/components/design-system/form-input";
+import { DatetimePickerField } from "@/components/followups/datetime-picker-field";
 import { cn } from "@/lib/utils";
 
 interface LeadQuickFollowupButtonProps {
@@ -124,15 +125,14 @@ export function LeadQuickFollowupButton({
               </FormField>
 
               {/* Date & Time */}
-              <FormField label="Due Date & Time" htmlFor="qf-due" required>
-                <FormInput
-                  id="qf-due"
-                  type="datetime-local"
-                  value={dueAt}
-                  onChange={(e) => setDueAt(e.target.value)}
-                  min={defaultDueAt().slice(0, 16)}
-                />
-              </FormField>
+              <DatetimePickerField
+                id="qf-due"
+                label="Due Date & Time"
+                value={dueAt}
+                onChange={setDueAt}
+                required
+                min={defaultDueAt()}
+              />
 
               {/* Priority */}
               <FormField label="Priority" htmlFor="qf-priority">
