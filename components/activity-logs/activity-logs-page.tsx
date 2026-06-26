@@ -107,6 +107,8 @@ export function ActivityLogsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [actionType, setActionType] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [agentFilter, setAgentFilter] = useState("");
+  const [agents, setAgents] = useState<{ id: string; name: string; profileId: string }[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
@@ -114,6 +116,19 @@ export function ActivityLogsPage() {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 300);
     return () => clearTimeout(t);
   }, [search]);
+
+  // Load agent list for filter dropdown (admin only)
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch("/api/agents")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setAgents(data.map((a: any) => ({ id: a.id, name: a.name, profileId: a.profileId })));
+        }
+      })
+      .catch(() => {});
+  }, [isAdmin]);
 
   const loadLogs = useCallback(async () => {
     setIsLoading(true);
@@ -124,6 +139,7 @@ export function ActivityLogsPage() {
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (actionType) params.set("actionType", actionType);
       if (roleFilter) params.set("role", roleFilter);
+      if (agentFilter) params.set("userId", agentFilter);
       if (dateFrom) params.set("from", new Date(`${dateFrom}T00:00:00`).toISOString());
       if (dateTo) params.set("to", new Date(`${dateTo}T23:59:59`).toISOString());
 
@@ -138,7 +154,7 @@ export function ActivityLogsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, debouncedSearch, actionType, roleFilter, dateFrom, dateTo]);
+  }, [page, debouncedSearch, actionType, roleFilter, agentFilter, dateFrom, dateTo]);
 
   useEffect(() => { void loadLogs(); }, [loadLogs]);
 
@@ -154,15 +170,23 @@ export function ActivityLogsPage() {
     };
   }, [logs]);
 
-  const handleExport = async (format: "csv" | "xlsx") => {
+  const handleExport = async (format: "xlsx") => {
     try {
-      const res = await fetch(`/api/activity-logs/export?format=${format}`);
+      const params = new URLSearchParams();
+      params.set("format", format);
+      if (agentFilter) params.set("userId", agentFilter);
+      if (dateFrom) params.set("from", new Date(`${dateFrom}T00:00:00`).toISOString());
+      if (dateTo) params.set("to", new Date(`${dateTo}T23:59:59`).toISOString());
+      if (actionType) params.set("actionType", actionType);
+
+      const res = await fetch(`/api/activity-logs/export?${params.toString()}`);
       if (!res.ok) throw new Error("Export failed");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `activity-logs.${format}`;
+      const agentName = agents.find((ag) => ag.profileId === agentFilter)?.name ?? "all-agents";
+      a.download = `activity-logs-${agentName}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Export downloaded");
@@ -214,13 +238,9 @@ export function ActivityLogsPage() {
             </Button>
             {isAdmin && (
               <>
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void handleExport("csv")}>
-                  <Download className="h-4 w-4" />
-                  CSV
-                </Button>
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void handleExport("xlsx")}>
                   <Download className="h-4 w-4" />
-                  Excel
+                  Export Excel
                 </Button>
                 <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => void handleBulkDelete(90)}>
                   <Trash2 className="h-4 w-4" />
@@ -270,6 +290,19 @@ export function ActivityLogsPage() {
               <option value="">All Roles</option>
               <option value="admin">Admin</option>
               <option value="agent">Agent</option>
+            </select>
+          )}
+          {isAdmin && agents.length > 0 && (
+            <select
+              value={agentFilter}
+              onChange={(e) => { setAgentFilter(e.target.value); setPage(1); }}
+              className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
+              aria-label="Filter by agent"
+            >
+              <option value="">All Agents</option>
+              {agents.map((a) => (
+                <option key={a.id} value={a.profileId}>{a.name}</option>
+              ))}
             </select>
           )}
           <Input
