@@ -4,6 +4,7 @@ import { requireLeadsAdminApi } from "@/lib/api/require-leads-admin";
 import { logActivity } from "@/lib/activity/log-activity";
 import { leadsService } from "@/services/leads.service";
 import { createLeadSchema } from "@/utils/validators";
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/db/pagination";
 import type { LeadListFilters } from "@/types/lead";
 
 export async function GET(request: Request) {
@@ -26,8 +27,8 @@ export async function GET(request: Request) {
 
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const pageSize = Math.min(
-    100,
-    Math.max(1, Number(searchParams.get("pageSize") ?? "20") || 20),
+    MAX_PAGE_SIZE,
+    Math.max(1, Number(searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE)) || DEFAULT_PAGE_SIZE),
   );
 
   try {
