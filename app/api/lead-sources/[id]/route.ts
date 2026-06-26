@@ -5,6 +5,12 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+async function getDbClient() {
+  const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+  const { createClient } = await import("@/lib/supabase/server");
+  return isAdminClientConfigured() ? createAdminSupabaseClient() : await createClient();
+}
+
 /** PATCH /api/lead-sources/[id] — Rename a source (admin only) */
 export async function PATCH(request: Request, { params }: RouteParams) {
   const auth = await requireAdminApi();
@@ -24,21 +30,21 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Source name is required" }, { status: 400 });
   }
 
-  const newValue = label.trim().toLowerCase().replace(/[\s\-]+/g, "_").replace(/[^a-z0-9_]/g, "");
+  const trimmed = label.trim();
+  const newValue = trimmed.toLowerCase().replace(/[\s\-]+/g, "_").replace(/[^a-z0-9_]/g, "");
   if (!newValue) {
     return NextResponse.json({ error: "Invalid source name" }, { status: 400 });
   }
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
 
     // Get current source
     const { data: current, error: fetchError } = await (supabase as any)
       .from("lead_sources")
-      .select("*")
+      .select("id, label, value, is_system")
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !current) {
       return NextResponse.json({ error: "Source not found" }, { status: 404 });
@@ -46,22 +52,33 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     const oldValue = current.value;
 
+    // Check for duplicates
+    if (newValue !== oldValue) {
+      const { data: dup } = await (supabase as any)
+        .from("lead_sources")
+        .select("id")
+        .eq("value", newValue)
+        .neq("id", id)
+        .maybeSingle();
+
+      if (dup) {
+        return NextResponse.json({ error: `Source "${trimmed}" already exists` }, { status: 400 });
+      }
+    }
+
     // Update the source record
     const { data, error } = await (supabase as any)
       .from("lead_sources")
-      .update({ label: label.trim(), value: newValue })
+      .update({ label: trimmed, value: newValue })
       .eq("id", id)
-      .select("*")
-      .single();
+      .select("id, label, value")
+      .maybeSingle();
 
     if (error) {
-      if (error.message?.includes("unique") || error.message?.includes("duplicate")) {
-        return NextResponse.json({ error: `Source "${label}" already exists` }, { status: 400 });
-      }
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    // Update all leads that use the old source value (tier column)
+    // Update all leads that use the old source value
     if (oldValue !== newValue) {
       await (supabase as any)
         .from("leads")
@@ -84,15 +101,14 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
 
     // Get the source first
     const { data: source, error: fetchError } = await (supabase as any)
       .from("lead_sources")
-      .select("*")
+      .select("id, label, value, is_system")
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
     if (fetchError || !source) {
       return NextResponse.json({ error: "Source not found" }, { status: 404 });
@@ -106,6 +122,13 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
       );
     }
 
+    // Check how many leads use this source
+    const { count } = await (supabase as any)
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .eq("tier", source.value)
+      .is("deleted_at", null);
+
     // Delete the source
     const { error } = await (supabase as any)
       .from("lead_sources")
@@ -116,13 +139,15 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    // Optionally: set leads using this source to 'standard' fallback
-    await (supabase as any)
-      .from("leads")
-      .update({ tier: "standard" })
-      .eq("tier", source.value);
+    // Set leads using this source to 'standard' fallback
+    if (count && count > 0) {
+      await (supabase as any)
+        .from("leads")
+        .update({ tier: "standard" })
+        .eq("tier", source.value);
+    }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, affectedLeads: count ?? 0 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to delete source";
     return NextResponse.json({ error: message }, { status: 500 });

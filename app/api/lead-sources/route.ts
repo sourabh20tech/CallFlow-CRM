@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { requireAuthApi } from "@/lib/api/require-auth";
 import { requireAdminApi } from "@/lib/api/require-admin";
 
-// In-memory fallback when DB table doesn't exist
 const DEFAULT_SOURCES = [
   { id: "src-1", label: "Standard", value: "standard", isSystem: true },
   { id: "src-2", label: "Premium", value: "premium", isSystem: true },
   { id: "src-3", label: "Enterprise", value: "enterprise", isSystem: true },
 ];
+
+async function getDbClient() {
+  const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+  const { createClient } = await import("@/lib/supabase/server");
+  return isAdminClientConfigured() ? createAdminSupabaseClient() : await createClient();
+}
 
 /** GET /api/lead-sources — List all sources */
 export async function GET() {
@@ -15,18 +20,15 @@ export async function GET() {
   if (auth.error) return auth.error;
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
 
     const { data, error } = await (supabase as any)
       .from("lead_sources")
-      .select("*")
+      .select("id, label, value, is_system, sort_order")
       .order("sort_order", { ascending: true });
 
     if (error || !data?.length) {
-      return NextResponse.json({ sources: DEFAULT_SOURCES }, {
-        headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=120" },
-      });
+      return NextResponse.json({ sources: DEFAULT_SOURCES });
     }
 
     const sources = (data as any[]).map((r) => ({
@@ -36,9 +38,7 @@ export async function GET() {
       isSystem: r.is_system ?? false,
     }));
 
-    return NextResponse.json({ sources }, {
-      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=120" },
-    });
+    return NextResponse.json({ sources });
   } catch {
     return NextResponse.json({ sources: DEFAULT_SOURCES });
   }
@@ -61,14 +61,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Source name is required" }, { status: 400 });
   }
 
-  const value = label.trim().toLowerCase().replace(/[\s\-]+/g, "_").replace(/[^a-z0-9_]/g, "");
+  const trimmed = label.trim();
+  const value = trimmed.toLowerCase().replace(/[\s\-]+/g, "_").replace(/[^a-z0-9_]/g, "");
   if (!value) {
     return NextResponse.json({ error: "Invalid source name" }, { status: 400 });
   }
 
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const supabase = await getDbClient();
+
+    // Check duplicate
+    const { data: existing } = await (supabase as any)
+      .from("lead_sources")
+      .select("id")
+      .eq("value", value)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ error: `Source "${trimmed}" already exists` }, { status: 400 });
+    }
 
     // Get next sort order
     const { data: maxRow } = await (supabase as any)
@@ -83,19 +94,16 @@ export async function POST(request: Request) {
     const { data, error } = await (supabase as any)
       .from("lead_sources")
       .insert({
-        label: label.trim(),
+        label: trimmed,
         value,
         sort_order: nextOrder,
         is_system: false,
         created_by: auth.user.id,
       })
-      .select("*")
-      .single();
+      .select("id, label, value")
+      .maybeSingle();
 
     if (error) {
-      if (error.message?.includes("unique") || error.message?.includes("duplicate")) {
-        return NextResponse.json({ error: `Source "${label}" already exists` }, { status: 400 });
-      }
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
