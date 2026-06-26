@@ -41,10 +41,12 @@ export class AgentsAdminService {
     const isActive = input.isActive ?? true;
     const department = input.department ?? "General";
 
+    // Check email uniqueness — only among ACTIVE agents (not deleted ones)
     const { data: existingProfile } = await admin
       .from("profiles")
-      .select("id")
+      .select("id, agents!inner(id, deleted_at)")
       .eq("email", email)
+      .is("agents.deleted_at", null)
       .maybeSingle();
 
     if (existingProfile) {
@@ -54,6 +56,7 @@ export class AgentsAdminService {
     let userId: string | null = null;
 
     try {
+      // Try creating a new auth user
       const { data: authData, error: authError } = await admin.auth.admin.createUser({
         email,
         password: input.password,
@@ -67,14 +70,36 @@ export class AgentsAdminService {
 
       if (authError || !authData.user) {
         if (authError && isAuthDuplicateError(authError.message)) {
-          throw new AgentEmailExistsError();
-        }
-        throw new Error(
-          formatAuthCreateError(authError?.message ?? "Failed to create auth user"),
-        );
-      }
+          // Auth user exists — might be a previously deleted agent.
+          // Try to find and reactivate them.
+          const { data: listData } = await admin.auth.admin.listUsers();
+          const existingUser = listData?.users?.find(
+            (u) => u.email?.toLowerCase() === email,
+          );
 
-      userId = authData.user.id;
+          if (existingUser && existingUser.banned_until) {
+            // This is a disabled/deleted agent — reactivate with new password
+            await admin.auth.admin.updateUserById(existingUser.id, {
+              password: input.password,
+              ban_duration: "none",
+              user_metadata: {
+                full_name: input.fullName,
+                phone: input.phone,
+                role: "agent",
+              },
+            });
+            userId = existingUser.id;
+          } else {
+            throw new AgentEmailExistsError();
+          }
+        } else {
+          throw new Error(
+            formatAuthCreateError(authError?.message ?? "Failed to create auth user"),
+          );
+        }
+      } else {
+        userId = authData.user.id;
+      }
 
       const { error: profileError } = await admin.from("profiles").upsert(
         {
