@@ -217,11 +217,19 @@ export class AgentsAdminService {
 
   async deleteAgentAuth(profileId: string): Promise<void> {
     if (!isAdminClientConfigured()) {
-      return;
+      throw new Error("Admin API (SUPABASE_SERVICE_ROLE_KEY) is required to delete agent authentication.");
+    }
+
+    if (!profileId) {
+      throw new Error("No auth user ID found for this agent.");
     }
 
     const admin = createAdminSupabaseClient();
-    await admin.auth.admin.deleteUser(profileId);
+    const { error } = await admin.auth.admin.deleteUser(profileId);
+
+    if (error) {
+      throw new Error(`Failed to delete authentication account: ${error.message}`);
+    }
   }
 }
 

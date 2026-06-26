@@ -82,8 +82,14 @@ export class AgentsService {
     }
 
     // Step 1: Delete from Supabase Auth (must succeed first)
-    if (agent.profileId && isAdminClientConfigured()) {
+    if (!agent.profileId) {
+      throw new Error("Agent has no linked authentication account (profileId missing).");
+    }
+
+    if (isAdminClientConfigured()) {
       await agentsAdminService.deleteAgentAuth(agent.profileId);
+    } else {
+      throw new Error("Cannot delete agent: SUPABASE_SERVICE_ROLE_KEY is not configured.");
     }
 
     // Step 2: Soft-delete the agent record (keeps historical data)
