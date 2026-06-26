@@ -3,19 +3,16 @@
 import { Search, X } from "lucide-react";
 import { GlassCard } from "@/components/design-system/glass-card";
 import { FormInput } from "@/components/design-system/form-input";
-import { AGENT_DEPARTMENTS } from "@/lib/agents/constants";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export interface AgentListFilters {
   search: string;
-  department: string;
   account: "all" | "active" | "inactive";
 }
 
 export const DEFAULT_AGENT_FILTERS: AgentListFilters = {
   search: "",
-  department: "all",
   account: "all",
 };
 
@@ -33,7 +30,6 @@ interface AgentFiltersBarProps {
 export function AgentFiltersBar({ filters, onChange, onClear }: AgentFiltersBarProps) {
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
-    filters.department !== "all" ||
     filters.account !== "all";
 
   return (
@@ -51,20 +47,6 @@ export function AgentFiltersBar({ filters, onChange, onClear }: AgentFiltersBarP
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            className={selectClassName}
-            value={filters.department}
-            onChange={(e) => onChange({ ...filters, department: e.target.value })}
-            aria-label="Filter by department"
-          >
-            <option value="all">All departments</option>
-            {AGENT_DEPARTMENTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-
           <select
             className={selectClassName}
             value={filters.account}

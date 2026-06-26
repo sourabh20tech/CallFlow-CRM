@@ -34,13 +34,10 @@ interface AgentsManagementProps {
 function filterAgents(agents: Agent[], filters: AgentListFilters): Agent[] {
   const q = filters.search.trim().toLowerCase();
   return agents.filter((agent) => {
-    if (filters.department !== "all" && agent.department !== filters.department) {
-      return false;
-    }
     if (filters.account === "active" && !agent.isActive) return false;
     if (filters.account === "inactive" && agent.isActive) return false;
     if (q) {
-      const hay = `${agent.name} ${agent.email} ${agent.phone ?? ""} ${agent.department ?? ""}`.toLowerCase();
+      const hay = `${agent.name} ${agent.email} ${agent.phone ?? ""}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -108,7 +105,6 @@ export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
 
   const hasActiveFilters = Boolean(
     filters.search.trim() ||
-      filters.department !== "all" ||
       filters.account !== "all",
   );
 
