@@ -7,8 +7,6 @@ export const AGENT_STATUS_OPTIONS: { value: AgentStatus; label: string }[] = [
   { value: "offline", label: "Offline" },
 ];
 
-export const AGENT_DEPARTMENTS = ["Support", "Sales", "Billing", "Retention", "Outbound"] as const;
-
 export const AGENT_STATUS_VARIANT: Record<
   AgentStatus,
   "success" | "warning" | "error" | "neutral"
