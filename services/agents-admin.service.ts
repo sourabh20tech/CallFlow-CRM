@@ -246,6 +246,11 @@ export class AgentsAdminService {
     const { error } = await (admin.auth.admin as any).deleteUser(profileId, false);
 
     if (error) {
+      // Ignore "user not found" — already deleted
+      const msg = error.message?.toLowerCase() ?? "";
+      if (msg.includes("not found") || msg.includes("not exist")) {
+        return;
+      }
       throw new Error(`Failed to delete authentication account: ${error.message}`);
     }
   }
