@@ -70,18 +70,20 @@ export class AgentsAdminService {
 
       if (authError || !authData.user) {
         if (authError && isAuthDuplicateError(authError.message)) {
-          // Auth user exists — might be a previously deleted agent.
-          // Try to find and reactivate them.
+          // Auth user exists — this is a leftover from a previously deleted agent.
+          // Since our profile check already passed (no active agent exists),
+          // find the orphan user and reactivate with new credentials.
           const { data: listData } = await admin.auth.admin.listUsers();
           const existingUser = listData?.users?.find(
             (u) => u.email?.toLowerCase() === email,
           );
 
-          if (existingUser && existingUser.banned_until) {
-            // This is a disabled/deleted agent — reactivate with new password
+          if (existingUser) {
+            // Reactivate: update password, remove ban, update metadata
             await admin.auth.admin.updateUserById(existingUser.id, {
               password: input.password,
               ban_duration: "none",
+              email_confirm: true,
               user_metadata: {
                 full_name: input.fullName,
                 phone: input.phone,
@@ -225,7 +227,10 @@ export class AgentsAdminService {
     }
 
     const admin = createAdminSupabaseClient();
-    const { error } = await admin.auth.admin.deleteUser(profileId);
+    
+    // Use shouldSoftDelete: false to permanently remove from auth.users
+    // This ensures the email becomes immediately available for reuse
+    const { error } = await (admin.auth.admin as any).deleteUser(profileId, false);
 
     if (error) {
       throw new Error(`Failed to delete authentication account: ${error.message}`);
