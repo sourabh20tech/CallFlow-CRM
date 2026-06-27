@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronRight, StickyNote, Users } from "lucide-react";
 import { GlassCard } from "@/components/design-system/glass-card";
-import { StatusChip } from "@/components/design-system/status-chip";
+import { InlineLeadStatus } from "@/components/leads/inline-lead-status";
 import { AgentPanelSectionHeader } from "@/components/agent-panel/agent-panel-section-header";
 import { AgentPanelEmptyState } from "@/components/agent-panel/agent-panel-empty-state";
 import { MyLeadsToolbar } from "@/components/agent-panel/my-leads-toolbar";
@@ -11,7 +11,6 @@ import { LeadDetailSheet } from "@/components/agent-panel/lead-detail-sheet";
 import { LeadQuickCallButton } from "@/components/agent-panel/lead-quick-call-button";
 import { LeadQuickFollowupButton } from "@/components/agent-panel/lead-quick-followup-button";
 import { WhatsAppChatButton } from "@/components/shared/whatsapp-chat-button";
-import { LEAD_STATUS_VARIANT, formatLeadStatus } from "@/lib/leads/constants";
 import { filterAgentLeads } from "@/lib/agent-panel/lead-lookup";
 import { WHATSAPP_TEMPLATES } from "@/lib/whatsapp";
 import {
@@ -121,10 +120,10 @@ export function MyLeadsSection({
                     </TableCell>
                     <TableCell className="capitalize">{lead.force}</TableCell>
                     <TableCell>
-                      <StatusChip
-                        label={formatLeadStatus(lead.status)}
-                        variant={LEAD_STATUS_VARIANT[lead.status]}
-                        size="sm"
+                      <InlineLeadStatus
+                        lead={lead as unknown as Lead}
+                        isAdmin={false}
+                        onStatusChange={(updated) => handleLeadUpdated(updated)}
                       />
                     </TableCell>
                     <TableCell>
@@ -184,10 +183,10 @@ export function MyLeadsSection({
                     <p className="font-medium">{lead.fullName}</p>
                     <p className="text-xs text-muted-foreground">{lead.email}</p>
                   </div>
-                  <StatusChip
-                    label={formatLeadStatus(lead.status)}
-                    variant={LEAD_STATUS_VARIANT[lead.status]}
-                    size="sm"
+                  <InlineLeadStatus
+                    lead={lead as unknown as Lead}
+                    isAdmin={false}
+                    onStatusChange={(updated) => handleLeadUpdated(updated)}
                   />
                 </button>
                 <div className="flex flex-wrap gap-2">
