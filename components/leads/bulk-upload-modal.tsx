@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, Check, CheckCircle2, Download, FileSpreadsheet, Loader2, Plus, Upload } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Download, FileSpreadsheet, Loader2, Plus, Settings2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   Modal,
@@ -12,6 +12,8 @@ import {
   ModalHeader,
   ModalTitle,
 } from "@/components/design-system/modal";
+import { ManageSourcesModal } from "@/components/leads/manage-sources-modal";
+import { ManageStatusesModal } from "@/components/leads/manage-statuses-modal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { LeadRosterAgent } from "@/types/lead";
@@ -84,6 +86,8 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const [showAddSource, setShowAddSource] = useState(false);
   const [newSourceLabel, setNewSourceLabel] = useState("");
   const [isCreatingSource, setIsCreatingSource] = useState(false);
+  const [manageStatusesOpen, setManageStatusesOpen] = useState(false);
+  const [manageSourcesOpen, setManageSourcesOpen] = useState(false);
 
   const reset = () => {
     setStep("upload");
@@ -307,6 +311,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const invalidCount = parsedLeads.length - validCount;
 
   return (
+    <>
     <Modal open={open} onOpenChange={handleClose}>
       <ModalContent size="lg">
         <ModalHeader>
@@ -519,14 +524,24 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                       ))}
                     </select>
                     {!showAddStatus ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowAddStatus(true)}
-                        className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                      >
-                        <Plus className="h-3 w-3" />
-                        Add New Status
-                      </button>
+                      <div className="mt-1.5 flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowAddStatus(true)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add New Status
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setManageStatusesOpen(true)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                        >
+                          <Settings2 className="h-3 w-3" />
+                          Manage
+                        </button>
+                      </div>
                     ) : (
                       <div className="mt-2 flex items-center gap-1.5">
                         <input
@@ -568,14 +583,24 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                       ))}
                     </select>
                     {!showAddSource ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowAddSource(true)}
-                        className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                      >
-                        <Plus className="h-3 w-3" />
-                        Add New Source
-                      </button>
+                      <div className="mt-1.5 flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowAddSource(true)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add New Source
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setManageSourcesOpen(true)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                        >
+                          <Settings2 className="h-3 w-3" />
+                          Manage
+                        </button>
+                      </div>
                     ) : (
                       <div className="mt-2 flex items-center gap-1.5">
                         <input
@@ -705,5 +730,51 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
         </ModalFooter>
       </ModalContent>
     </Modal>
+
+    <ManageStatusesModal
+      open={manageStatusesOpen}
+      onOpenChange={setManageStatusesOpen}
+      statuses={statusOptions.map((s, i) => ({
+        id: `s-${i}`,
+        label: s.label,
+        value: s.value,
+        color: "#8b5cf6",
+        sortOrder: i,
+        isSystem: ["new", "interested", "follow_up", "converted", "not_interested", "closed"].includes(s.value),
+        createdAt: "",
+      }))}
+      onStatusesChanged={() => {
+        fetch("/api/lead-statuses")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.statuses?.length) {
+              setStatusOptions(data.statuses.map((s: any) => ({ value: s.value, label: s.label })));
+            }
+          })
+          .catch(() => {});
+      }}
+    />
+
+    <ManageSourcesModal
+      open={manageSourcesOpen}
+      onOpenChange={setManageSourcesOpen}
+      sources={sourceOptions.map((s, i) => ({
+        id: `src-${i}`,
+        label: s.label,
+        value: s.value,
+        isSystem: ["standard", "premium", "enterprise"].includes(s.value),
+      }))}
+      onSourcesChanged={() => {
+        fetch("/api/lead-sources")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.sources?.length) {
+              setSourceOptions(data.sources.map((s: any) => ({ value: s.value, label: s.label })));
+            }
+          })
+          .catch(() => {});
+      }}
+    />
+    </>
   );
 }
