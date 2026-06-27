@@ -64,25 +64,11 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const [result, setResult] = useState<UploadResult | null>(null);
   const [defaultStatus, setDefaultStatus] = useState("new");
   const [defaultForce, setDefaultForce] = useState("standard");
-  const [statusOptions, setStatusOptions] = useState<{ value: string; label: string }[]>([
-    { value: "new", label: "New" },
-    { value: "interested", label: "Interested" },
-    { value: "follow_up", label: "Follow-Up" },
-    { value: "converted", label: "Converted" },
-    { value: "not_interested", label: "Not Interested" },
-    { value: "closed", label: "Closed" },
-    { value: "npc", label: "NPC" },
-    { value: "switch_off", label: "Switch Off" },
-    { value: "call_cut", label: "Call Cut" },
-  ]);
+  const [statusOptions, setStatusOptions] = useState<{ id: string; value: string; label: string; isSystem: boolean; color: string }[]>([]);
   const [showAddStatus, setShowAddStatus] = useState(false);
   const [newStatusLabel, setNewStatusLabel] = useState("");
   const [isCreatingStatus, setIsCreatingStatus] = useState(false);
-  const [sourceOptions, setSourceOptions] = useState<{ value: string; label: string }[]>([
-    { value: "standard", label: "Standard" },
-    { value: "premium", label: "Premium" },
-    { value: "enterprise", label: "Enterprise" },
-  ]);
+  const [sourceOptions, setSourceOptions] = useState<{ id: string; value: string; label: string; isSystem: boolean }[]>([]);
   const [showAddSource, setShowAddSource] = useState(false);
   const [newSourceLabel, setNewSourceLabel] = useState("");
   const [isCreatingSource, setIsCreatingSource] = useState(false);
@@ -99,15 +85,18 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
     setResult(null);
   };
 
-  // Load custom statuses from API
+  // Load custom statuses and sources from API
   useEffect(() => {
     fetch("/api/lead-statuses")
       .then((res) => res.json())
       .then((data) => {
         if (data.statuses?.length) {
-          setStatusOptions(data.statuses.map((s: { value: string; label: string }) => ({
+          setStatusOptions(data.statuses.map((s: any) => ({
+            id: s.id,
             value: s.value,
             label: s.label,
+            isSystem: s.isSystem ?? false,
+            color: s.color ?? "#8b5cf6",
           })));
         }
       })
@@ -117,9 +106,11 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
       .then((res) => res.json())
       .then((data) => {
         if (data.sources?.length) {
-          setSourceOptions(data.sources.map((s: { value: string; label: string }) => ({
+          setSourceOptions(data.sources.map((s: any) => ({
+            id: s.id,
             value: s.value,
             label: s.label,
+            isSystem: s.isSystem ?? false,
           })));
         }
       })
@@ -138,7 +129,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
       toast.success(`Status "${newStatusLabel.trim()}" created`);
-      setStatusOptions((prev) => [...prev, { value: data.value, label: data.label }]);
+      setStatusOptions((prev) => [...prev, { id: data.id ?? `new-${Date.now()}`, value: data.value, label: data.label, isSystem: false, color: data.color ?? "#8b5cf6" }]);
       setDefaultStatus(data.value);
       setNewStatusLabel("");
       setShowAddStatus(false);
@@ -161,7 +152,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
       toast.success(`Source "${newSourceLabel.trim()}" created`);
-      setSourceOptions((prev) => [...prev, { value: data.value, label: data.label }]);
+      setSourceOptions((prev) => [...prev, { id: data.id ?? `new-${Date.now()}`, value: data.value, label: data.label, isSystem: false }]);
       setDefaultForce(data.value);
       setNewSourceLabel("");
       setShowAddSource(false);
@@ -735,12 +726,12 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
       open={manageStatusesOpen}
       onOpenChange={setManageStatusesOpen}
       statuses={statusOptions.map((s, i) => ({
-        id: `s-${i}`,
+        id: s.id,
         label: s.label,
         value: s.value,
-        color: "#8b5cf6",
+        color: s.color ?? "#8b5cf6",
         sortOrder: i,
-        isSystem: ["new", "interested", "follow_up", "converted", "not_interested", "closed"].includes(s.value),
+        isSystem: s.isSystem,
         createdAt: "",
       }))}
       onStatusesChanged={() => {
@@ -748,7 +739,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
           .then((res) => res.json())
           .then((data) => {
             if (data.statuses?.length) {
-              setStatusOptions(data.statuses.map((s: any) => ({ value: s.value, label: s.label })));
+              setStatusOptions(data.statuses.map((s: any) => ({ id: s.id, value: s.value, label: s.label, isSystem: s.isSystem ?? false, color: s.color ?? "#8b5cf6" })));
             }
           })
           .catch(() => {});
@@ -758,18 +749,18 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
     <ManageSourcesModal
       open={manageSourcesOpen}
       onOpenChange={setManageSourcesOpen}
-      sources={sourceOptions.map((s, i) => ({
-        id: `src-${i}`,
+      sources={sourceOptions.map((s) => ({
+        id: s.id,
         label: s.label,
         value: s.value,
-        isSystem: ["standard", "premium", "enterprise"].includes(s.value),
+        isSystem: s.isSystem,
       }))}
       onSourcesChanged={() => {
         fetch("/api/lead-sources")
           .then((res) => res.json())
           .then((data) => {
             if (data.sources?.length) {
-              setSourceOptions(data.sources.map((s: any) => ({ value: s.value, label: s.label })));
+              setSourceOptions(data.sources.map((s: any) => ({ id: s.id, value: s.value, label: s.label, isSystem: s.isSystem ?? false })));
             }
           })
           .catch(() => {});
