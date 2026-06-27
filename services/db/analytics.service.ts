@@ -256,6 +256,15 @@ export class AnalyticsDbService extends BaseDbService {
         const leadIds = ((agentLeads ?? []) as { id: string }[]).map((l) => l.id);
         if (leadIds.length === 0) return [];
         query = query.in("lead_id", leadIds);
+      } else {
+        // For admin, exclude funds from deleted leads
+        const { data: activeLeads } = await (client as any)
+          .from("leads")
+          .select("id")
+          .is("deleted_at", null);
+        const activeIds = ((activeLeads ?? []) as { id: string }[]).map((l) => l.id);
+        if (activeIds.length === 0) return [];
+        query = query.in("lead_id", activeIds);
       }
 
       const { data, error } = await query.limit(2000);

@@ -67,7 +67,13 @@ async function bulkSoftDelete(leadIds: string[]): Promise<number> {
   let totalDeleted = 0;
   const now = new Date().toISOString();
 
-  // Process in batches of BATCH_SIZE
+  // Delete associated fund records first
+  for (let i = 0; i < leadIds.length; i += BATCH_SIZE) {
+    const batch = leadIds.slice(i, i + BATCH_SIZE);
+    await (supabase as any).from("lead_funds").delete().in("lead_id", batch);
+  }
+
+  // Soft-delete leads in batches
   for (let i = 0; i < leadIds.length; i += BATCH_SIZE) {
     const batch = leadIds.slice(i, i + BATCH_SIZE);
     const { error, count } = await (supabase as any)

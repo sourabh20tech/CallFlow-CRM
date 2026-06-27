@@ -82,6 +82,26 @@ export class LeadsService {
 
   async delete(id: string): Promise<void> {
     requireSupabaseConfigured("lead deletion");
+
+    // Get lead info before deletion for activity log
+    const lead = await this.getById(id);
+
+    // Delete associated fund records
+    try {
+      const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = isAdminClientConfigured() ? createAdminSupabaseClient() : await createClient();
+
+      // Delete fund records for this lead
+      await (supabase as any)
+        .from("lead_funds")
+        .delete()
+        .eq("lead_id", id);
+    } catch {
+      // Non-fatal — fund table might not exist yet
+    }
+
+    // Soft-delete the lead
     return leadsDbServiceServer.delete(id);
   }
 
