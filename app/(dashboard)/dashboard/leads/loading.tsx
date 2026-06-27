@@ -1,11 +1,14 @@
-import { SkeletonPageHeader, SkeletonTable } from "@/components/design-system/skeletons";
-import { pageSection } from "@/lib/design-system/styles";
+import { SkeletonPageHeader, SkeletonStatCard, SkeletonTable } from "@/components/design-system/skeletons";
 
 export default function LeadsLoading() {
   return (
-    <div className={pageSection}>
+    <div className="flex flex-col gap-[var(--ds-section-gap)]">
       <SkeletonPageHeader />
-      <div className="h-14 rounded-2xl border border-border/30 bg-muted/20" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkeletonStatCard key={i} />
+        ))}
+      </div>
       <SkeletonTable rows={8} cols={6} />
     </div>
   );

@@ -1,11 +1,10 @@
 import { SkeletonPageHeader, SkeletonStatCard, SkeletonTable } from "@/components/design-system/skeletons";
-import { pageSection } from "@/lib/design-system/styles";
 
 export default function CallsLoading() {
   return (
-    <div className={pageSection}>
+    <div className="flex flex-col gap-[var(--ds-section-gap)]">
       <SkeletonPageHeader />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <SkeletonStatCard key={i} />
         ))}

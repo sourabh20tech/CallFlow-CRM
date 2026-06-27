@@ -32,10 +32,10 @@ const nextConfig: NextConfig = {
       "jspdf",
       "xlsx",
     ],
-    // Enable PPR for faster page loads
+    // Router cache — pages stay in memory for fast back/forward navigation
     staleTimes: {
-      dynamic: 30, // Cache dynamic pages for 30s in router
-      static: 180, // Cache static pages for 3 minutes
+      dynamic: 60, // Cache dynamic pages for 60s in router
+      static: 300, // Cache static pages for 5 minutes
     },
   },
 
