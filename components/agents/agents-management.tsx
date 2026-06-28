@@ -253,7 +253,7 @@ export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
         description="Create agents, manage access, and monitor team performance"
         actions={
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-            <AddAgentButton onClick={openAddAgent} className="w-full shrink-0 sm:w-auto" />
+            <AddAgentButton onClick={openAddAgent} className="hidden w-full shrink-0 sm:flex sm:w-auto" />
             <div className="flex flex-wrap items-center justify-end gap-2">
               <div className="hidden items-center gap-2 rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] px-3 py-2 text-sm text-muted-foreground lg:flex">
                 <Users className="h-4 w-4 text-primary" />

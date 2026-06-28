@@ -773,6 +773,56 @@ img, video, svg, canvas {
   }
 }
 
+/* Mobile form fixes (all phones) */
+@media (max-width: 639px) {
+  /* Stack form actions vertically */
+  [class*="ModalFooter"],
+  [role="dialog"] [class*="flex"][class*="justify-end"] {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  [class*="ModalFooter"] button,
+  [role="dialog"] [class*="flex"][class*="justify-end"] button {
+    width: 100%;
+  }
+
+  /* Ensure dropdowns never overflow */
+  select {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Activity log filter stack */
+  .ds-page-header + div select,
+  .ds-page-header + div input[type="date"] {
+    min-width: 0;
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+
+  /* Dashboard stat cards: ensure 2-col minimum */
+  .grid[class*="sm:grid-cols-2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Touch-friendly button sizes */
+  button, [role="button"] {
+    min-height: 36px;
+  }
+}
+
+/* Tablet tweaks */
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* 2-column grids for tablet */
+  .grid[class*="xl:grid-cols-4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid[class*="xl:grid-cols-5"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 /* Large screens optimization */
 @media (min-width: 1920px) {
   :root {
