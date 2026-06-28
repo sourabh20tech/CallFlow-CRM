@@ -247,17 +247,21 @@ export class AnalyticsDbService extends BaseDbService {
         .lte("created_at", to);
 
       if (agentId) {
-        // For agent reports, show funds from leads assigned to the agent
-        const { data: agentLeads } = await (client as any)
-          .from("leads")
-          .select("id")
-          .eq("assigned_agent_id", agentId)
-          .is("deleted_at", null);
-        const leadIds = ((agentLeads ?? []) as { id: string }[]).map((l) => l.id);
-        if (leadIds.length === 0) return [];
-        query = query.in("lead_id", leadIds);
+        // Agent fund isolation: filter by the agent's profile_id stored in lead_funds.agent_id
+        // This ensures fund belongs to the agent who CREATED it, not who currently owns the lead
+        // First resolve profile_id from agent record
+        const { data: agentRow } = await (client as any)
+          .from("agents")
+          .select("profile_id")
+          .eq("id", agentId)
+          .maybeSingle();
+
+        const profileId = (agentRow as any)?.profile_id;
+        if (!profileId) return [];
+
+        query = query.eq("agent_id", profileId);
       } else {
-        // For admin, exclude funds from deleted leads
+        // For admin: only include funds from non-deleted leads
         const { data: activeLeads } = await (client as any)
           .from("leads")
           .select("id")
