@@ -77,9 +77,12 @@ export class AnalyticsDbService extends BaseDbService {
     const today = new Date().toISOString().slice(0, 10);
 
     // Resolve profile_id for fund filtering (lead_funds.agent_id stores profile_id)
+    // MUST use admin client to bypass RLS on agents table
     let fundProfileId: string | undefined;
     if (agentId) {
-      const { data: agentRow } = await supabase
+      const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+      const adminClient = isAdminClientConfigured() ? createAdminSupabaseClient() : supabase;
+      const { data: agentRow } = await (adminClient as any)
         .from("agents")
         .select("profile_id")
         .eq("id", agentId)

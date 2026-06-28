@@ -9,10 +9,17 @@ export const dynamic = "force-dynamic";
 async function resolveAgentId(profileId: string): Promise<string | undefined> {
   const { isSupabaseConfigured } = await import("@/lib/supabase/config");
   if (!isSupabaseConfigured()) return "agent-1";
-  const { agentsDbServiceServer } = await import("@/services/db/agents.service");
-  const agents = await agentsDbServiceServer.list(true);
-  const match = agents.find((a) => a.profileId === profileId);
-  return match?.id;
+  // Use admin client to guarantee we can read the agents table
+  const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+  if (!isAdminClientConfigured()) return undefined;
+  const admin = createAdminSupabaseClient();
+  const { data } = await (admin as any)
+    .from("agents")
+    .select("id")
+    .eq("profile_id", profileId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return (data as any)?.id ?? undefined;
 }
 
 export async function GET(request: Request) {
