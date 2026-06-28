@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { GlassCard } from "@/components/design-system/glass-card";
 import { CrmSystemControl } from "@/components/settings/crm-system-control";
 import { AdminAnnouncementCard } from "@/components/settings/admin-announcement-card";
+import { SendAnnouncement } from "@/components/settings/send-announcement";
 
 export function SettingsContent() {
   const searchParams = useSearchParams();
@@ -21,6 +22,7 @@ export function SettingsContent() {
   return (
     <div className="grid gap-[var(--ds-stack-gap)]">
       <CrmSystemControl />
+      <SendAnnouncement />
       <AdminAnnouncementCard />
 
       <GlassCard variant="default" padding="md">

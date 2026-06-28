@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { Bell, CalendarClock } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,110 +11,143 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Followup } from "@/types/followup";
 import { cn } from "@/lib/utils";
 
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  priority: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+function getRelativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function priorityColor(p: string): string {
+  if (p === "urgent") return "bg-red-500";
+  if (p === "high") return "bg-amber-500";
+  if (p === "medium") return "bg-blue-500";
+  return "bg-muted-foreground";
+}
+
 export function NotificationsMenu() {
-  const [data, setData] = useState<{
-    overdue: Followup[];
-    dueToday: Followup[];
-    upcoming: Followup[];
-    total: number;
-  } | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/followups/reminders", { cache: "no-store" });
+      const res = await fetch("/api/notifications");
       if (!res.ok) return;
-      setData(await res.json());
+      const data = await res.json();
+      setNotifications(data.notifications ?? []);
+      setUnreadCount(data.unreadCount ?? 0);
     } catch {}
   }, []);
 
   useEffect(() => {
     void load();
-    const t = setInterval(() => void load(), 60_000);
+    const t = setInterval(() => void load(), 30_000); // Poll every 30s
     return () => clearInterval(t);
   }, [load]);
 
-  const unreadCount = data?.total ?? 0;
-  const items = [
-    ...(data?.overdue ?? []).map((f) => ({ ...f, urgency: "overdue" as const })),
-    ...(data?.dueToday ?? []).map((f) => ({ ...f, urgency: "today" as const })),
-    ...(data?.upcoming ?? []).map((f) => ({ ...f, urgency: "upcoming" as const })),
-  ].slice(0, 5);
+  const markRead = async (id: string) => {
+    await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  };
+
+  const markAllRead = async () => {
+    await fetch("/api/notifications/read-all", { method: "PATCH" });
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    setUnreadCount(0);
+    toast.success("All marked as read");
+  };
+
+  const deleteNotification = async (id: string) => {
+    await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+    const wasUnread = notifications.find((n) => n.id === id && !n.is_read);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (wasUnread) setUnreadCount((prev) => Math.max(0, prev - 1));
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-10 w-10 rounded-xl transition-colors hover:bg-primary/10"
-          aria-label={`Follow-up notifications${unreadCount ? `, ${unreadCount} pending` : ""}`}
-        >
+        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
-              {unreadCount > 9 ? "9+" : unreadCount}
+            <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+              {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 p-0">
-        <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
-          <DropdownMenuLabel className="flex items-center gap-2 p-0 text-sm font-semibold">
-            <CalendarClock className="h-4 w-4 text-amber-500" />
-            Follow-Up Reminders
-          </DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-80 max-h-[420px] overflow-y-auto">
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>Notifications</span>
           {unreadCount > 0 && (
-            <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-              {unreadCount} pending
-            </span>
+            <button
+              onClick={() => void markAllRead()}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              <CheckCheck className="mr-1 inline h-3 w-3" />
+              Mark all read
+            </button>
           )}
-        </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
 
-        {items.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-            No pending follow-ups
-          </div>
+        {notifications.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">No notifications</p>
         ) : (
-          <div className="max-h-[280px] overflow-y-auto">
-            {items.map((item) => (
-              <div key={item.id} className="flex items-start gap-2.5 border-b border-border/20 px-4 py-2.5 last:border-0">
-                <span
-                  className={cn(
-                    "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                    item.urgency === "overdue" && "bg-red-500",
-                    item.urgency === "today" && "bg-amber-500",
-                    item.urgency === "upcoming" && "bg-emerald-500",
-                  )}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium">{item.title}</p>
-                  <p className="truncate text-[11px] text-muted-foreground">
-                    {item.leadName ?? ""}
-                    {item.assignedAgentName ? ` · ${item.assignedAgentName}` : ""}
-                  </p>
-                  <p className={cn(
-                    "text-[10px] font-medium",
-                    item.urgency === "overdue" && "text-red-500",
-                    item.urgency === "today" && "text-amber-500",
-                    item.urgency === "upcoming" && "text-emerald-500",
-                  )}>
-                    {new Date(item.dueAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
-                  </p>
+          <div className="space-y-1 p-1">
+            {notifications.map((n) => (
+              <div
+                key={n.id}
+                className={cn(
+                  "relative rounded-lg px-3 py-2.5 transition-colors",
+                  !n.is_read ? "bg-primary/5" : "hover:bg-muted/40",
+                )}
+              >
+                <div className="flex items-start gap-2">
+                  <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", priorityColor(n.priority))} />
+                  <div className="min-w-0 flex-1">
+                    <p className={cn("text-sm", !n.is_read && "font-semibold")}>{n.title}</p>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.message}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground/70">{getRelativeTime(n.created_at)}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-0.5">
+                    {!n.is_read && (
+                      <button
+                        onClick={() => void markRead(n.id)}
+                        className="rounded p-1 text-muted-foreground hover:text-primary"
+                        title="Mark as read"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => void deleteNotification(n.id)}
+                      className="rounded p-1 text-muted-foreground hover:text-destructive"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-
-        <DropdownMenuSeparator className="m-0" />
-        <div className="p-2">
-          <Button variant="ghost" className="w-full text-xs" asChild>
-            <Link href="/dashboard/follow-ups">View all follow-ups</Link>
-          </Button>
-        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
