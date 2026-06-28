@@ -9,7 +9,6 @@ import { DataTableCard } from "@/components/design-system/data-table-card";
 import { SkeletonStatCard, SkeletonTable } from "@/components/design-system/skeletons";
 import { AddAgentModal } from "@/components/agents/add-agent-modal";
 import { AddAgentButton } from "@/components/agents/add-agent-button";
-import { AgentsMobileFab } from "@/components/agents/agents-mobile-fab";
 import { AgentsSetupBanner } from "@/components/agents/agents-setup-banner";
 import { EditAgentModal } from "@/components/agents/edit-agent-modal";
 import { ResetPasswordModal } from "@/components/agents/reset-password-modal";
@@ -253,7 +252,7 @@ export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
         description="Create agents, manage access, and monitor team performance"
         actions={
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-            <AddAgentButton onClick={openAddAgent} className="hidden w-full shrink-0 sm:flex sm:w-auto" />
+            <AddAgentButton onClick={openAddAgent} className="w-full shrink-0 sm:w-auto" />
             <div className="flex flex-wrap items-center justify-end gap-2">
               <div className="hidden items-center gap-2 rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] px-3 py-2 text-sm text-muted-foreground lg:flex">
                 <Users className="h-4 w-4 text-primary" />
@@ -318,8 +317,6 @@ export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
           <AgentTable agents={filteredAgents} actions={tableActions} />
         </DataTableCard>
       )}
-
-      <AgentsMobileFab onClick={openAddAgent} />
 
       <AddAgentModal
         open={addOpen}

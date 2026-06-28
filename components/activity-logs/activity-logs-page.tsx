@@ -367,18 +367,28 @@ export function ActivityLogsPage() {
               ))}
             </select>
           )}
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="h-9 w-36"
-          />
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="h-9 w-36"
-          />
+          <div className="flex items-center gap-1.5">
+            <label className="text-[10px] text-muted-foreground sm:hidden">From</label>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+              className="h-9 w-full sm:w-36"
+              placeholder="Start date"
+              aria-label="Start date"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-[10px] text-muted-foreground sm:hidden">To</label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+              className="h-9 w-full sm:w-36"
+              placeholder="End date"
+              aria-label="End date"
+            />
+          </div>
         </div>
       </GlassCard>
 
