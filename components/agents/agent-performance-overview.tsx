@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Phone, Star, Users } from "lucide-react";
+import { Clock, Phone, Users } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -33,7 +33,7 @@ export function AgentPerformanceOverview({
 
   return (
     <div className="space-y-[var(--ds-stack-gap)]">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           title="Calls handled"
           value={performance.callsHandled}
@@ -45,12 +45,6 @@ export function AgentPerformanceOverview({
           value={formatDuration(performance.avgHandleTime)}
           icon={Clock}
           description="Per completed call"
-        />
-        <StatCard
-          title="CSAT score"
-          value={`${performance.satisfaction}/5`}
-          icon={Star}
-          description="Customer rating"
         />
         <StatCard
           title="Assigned leads"
