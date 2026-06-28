@@ -76,14 +76,24 @@ export class AnalyticsDbService extends BaseDbService {
     const to = range.to;
     const today = new Date().toISOString().slice(0, 10);
 
+    // Resolve profile_id for fund filtering (lead_funds.agent_id stores profile_id)
+    let fundProfileId: string | undefined;
+    if (agentId) {
+      const { data: agentRow } = await supabase
+        .from("agents")
+        .select("profile_id")
+        .eq("id", agentId)
+        .maybeSingle();
+      fundProfileId = (agentRow as any)?.profile_id ?? undefined;
+    }
+
     const [dashboardStats, leads, calls, followups, agents, funds] = await Promise.all([
-      // For agent-scoped reports, skip the global dashboard stats
       agentId ? Promise.resolve(null) : this.refreshDashboardStats(supabase, today),
       this.fetchLeads(supabase, from, to, agentId),
       this.fetchCalls(supabase, from, to, agentId),
       this.fetchFollowups(supabase, from, to, agentId),
       agentId ? Promise.resolve([]) : this.fetchAgents(supabase),
-      this.fetchFunds(supabase, from, to, agentId),
+      this.fetchFunds(supabase, from, to, fundProfileId),
     ]);
 
     return { dashboardStats, leads, calls, followups, agents, funds };
@@ -233,10 +243,9 @@ export class AnalyticsDbService extends BaseDbService {
     supabase: TypedSupabaseClient,
     from: string,
     to: string,
-    agentId?: string,
+    profileId?: string,
   ): Promise<AnalyticsFundRow[]> {
     try {
-      // Use admin client to bypass RLS on lead_funds table
       const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
       const client = isAdminClientConfigured() ? createAdminSupabaseClient() : supabase;
 
@@ -246,22 +255,11 @@ export class AnalyticsDbService extends BaseDbService {
         .gte("created_at", from)
         .lte("created_at", to);
 
-      if (agentId) {
-        // Agent fund isolation: filter by the agent's profile_id stored in lead_funds.agent_id
-        // This ensures fund belongs to the agent who CREATED it, not who currently owns the lead
-        // First resolve profile_id from agent record
-        const { data: agentRow } = await (client as any)
-          .from("agents")
-          .select("profile_id")
-          .eq("id", agentId)
-          .maybeSingle();
-
-        const profileId = (agentRow as any)?.profile_id;
-        if (!profileId) return [];
-
+      if (profileId) {
+        // Agent: filter by their profile_id (stored as agent_id in lead_funds)
         query = query.eq("agent_id", profileId);
       } else {
-        // For admin: only include funds from non-deleted leads
+        // Admin: only include funds from non-deleted leads
         const { data: activeLeads } = await (client as any)
           .from("leads")
           .select("id")
