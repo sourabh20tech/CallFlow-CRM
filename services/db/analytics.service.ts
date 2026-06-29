@@ -88,6 +88,9 @@ export class AnalyticsDbService extends BaseDbService {
         .eq("id", agentId)
         .maybeSingle();
       fundProfileId = (agentRow as any)?.profile_id ?? undefined;
+      // CRITICAL: If we couldn't resolve profile_id, use a dummy ID to ensure zero results
+      // Never fall through to admin (unfiltered) mode
+      if (!fundProfileId) fundProfileId = "no-match-" + agentId;
     }
 
     const [dashboardStats, leads, calls, followups, agents, funds] = await Promise.all([
