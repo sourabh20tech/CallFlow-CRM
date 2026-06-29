@@ -35,10 +35,57 @@ function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+/**
+ * Normalize and validate phone number.
+ * Handles: 9876543210, +919876543210, 91-9876543210, 9876 543210
+ * Also handles Excel scientific notation: 9.87654E+9 → 9876540000
+ */
+function normalizePhone(phone: string): string {
+  let raw = phone.toString().trim();
+
+  // Handle Excel scientific notation (e.g. 9.87654E+9)
+  if (/\d+\.?\d*[eE][+\-]?\d+/.test(raw)) {
+    const num = Number(raw);
+    if (!isNaN(num) && num > 0) raw = Math.round(num).toString();
+  }
+
+  // Remove all non-digit and non-plus characters except leading +
+  const hasPlus = raw.startsWith("+");
+  const digits = raw.replace(/\D/g, "");
+
+  if (hasPlus) {
+    return "+" + digits;
+  }
+  return digits;
+}
+
 function validatePhone(phone: string): boolean {
-  // Accept digits, spaces, dashes, plus, parentheses — minimum 7 chars
-  const cleaned = phone.replace(/[\s\-\(\)\+\.]/g, "");
-  return /^\d{7,15}$/.test(cleaned);
+  const normalized = normalizePhone(phone);
+  // Remove leading + for digit check
+  const digits = normalized.replace(/^\+/, "");
+  // Must be 7-15 digits
+  if (!/^\d{7,15}$/.test(digits)) return false;
+  return true;
+}
+
+/** Format phone to +91XXXXXXXXXX for Indian numbers */
+function formatIndianPhone(phone: string): string {
+  const normalized = normalizePhone(phone);
+  const digits = normalized.replace(/^\+/, "");
+
+  // Already has country code 91 (12 digits starting with 91)
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return "+" + digits;
+  }
+  // 10-digit Indian mobile number
+  if (digits.length === 10) {
+    return "+91" + digits;
+  }
+  // Has + prefix already
+  if (normalized.startsWith("+")) {
+    return normalized;
+  }
+  return "+" + digits;
 }
 
 export async function POST(request: Request) {
@@ -147,7 +194,7 @@ export async function POST(request: Request) {
 
     // Use validated values only
     const finalEmail = (hasEmail && validateEmail(row.email!.trim())) ? row.email!.trim() : undefined;
-    const finalPhone = (hasPhone && validatePhone(row.phone!.trim())) ? row.phone!.trim() : undefined;
+    const finalPhone = (hasPhone && validatePhone(row.phone!.trim())) ? formatIndianPhone(row.phone!.trim()) : undefined;
 
     // === CREATE LEAD ===
     try {
