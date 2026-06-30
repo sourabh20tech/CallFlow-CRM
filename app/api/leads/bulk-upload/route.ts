@@ -105,9 +105,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No leads provided" }, { status: 400 });
   }
 
-  if (leads.length > 1000) {
-    return NextResponse.json({ error: "Maximum 1000 leads per upload" }, { status: 400 });
-  }
+  // No artificial limit — accept any batch size sent by the client
+  // The frontend handles chunking transparently for the user
 
   // Validate agent IDs exist if assignment is requested
   let validAgentIds: Set<string> = new Set();

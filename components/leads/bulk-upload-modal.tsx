@@ -42,6 +42,17 @@ interface UploadResult {
   errors: RowError[];
 }
 
+interface UploadProgress {
+  imported: number;
+  failed: number;
+  duplicates: number;
+  remaining: number;
+  total: number;
+  done: boolean;
+}
+
+const BATCH_SIZE = 500; // internal — never shown to user
+
 type AssignmentMode = "none" | "single" | "round-robin";
 
 interface BulkUploadModalProps {
@@ -62,6 +73,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [defaultStatus, setDefaultStatus] = useState("new");
   const [defaultForce, setDefaultForce] = useState("standard");
   const [statusOptions, setStatusOptions] = useState<{ id: string; value: string; label: string; isSystem: boolean; color: string }[]>([]);
@@ -83,6 +95,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
     setSelectedAgentId("");
     setSelectedAgentIds([]);
     setResult(null);
+    setProgress(null);
   };
 
   // Load custom statuses and sources from API
@@ -187,10 +200,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
         return;
       }
 
-      if (rows.length > 1000) {
-        toast.error("Maximum 1000 leads per upload. Please split your file.");
-        return;
-      }
+      // No limit — enterprise mode processes any number of rows
 
       // Flexible column mapping (case-insensitive, multiple aliases)
       const mapped: ParsedLead[] = rows.map((row) => {
@@ -236,31 +246,88 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
 
   const handleUpload = async () => {
     setIsUploading(true);
+
+    const total = parsedLeads.length;
+    const allErrors: RowError[] = [];
+    let imported = 0;
+    let failed = 0;
+    let duplicates = 0;
+
+    // Split into invisible batches of BATCH_SIZE
+    const batches: ParsedLead[][] = [];
+    for (let i = 0; i < parsedLeads.length; i += BATCH_SIZE) {
+      batches.push(parsedLeads.slice(i, i + BATCH_SIZE));
+    }
+
+    // Initialize progress — show uploading state immediately
+    setProgress({ imported: 0, failed: 0, duplicates: 0, remaining: total, total, done: false });
+
     try {
-      const res = await fetch("/api/leads/bulk-upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leads: parsedLeads,
-          assignmentMode,
-          assignedAgentId: assignmentMode === "single" ? selectedAgentId : undefined,
-          selectedAgentIds: assignmentMode === "round-robin" ? selectedAgentIds : undefined,
-          defaultStatus,
-          defaultForce,
-        }),
-      });
+      for (let b = 0; b < batches.length; b++) {
+        const batch = batches[b];
+        // Row offset for correct error row numbers across batches
+        const rowOffset = b * BATCH_SIZE;
 
-      const data = (await res.json()) as UploadResult & { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+        const res = await fetch("/api/leads/bulk-upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leads: batch,
+            assignmentMode,
+            assignedAgentId: assignmentMode === "single" ? selectedAgentId : undefined,
+            selectedAgentIds: assignmentMode === "round-robin" ? selectedAgentIds : undefined,
+            defaultStatus,
+            defaultForce,
+          }),
+        });
 
-      setResult(data);
+        const data = (await res.json()) as UploadResult & { error?: string };
+
+        if (!res.ok) {
+          // Entire batch failed — count all as failed
+          failed += batch.length;
+          allErrors.push({ row: rowOffset + 1, name: "Batch error", error: data.error ?? "Upload failed" });
+        } else {
+          imported += data.success ?? 0;
+          failed += data.failed ?? 0;
+          duplicates += data.duplicates ?? 0;
+
+          // Adjust row numbers to absolute position in full file
+          if (data.errors?.length) {
+            for (const e of data.errors) {
+              allErrors.push({ ...e, row: e.row + rowOffset });
+            }
+          }
+        }
+
+        // Update live progress after each batch
+        const processed = imported + failed + duplicates;
+        setProgress({
+          imported,
+          failed,
+          duplicates,
+          remaining: Math.max(0, total - processed),
+          total,
+          done: b === batches.length - 1,
+        });
+      }
+
+      // Build final result and show result step
+      const finalResult: UploadResult = {
+        success: imported,
+        failed,
+        duplicates,
+        total,
+        errors: allErrors,
+      };
+      setResult(finalResult);
       setStep("result");
 
-      if (data.success > 0) {
-        toast.success(`${data.success} leads imported successfully`);
+      if (imported > 0) {
+        toast.success(`${imported} leads imported successfully`);
         onComplete();
       }
-      if (data.success === 0) {
+      if (imported === 0) {
         toast.error("No leads were imported. Check the error details below.");
       }
     } catch (error) {
@@ -330,7 +397,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                 <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Drag & drop your file here</p>
-                  <p className="mt-1 text-xs text-muted-foreground">CSV, XLSX, or XLS — max 1000 rows</p>
+                  <p className="mt-1 text-xs text-muted-foreground">CSV, XLSX, or XLS — any number of rows</p>
                 </div>
                 <label className="cursor-pointer">
                   <input type="file" accept=".csv,.xlsx,.xls" onChange={handleInputChange} className="hidden" />
@@ -362,7 +429,51 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
           {/* STEP 2: PREVIEW & VALIDATE */}
           {step === "preview" && (
             <div className="space-y-4">
-              {/* Validation summary */}
+
+              {/* LIVE PROGRESS — shown while uploading */}
+              {isUploading && progress && (
+                <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-5">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    Uploading...
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="space-y-1">
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-border">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-300"
+                        style={{ width: `${progress.total > 0 ? Math.round(((progress.imported + progress.failed + progress.duplicates) / progress.total) * 100) : 0}%` }}
+                      />
+                    </div>
+                    <p className="text-right text-[11px] text-muted-foreground">
+                      {progress.total > 0 ? Math.round(((progress.imported + progress.failed + progress.duplicates) / progress.total) * 100) : 0}%
+                    </p>
+                  </div>
+
+                  {/* Stats row */}
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-lg bg-emerald-500/10 p-3 text-center">
+                      <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{progress.imported}</p>
+                      <p className="text-[11px] text-muted-foreground">Imported</p>
+                    </div>
+                    <div className="rounded-lg bg-red-500/10 p-3 text-center">
+                      <p className="text-lg font-bold text-red-600 dark:text-red-400">{progress.failed}</p>
+                      <p className="text-[11px] text-muted-foreground">Failed</p>
+                    </div>
+                    <div className="rounded-lg bg-amber-500/10 p-3 text-center">
+                      <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{progress.duplicates}</p>
+                      <p className="text-[11px] text-muted-foreground">Duplicates</p>
+                    </div>
+                    <div className="rounded-lg bg-blue-500/10 p-3 text-center">
+                      <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{progress.remaining}</p>
+                      <p className="text-[11px] text-muted-foreground">Remaining</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Validation summary — hide while uploading */}
+              {!isUploading && (
               <div className="flex flex-wrap gap-3 text-sm">
                 <span className="rounded-lg bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-600 dark:text-emerald-400">
                   ✓ {validCount} valid
@@ -376,8 +487,10 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                   {parsedLeads.length} total rows
                 </span>
               </div>
+              )}
 
-              {/* Preview table */}
+              {/* Preview table — hide while uploading */}
+              {!isUploading && (
               <div className="max-h-52 overflow-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-muted">
@@ -412,9 +525,10 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                   </p>
                 )}
               </div>
+              )} {/* end !isUploading preview table */}
 
-              {/* Validation issues preview */}
-              {invalidCount > 0 && (
+              {/* Validation issues preview — hide while uploading */}
+              {!isUploading && invalidCount > 0 && (
                 <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
                   <p className="mb-1 text-xs font-medium text-amber-600 dark:text-amber-400">
                     {invalidCount} rows will be skipped (no email or phone):
@@ -435,7 +549,8 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                 </div>
               )}
 
-              {/* Assignment options */}
+              {/* Assignment options + defaults — hide while uploading */}
+              {!isUploading && (
               <div className="space-y-3 rounded-xl border border-border p-4">
                 <p className="text-sm font-medium">Agent Assignment</p>
                 <div className="flex flex-wrap gap-2">
@@ -498,8 +613,10 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                   </div>
                 )}
               </div>
+              )} {/* end !isUploading assignment */}
 
-              {/* Default Status & Tier dropdowns */}
+              {/* Default Status & Source dropdowns — hide while uploading */}
+              {!isUploading && (
               <div className="space-y-3 rounded-xl border border-border p-4">
                 <p className="text-sm font-medium">Default Values (for rows without Status/Source)</p>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -622,6 +739,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                   </div>
                 </div>
               </div>
+              )} {/* end !isUploading defaults */}
             </div>
           )}
 
@@ -702,7 +820,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
           )}
           {step === "preview" && (
             <>
-              <Button variant="outline" onClick={() => { setStep("upload"); setParsedLeads([]); }}>
+              <Button variant="outline" onClick={() => { setStep("upload"); setParsedLeads([]); }} disabled={isUploading}>
                 Back
               </Button>
               <Button
@@ -711,7 +829,7 @@ export function BulkUploadModal({ open, onOpenChange, agents, onComplete }: Bulk
                 className="gap-1.5"
               >
                 {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                Import {validCount} leads
+                {isUploading ? "Uploading..." : `Import ${validCount} leads`}
               </Button>
             </>
           )}
