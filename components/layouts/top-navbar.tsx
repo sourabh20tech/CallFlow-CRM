@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Menu, PanelLeftClose, PanelLeft, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ interface TopNavbarProps {
   onMobileMenuOpen?: () => void;
 }
 
-export function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
+export const TopNavbar = memo(function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
   const { sidebarCollapsed, toggleSidebar } = useAppStore();
   const { role } = useAuth();
   const isAdmin = role === "admin";
@@ -104,4 +104,4 @@ export function TopNavbar({ onMobileMenuOpen }: TopNavbarProps) {
       </div>
     </header>
   );
-}
+});

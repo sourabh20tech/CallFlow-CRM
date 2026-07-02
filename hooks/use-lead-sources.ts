@@ -16,18 +16,27 @@ const FALLBACK: LeadSource[] = [
 ];
 
 let cached: LeadSource[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 120_000; // 2 minutes
 
 export function useLeadSources() {
   const [sources, setSources] = useState<LeadSource[]>(cached ?? FALLBACK);
   const [isLoading, setIsLoading] = useState(!cached);
 
   const load = useCallback(async () => {
+    // If cache is fresh, skip fetch
+    if (cached && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
+      setSources(cached);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const res = await fetch("/api/lead-sources");
       const data = await res.json();
       const list = data.sources ?? FALLBACK;
       cached = list;
+      cacheTimestamp = Date.now();
       setSources(list);
     } catch {
       // keep fallback
@@ -37,7 +46,7 @@ export function useLeadSources() {
   }, []);
 
   useEffect(() => {
-    if (cached) {
+    if (cached && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
       setSources(cached);
       setIsLoading(false);
       return;
@@ -47,10 +56,12 @@ export function useLeadSources() {
 
   const invalidate = useCallback(() => {
     cached = null;
+    cacheTimestamp = 0;
   }, []);
 
   const refresh = useCallback(async () => {
     cached = null;
+    cacheTimestamp = 0;
     await load();
   }, [load]);
 

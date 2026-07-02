@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AgentPanelBundle } from "@/types/agent-panel";
 
 interface UseAgentPanelOptions {
@@ -12,8 +12,11 @@ export function useAgentPanel(options: UseAgentPanelOptions = {}) {
   const [data, setData] = useState<AgentPanelBundle | null>(initialData ?? null);
   const [isRefreshing, setIsRefreshing] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
+  const fetchingRef = useRef(false);
 
   const refresh = useCallback(async (): Promise<AgentPanelBundle | null> => {
+    if (fetchingRef.current) return data;
+    fetchingRef.current = true;
     setIsRefreshing(true);
     setError(null);
     try {
@@ -28,8 +31,9 @@ export function useAgentPanel(options: UseAgentPanelOptions = {}) {
       return null;
     } finally {
       setIsRefreshing(false);
+      fetchingRef.current = false;
     }
-  }, []);
+  }, [data]);
 
   const patchData = useCallback((updater: (current: AgentPanelBundle) => AgentPanelBundle) => {
     setData((current) => (current ? updater(current) : current));
@@ -37,33 +41,8 @@ export function useAgentPanel(options: UseAgentPanelOptions = {}) {
 
   useEffect(() => {
     if (initialData) return;
-
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const res = await fetch("/api/agent/panel");
-        const json = (await res.json()) as AgentPanelBundle & { error?: string };
-        if (cancelled) return;
-        if (!res.ok) throw new Error(json.error ?? "Failed to load workspace");
-        setData(json);
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load workspace");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsRefreshing(false);
-        }
-      }
-    }
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [initialData]);
+    void refresh();
+  }, [initialData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isLoading = !data && isRefreshing;
 

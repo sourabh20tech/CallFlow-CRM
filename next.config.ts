@@ -34,10 +34,13 @@ const nextConfig: NextConfig = {
     ],
     // Router cache — pages stay in memory for fast back/forward navigation
     staleTimes: {
-      dynamic: 60, // Cache dynamic pages for 60s in router
+      dynamic: 30, // Cache dynamic pages for 30s in router
       static: 300, // Cache static pages for 5 minutes
     },
   },
+
+  // Server-only heavy packages — don't bundle on client
+  serverExternalPackages: ["server-only"],
 
   async redirects() {
     return [
@@ -64,10 +67,31 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Cache API responses briefly for faster repeated navigation
+        // Cache JS/CSS chunks — they have content hashes
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // API security + brief cache for dashboard-type routes
         source: "/api/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        // Cache relatively stable reference data APIs
+        source: "/api/lead-sources",
+        headers: [
+          { key: "Cache-Control", value: "private, max-age=60, stale-while-revalidate=120" },
+        ],
+      },
+      {
+        source: "/api/lead-statuses",
+        headers: [
+          { key: "Cache-Control", value: "private, max-age=60, stale-while-revalidate=120" },
         ],
       },
     ];

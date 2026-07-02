@@ -15,7 +15,7 @@ interface FollowupCenterData {
   total: number;
 }
 
-const POLL_MS = 60_000;
+const POLL_MS = 120_000; // 2 minutes — reduced from 60s for lower network load
 
 export function FollowupCenterWidget() {
   const [data, setData] = useState<FollowupCenterData | null>(null);

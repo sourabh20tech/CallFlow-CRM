@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,7 @@ interface SidebarNavProps {
   onNavigate?: () => void;
 }
 
-function NavLink({
+const NavLink = memo(function NavLink({
   item,
   active,
   collapsed,
@@ -77,7 +78,7 @@ function NavLink({
   }
 
   return link;
-}
+});
 
 export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
   const pathname = usePathname();

@@ -68,21 +68,11 @@ export async function getCurrentAgentId(
   const userId = await getCurrentUserId(supabase);
   if (!userId) return null;
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("agents")
     .select("id")
     .eq("profile_id", userId)
-    .is("deleted_at", null)
     .maybeSingle();
-
-  if (error) {
-    const { data: fallback } = await supabase
-      .from("agents")
-      .select("id")
-      .eq("profile_id", userId)
-      .maybeSingle();
-    return fallback?.id ?? null;
-  }
 
   return data?.id ?? null;
 }

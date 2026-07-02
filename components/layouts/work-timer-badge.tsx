@@ -32,7 +32,8 @@ export function WorkTimerBadge() {
   useEffect(() => {
     if (role !== "agent") return;
     void loadToday();
-    const interval = setInterval(() => void loadToday(), 120_000);
+    // Reduced from 120s to 180s — today total doesn't change that fast
+    const interval = setInterval(() => void loadToday(), 180_000);
     return () => clearInterval(interval);
   }, [role, loadToday]);
 

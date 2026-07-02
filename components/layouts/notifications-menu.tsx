@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,17 @@ function priorityColor(p: string): string {
   return "bg-muted-foreground";
 }
 
-export function NotificationsMenu() {
+export const NotificationsMenu = memo(function NotificationsMenu() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const lastFetchRef = useRef(0);
 
   const load = useCallback(async () => {
+    // Dedupe — skip if fetched within last 5 seconds
+    const now = Date.now();
+    if (now - lastFetchRef.current < 5000) return;
+    lastFetchRef.current = now;
     try {
       const res = await fetch("/api/notifications");
       if (!res.ok) return;
@@ -55,8 +61,15 @@ export function NotificationsMenu() {
 
   useEffect(() => {
     void load();
-    const t = setInterval(() => void load(), 30_000); // Poll every 30s
+    // Poll every 60s (reduced from 30s — balance freshness vs requests)
+    const t = setInterval(() => void load(), 60_000);
     return () => clearInterval(t);
+  }, [load]);
+
+  // Refresh when dropdown opens
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    if (open) void load();
   }, [load]);
 
   const markRead = async (id: string) => {
@@ -80,7 +93,7 @@ export function NotificationsMenu() {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl">
           <Bell className="h-5 w-5" />
@@ -151,4 +164,4 @@ export function NotificationsMenu() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});

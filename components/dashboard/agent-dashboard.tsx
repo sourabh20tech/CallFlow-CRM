@@ -1,6 +1,8 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   ArrowRight,
   CalendarClock,
@@ -14,12 +16,20 @@ import { PageHeader } from "@/components/design-system/page-header";
 import { StatCard } from "@/components/design-system/stat-card";
 import { GlassCard } from "@/components/design-system/glass-card";
 import { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
-import { FollowupCenterWidget } from "@/components/dashboard/followup-center-widget";
-import { WorkTimeWidget } from "@/components/dashboard/work-time-widget";
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { Button } from "@/components/ui/button";
 import { useAgentPanel } from "@/hooks/use-agent-panel";
 import { pageSection, statsGrid } from "@/lib/design-system/styles";
+
+// Lazy-load heavy widgets — they load after the main KPIs render
+const FollowupCenterWidget = dynamic(
+  () => import("@/components/dashboard/followup-center-widget").then((m) => m.FollowupCenterWidget),
+  { ssr: false },
+);
+const WorkTimeWidget = dynamic(
+  () => import("@/components/dashboard/work-time-widget").then((m) => m.WorkTimeWidget),
+  { ssr: false },
+);
 
 export function AgentDashboard() {
   const { data, refresh, isRefreshing, isLoading, error } = useAgentPanel();

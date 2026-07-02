@@ -36,8 +36,8 @@ export function WorkTimeWidget() {
 
   useEffect(() => {
     void loadToday();
-    // Refresh total every 2 min
-    const interval = setInterval(() => void loadToday(), 120_000);
+    // Refresh total every 3 min (reduced from 2 min — widget shown on dashboard only)
+    const interval = setInterval(() => void loadToday(), 180_000);
     return () => clearInterval(interval);
   }, [loadToday]);
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/constants/app";
 import { useAppStore } from "@/store/app-store";
@@ -10,7 +11,7 @@ import { StatusChip } from "@/components/design-system/status-chip";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { roleLabel } from "@/lib/auth/roles";
 
-export function Sidebar() {
+export const Sidebar = memo(function Sidebar() {
   const collapsed = useAppStore((s) => s.sidebarCollapsed);
   const { role, user } = useAuth();
   const isClient = useIsClient();
@@ -74,4 +75,4 @@ export function Sidebar() {
       </div>
     </aside>
   );
-}
+});

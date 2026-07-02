@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   AdminDashboardStats,
   AgentPerformanceDataPoint,
@@ -30,52 +30,29 @@ export function useDashboard(options: UseDashboardOptions = {}) {
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fetchingRef = useRef(false);
 
   const refresh = useCallback(async () => {
+    // Prevent duplicate concurrent fetches
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     try {
       setError(null);
       const res = await fetch("/api/dashboard/admin", { cache: "no-store" });
       const body = (await res.json()) as AdminDashboardData & { error?: string };
       if (!res.ok) throw new Error(body.error ?? "Failed to load dashboard");
-      const result = body;
-      setData(result);
+      setData(body);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load dashboard");
     } finally {
       setIsLoading(false);
+      fetchingRef.current = false;
     }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const res = await fetch("/api/dashboard/admin", { cache: "no-store" });
-        const body = (await res.json()) as AdminDashboardData & { error?: string };
-        if (!res.ok) throw new Error(body.error ?? "Failed to load dashboard");
-        const result = body;
-        if (!cancelled) {
-          setData(result);
-          setError(null);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load dashboard");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void refresh();
+  }, [refresh]);
 
   useEffect(() => {
     if (!refreshInterval) return;

@@ -1,19 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
+import dynamic from "next/dynamic";
 import { FollowupReminderListener } from "@/components/followups/followup-reminder-listener";
 import { AgentInactivityGuard } from "@/components/auth/agent-inactivity-guard";
 import { Sidebar } from "@/components/layouts/sidebar";
-import { MobileNav } from "@/components/layouts/mobile-nav";
 import { TopNavbar } from "@/components/layouts/top-navbar";
 import { pageContainer, pageSection } from "@/lib/design-system/styles";
 import { cn } from "@/lib/utils";
+
+// Lazy-load mobile nav — only needed on mobile tap
+const MobileNav = dynamic(
+  () => import("@/components/layouts/mobile-nav").then((m) => m.MobileNav),
+  { ssr: false },
+);
 
 interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export const DashboardShell = memo(function DashboardShell({ children }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -21,7 +27,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <FollowupReminderListener />
       <AgentInactivityGuard />
       <Sidebar />
-      <MobileNav open={mobileOpen} onOpenChange={setMobileOpen} />
+      {mobileOpen && <MobileNav open={mobileOpen} onOpenChange={setMobileOpen} />}
 
       <div className="flex min-h-[100dvh] min-w-0 flex-1 flex-col">
         <TopNavbar onMobileMenuOpen={() => setMobileOpen(true)} />
@@ -38,4 +44,4 @@ export function DashboardShell({ children }: DashboardShellProps) {
       </div>
     </div>
   );
-}
+});
