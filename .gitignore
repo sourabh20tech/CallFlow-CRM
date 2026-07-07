@@ -124,3 +124,6 @@ Desktop.ini
 *.pid
 *.seed
 *.pid.lock
+
+# Temporary files from git operations
+_*.txt
