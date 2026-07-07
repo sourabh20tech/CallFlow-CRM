@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireLeadsAdminApi } from "@/lib/api/require-leads-admin";
 import { logActivity } from "@/lib/activity/log-activity";
-import { leadsService } from "@/services/leads.service";
 import type { CreateLeadInput } from "@/types/lead";
 
 export interface BulkUploadRow {
@@ -29,64 +28,43 @@ interface RowError {
   field?: string;
 }
 
-const VALID_STATUSES = ["new", "interested", "follow_up", "converted", "not_interested", "closed"];
+// ─── Validation Helpers (unchanged logic) ────────────────────────────────────
 
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-/**
- * Normalize and validate phone number.
- * Handles: 9876543210, +919876543210, 91-9876543210, 9876 543210
- * Also handles Excel scientific notation: 9.87654E+9 → 9876540000
- */
 function normalizePhone(phone: string): string {
   let raw = phone.toString().trim();
-
-  // Handle Excel scientific notation (e.g. 9.87654E+9)
   if (/\d+\.?\d*[eE][+\-]?\d+/.test(raw)) {
     const num = Number(raw);
     if (!isNaN(num) && num > 0) raw = Math.round(num).toString();
   }
-
-  // Remove all non-digit and non-plus characters except leading +
   const hasPlus = raw.startsWith("+");
   const digits = raw.replace(/\D/g, "");
-
-  if (hasPlus) {
-    return "+" + digits;
-  }
-  return digits;
+  return hasPlus ? "+" + digits : digits;
 }
 
 function validatePhone(phone: string): boolean {
   const normalized = normalizePhone(phone);
-  // Remove leading + for digit check
   const digits = normalized.replace(/^\+/, "");
-  // Must be 7-15 digits
-  if (!/^\d{7,15}$/.test(digits)) return false;
-  return true;
+  return /^\d{7,15}$/.test(digits);
 }
 
-/** Format phone to +91XXXXXXXXXX for Indian numbers */
 function formatIndianPhone(phone: string): string {
   const normalized = normalizePhone(phone);
   const digits = normalized.replace(/^\+/, "");
-
-  // Already has country code 91 (12 digits starting with 91)
-  if (digits.length === 12 && digits.startsWith("91")) {
-    return "+" + digits;
-  }
-  // 10-digit Indian mobile number
-  if (digits.length === 10) {
-    return "+91" + digits;
-  }
-  // Has + prefix already
-  if (normalized.startsWith("+")) {
-    return normalized;
-  }
+  if (digits.length === 12 && digits.startsWith("91")) return "+" + digits;
+  if (digits.length === 10) return "+91" + digits;
+  if (normalized.startsWith("+")) return normalized;
   return "+" + digits;
 }
+
+// ─── Bulk Insert Size ────────────────────────────────────────────────────────
+
+const DB_BATCH_SIZE = 200; // rows per INSERT statement
+
+// ─── Main Handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
   const auth = await requireLeadsAdminApi();
@@ -105,18 +83,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No leads provided" }, { status: 400 });
   }
 
-  // No artificial limit — accept any batch size sent by the client
-  // The frontend handles chunking transparently for the user
+  // ─── Agent validation (one query) ───────────────────────────────────────────
 
-  // Validate agent IDs exist if assignment is requested
   let validAgentIds: Set<string> = new Set();
   if (assignmentMode === "single" || assignmentMode === "round-robin") {
     try {
+      const { leadsService } = await import("@/services/leads.service");
       const rosterAgents = await leadsService.getRosterAgents();
       validAgentIds = new Set(rosterAgents.map((a) => a.id));
-    } catch {
-      // If we can't validate agents, proceed without assignment
-    }
+    } catch { /* proceed without validation */ }
 
     if (assignmentMode === "single" && assignedAgentId && !validAgentIds.has(assignedAgentId)) {
       return NextResponse.json({
@@ -125,24 +100,38 @@ export async function POST(request: Request) {
     }
   }
 
-  // Determine agent assignment list for round-robin
   const agentPool = assignmentMode === "round-robin" && selectedAgentIds?.length
     ? selectedAgentIds.filter((id) => validAgentIds.size === 0 || validAgentIds.has(id))
     : [];
 
-  let successCount = 0;
-  let failCount = 0;
-  let duplicateCount = 0;
+  // ─── Phase 1: Validate all rows in memory (zero DB calls) ──────────────────
+
+  interface ValidatedLead {
+    rowNum: number;
+    insert: {
+      full_name: string;
+      email: string | null;
+      phone: string | null;
+      company: string | null;
+      tier: string;
+      status: string;
+      source: string | null;
+      assigned_agent_id: string | null;
+      created_by: string;
+      converted_at: string | null;
+      next_follow_up_at: string | null;
+    };
+  }
+
+  const validated: ValidatedLead[] = [];
   const errors: RowError[] = [];
+  let failCount = 0;
 
   for (let i = 0; i < leads.length; i++) {
     const row = leads[i];
     const rowNum = i + 1;
     const rowName = row.fullName?.trim() || `Row ${rowNum}`;
 
-    // === VALIDATION ===
-
-    // ONLY required: at least one of email or phone
     const hasEmail = Boolean(row.email?.trim());
     const hasPhone = Boolean(row.phone?.trim());
 
@@ -152,87 +141,223 @@ export async function POST(request: Request) {
       continue;
     }
 
-    // Validate email format if provided (skip row only if format is truly invalid)
     if (hasEmail && !validateEmail(row.email!.trim())) {
-      // Don't fail — just ignore the bad email if phone exists
       if (!hasPhone) {
         failCount++;
         errors.push({ row: rowNum, name: rowName, error: `Invalid email and no phone: ${row.email}`, field: "email" });
         continue;
       }
-      // Has phone, skip bad email silently
     }
 
-    // Validate phone format if provided
     if (hasPhone && !validatePhone(row.phone!.trim())) {
-      // Don't fail — just ignore bad phone if email exists
       if (!hasEmail) {
         failCount++;
         errors.push({ row: rowNum, name: rowName, error: `Invalid phone and no email: ${row.phone}`, field: "phone" });
         continue;
       }
-      // Has email, skip bad phone silently
     }
 
-    // Auto-fill optional fields with defaults
     const leadName = row.fullName?.trim() || "Unknown Lead";
     const leadSource = row.source?.trim() || "Imported";
     const rawStatus = row.status?.trim().toLowerCase().replace(/[\s-]+/g, "_");
-    const status: CreateLeadInput["status"] = rawStatus
-      ? rawStatus as CreateLeadInput["status"]
-      : (defaultStatus || "new") as CreateLeadInput["status"];
-    const force = (defaultForce || "standard") as "standard" | "premium" | "enterprise";
+    const status = rawStatus || defaultStatus || "new";
+    const force = defaultForce || "standard";
 
-    // Determine agent assignment
-    let agentId: string | undefined;
+    let agentId: string | null = null;
     if (assignmentMode === "single" && assignedAgentId) {
       agentId = assignedAgentId;
     } else if (assignmentMode === "round-robin" && agentPool.length > 0) {
       agentId = agentPool[i % agentPool.length];
     }
 
-    // Use validated values only
-    const finalEmail = (hasEmail && validateEmail(row.email!.trim())) ? row.email!.trim() : undefined;
-    const finalPhone = (hasPhone && validatePhone(row.phone!.trim())) ? formatIndianPhone(row.phone!.trim()) : undefined;
+    const finalEmail = (hasEmail && validateEmail(row.email!.trim())) ? row.email!.trim().toLowerCase() : null;
+    const finalPhone = (hasPhone && validatePhone(row.phone!.trim())) ? formatIndianPhone(row.phone!.trim()) : null;
 
-    // === CREATE LEAD ===
-    try {
-      await leadsService.create({
-        fullName: leadName,
+    validated.push({
+      rowNum,
+      insert: {
+        full_name: leadName,
         email: finalEmail,
         phone: finalPhone,
-        company: row.company?.trim() || undefined,
-        source: leadSource,
+        company: row.company?.trim() || null,
+        tier: force,
         status,
-        force,
-        assignedAgentId: agentId,
-      });
-      successCount++;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create";
-      const isDuplicate = message.toLowerCase().includes("duplicate") ||
-        message.toLowerCase().includes("unique") ||
-        message.toLowerCase().includes("already exists") ||
-        message.toLowerCase().includes("violates unique");
+        source: leadSource,
+        assigned_agent_id: agentId,
+        created_by: auth.user.id,
+        converted_at: status === "converted" ? new Date().toISOString() : null,
+        next_follow_up_at: null,
+      },
+    });
+  }
 
-      if (isDuplicate) {
-        duplicateCount++;
-        errors.push({ row: rowNum, name: rowName, error: "Duplicate entry (email or phone already exists)", field: "duplicate" });
-      } else {
-        failCount++;
-        errors.push({ row: rowNum, name: rowName, error: message, field: "database" });
+  // ─── Phase 2: Bulk duplicate detection (ONE query) ─────────────────────────
+
+  const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
+  const { createClient } = await import("@/lib/supabase/server");
+
+  // Use admin client to bypass RLS for bulk ops (auth already verified above)
+  const supabase = isAdminClientConfigured() ? createAdminSupabaseClient() : await createClient();
+
+  // Collect all emails and phones to check
+  const emailsToCheck = validated
+    .map((v) => v.insert.email)
+    .filter((e): e is string => e !== null);
+  const phonesToCheck = validated
+    .map((v) => v.insert.phone)
+    .filter((p): p is string => p !== null);
+
+  // Fetch existing emails + phones in parallel (max 2 queries instead of N)
+  const existingEmails = new Set<string>();
+  const existingPhones = new Set<string>();
+
+  const dupCheckPromises: Promise<void>[] = [];
+
+  if (emailsToCheck.length > 0) {
+    dupCheckPromises.push(
+      (async () => {
+        // Supabase `in` supports up to ~1000 values; chunk if needed
+        for (let i = 0; i < emailsToCheck.length; i += 500) {
+          const chunk = emailsToCheck.slice(i, i + 500);
+          const { data } = await (supabase as any)
+            .from("leads")
+            .select("email")
+            .is("deleted_at", null)
+            .in("email", chunk);
+          if (data) {
+            for (const row of data) {
+              if (row.email) existingEmails.add(row.email.toLowerCase());
+            }
+          }
+        }
+      })(),
+    );
+  }
+
+  if (phonesToCheck.length > 0) {
+    dupCheckPromises.push(
+      (async () => {
+        for (let i = 0; i < phonesToCheck.length; i += 500) {
+          const chunk = phonesToCheck.slice(i, i + 500);
+          const { data } = await (supabase as any)
+            .from("leads")
+            .select("phone")
+            .is("deleted_at", null)
+            .in("phone", chunk);
+          if (data) {
+            for (const row of data) {
+              if (row.phone) existingPhones.add(row.phone);
+            }
+          }
+        }
+      })(),
+    );
+  }
+
+  await Promise.all(dupCheckPromises);
+
+  // ─── Phase 3: Filter duplicates in-memory ──────────────────────────────────
+
+  let duplicateCount = 0;
+  const toInsert: ValidatedLead[] = [];
+  // Track within-batch duplicates too
+  const batchEmails = new Set<string>();
+  const batchPhones = new Set<string>();
+
+  for (const item of validated) {
+    const email = item.insert.email;
+    const phone = item.insert.phone;
+
+    // Check against existing DB records
+    const emailDup = email && existingEmails.has(email.toLowerCase());
+    const phoneDup = phone && existingPhones.has(phone);
+
+    // Check against other rows in this batch (prevent intra-batch duplicates)
+    const batchEmailDup = email && batchEmails.has(email.toLowerCase());
+    const batchPhoneDup = phone && batchPhones.has(phone);
+
+    if (emailDup || phoneDup || batchEmailDup || batchPhoneDup) {
+      duplicateCount++;
+      const rowName = item.insert.full_name || `Row ${item.rowNum}`;
+      errors.push({
+        row: item.rowNum,
+        name: rowName,
+        error: "Duplicate entry (email or phone already exists)",
+        field: "duplicate",
+      });
+      continue;
+    }
+
+    // Track for intra-batch dedup
+    if (email) batchEmails.add(email.toLowerCase());
+    if (phone) batchPhones.add(phone);
+    toInsert.push(item);
+  }
+
+  // ─── Phase 4: Bulk INSERT in batches of DB_BATCH_SIZE ──────────────────────
+
+  let successCount = 0;
+
+  for (let i = 0; i < toInsert.length; i += DB_BATCH_SIZE) {
+    const batch = toInsert.slice(i, i + DB_BATCH_SIZE);
+    const rows = batch.map((b) => b.insert);
+
+    const { data, error } = await (supabase as any)
+      .from("leads")
+      .insert(rows)
+      .select("id");
+
+    if (error) {
+      // If the batch insert fails entirely (rare), fall back to individual inserts
+      // This handles edge cases like partial unique constraint violations
+      for (const item of batch) {
+        const { error: singleErr } = await (supabase as any)
+          .from("leads")
+          .insert(item.insert)
+          .select("id");
+
+        if (singleErr) {
+          const msg = singleErr.message ?? "Failed to create";
+          const isDuplicate = msg.toLowerCase().includes("duplicate") ||
+            msg.toLowerCase().includes("unique") ||
+            msg.toLowerCase().includes("already exists") ||
+            msg.toLowerCase().includes("violates unique");
+
+          if (isDuplicate) {
+            duplicateCount++;
+            errors.push({
+              row: item.rowNum,
+              name: item.insert.full_name,
+              error: "Duplicate entry (email or phone already exists)",
+              field: "duplicate",
+            });
+          } else {
+            failCount++;
+            errors.push({
+              row: item.rowNum,
+              name: item.insert.full_name,
+              error: msg,
+              field: "database",
+            });
+          }
+        } else {
+          successCount++;
+        }
       }
+    } else {
+      // Batch succeeded — count all rows
+      successCount += data?.length ?? batch.length;
     }
   }
 
-  // Log errors server-side for debugging
+  // ─── Phase 5: Activity log (one call) ──────────────────────────────────────
+
   if (errors.length > 0) {
     console.warn(`[bulk-upload] ${errors.length} errors out of ${leads.length} rows:`,
       errors.slice(0, 5).map((e) => `Row ${e.row}: ${e.error}`).join("; "),
     );
   }
 
-  // Log bulk upload activity
   if (successCount > 0) {
     logActivity({
       userId: auth.user.id,
