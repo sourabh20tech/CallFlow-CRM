@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { cachedFetch, invalidateCache } from "@/lib/cache/data-cache";
 
 export interface LeadSource {
   id: string;
@@ -15,29 +16,26 @@ const FALLBACK: LeadSource[] = [
   { id: "src-3", label: "Enterprise", value: "enterprise", isSystem: true },
 ];
 
-let cached: LeadSource[] | null = null;
-let cacheTimestamp = 0;
-const CACHE_TTL_MS = 120_000; // 2 minutes
+const CACHE_KEY = "ref:lead-sources";
+const CACHE_TTL = 180_000; // 3 minutes — sources rarely change
+
+async function fetchSources(): Promise<LeadSource[]> {
+  const res = await fetch("/api/lead-sources");
+  const data = await res.json();
+  return data.sources ?? FALLBACK;
+}
 
 export function useLeadSources() {
-  const [sources, setSources] = useState<LeadSource[]>(cached ?? FALLBACK);
-  const [isLoading, setIsLoading] = useState(!cached);
+  const [sources, setSources] = useState<LeadSource[]>(FALLBACK);
+  const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
-    // If cache is fresh, skip fetch
-    if (cached && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
-      setSources(cached);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
     try {
-      const res = await fetch("/api/lead-sources");
-      const data = await res.json();
-      const list = data.sources ?? FALLBACK;
-      cached = list;
-      cacheTimestamp = Date.now();
-      setSources(list);
+      const result = await cachedFetch(CACHE_KEY, fetchSources, {
+        ttl: CACHE_TTL,
+        staleWhileRevalidate: true,
+      });
+      setSources(result);
     } catch {
       // keep fallback
     } finally {
@@ -46,22 +44,16 @@ export function useLeadSources() {
   }, []);
 
   useEffect(() => {
-    if (cached && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
-      setSources(cached);
-      setIsLoading(false);
-      return;
-    }
     void load();
   }, [load]);
 
   const invalidate = useCallback(() => {
-    cached = null;
-    cacheTimestamp = 0;
+    invalidateCache(CACHE_KEY);
   }, []);
 
   const refresh = useCallback(async () => {
-    cached = null;
-    cacheTimestamp = 0;
+    invalidateCache(CACHE_KEY);
+    setIsLoading(true);
     await load();
   }, [load]);
 

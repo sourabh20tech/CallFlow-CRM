@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cachedFetch, invalidateCache } from "@/lib/cache/data-cache";
 import type {
   AdminDashboardStats,
   AgentPerformanceDataPoint,
@@ -25,6 +26,16 @@ interface UseDashboardOptions {
   refreshInterval?: number;
 }
 
+const CACHE_KEY = "dashboard:admin";
+const CACHE_TTL = 20_000; // 20s — dashboard data stays fresh briefly
+
+async function fetchDashboard(): Promise<AdminDashboardData> {
+  const res = await fetch("/api/dashboard/admin", { cache: "no-store" });
+  const body = (await res.json()) as AdminDashboardData & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Failed to load dashboard");
+  return body;
+}
+
 export function useDashboard(options: UseDashboardOptions = {}) {
   const { refreshInterval } = options;
   const [data, setData] = useState<AdminDashboardData | null>(null);
@@ -33,15 +44,13 @@ export function useDashboard(options: UseDashboardOptions = {}) {
   const fetchingRef = useRef(false);
 
   const refresh = useCallback(async () => {
-    // Prevent duplicate concurrent fetches
     if (fetchingRef.current) return;
     fetchingRef.current = true;
     try {
       setError(null);
-      const res = await fetch("/api/dashboard/admin", { cache: "no-store" });
-      const body = (await res.json()) as AdminDashboardData & { error?: string };
-      if (!res.ok) throw new Error(body.error ?? "Failed to load dashboard");
-      setData(body);
+      invalidateCache(CACHE_KEY);
+      const result = await cachedFetch(CACHE_KEY, fetchDashboard, { ttl: CACHE_TTL });
+      setData(result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load dashboard");
     } finally {
@@ -51,8 +60,27 @@ export function useDashboard(options: UseDashboardOptions = {}) {
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await cachedFetch(CACHE_KEY, fetchDashboard, {
+          ttl: CACHE_TTL,
+          staleWhileRevalidate: true,
+        });
+        if (!cancelled) {
+          setData(result);
+          setError(null);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : "Failed to load dashboard");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (!refreshInterval) return;

@@ -6,6 +6,7 @@ import { FollowupReminderListener } from "@/components/followups/followup-remind
 import { AgentInactivityGuard } from "@/components/auth/agent-inactivity-guard";
 import { Sidebar } from "@/components/layouts/sidebar";
 import { TopNavbar } from "@/components/layouts/top-navbar";
+import { RoutePrefetcher } from "@/components/layouts/route-prefetcher";
 import { pageContainer, pageSection } from "@/lib/design-system/styles";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export const DashboardShell = memo(function DashboardShell({ children }: Dashboa
     <div className="flex min-h-[100dvh] bg-transparent">
       <FollowupReminderListener />
       <AgentInactivityGuard />
+      <RoutePrefetcher />
       <Sidebar />
       {mobileOpen && <MobileNav open={mobileOpen} onOpenChange={setMobileOpen} />}
 

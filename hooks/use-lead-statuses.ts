@@ -1,30 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { cachedFetch, invalidateCache } from "@/lib/cache/data-cache";
 import type { LeadStatusConfig } from "@/types/lead-status-config";
 
-let cached: LeadStatusConfig[] | null = null;
-let cacheTimestamp = 0;
-const CACHE_TTL_MS = 120_000; // 2 minutes
+const CACHE_KEY = "ref:lead-statuses";
+const CACHE_TTL = 180_000; // 3 minutes — statuses rarely change
+
+async function fetchStatuses(): Promise<LeadStatusConfig[]> {
+  const res = await fetch("/api/lead-statuses");
+  const data = await res.json();
+  return data.statuses ?? [];
+}
 
 export function useLeadStatuses() {
-  const [statuses, setStatuses] = useState<LeadStatusConfig[]>(cached ?? []);
-  const [isLoading, setIsLoading] = useState(!cached);
+  const [statuses, setStatuses] = useState<LeadStatusConfig[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (cached && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
-      setStatuses(cached);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
     try {
-      const res = await fetch("/api/lead-statuses");
-      const data = await res.json();
-      const list = data.statuses ?? [];
-      cached = list;
-      cacheTimestamp = Date.now();
-      setStatuses(list);
+      const result = await cachedFetch(CACHE_KEY, fetchStatuses, {
+        ttl: CACHE_TTL,
+        staleWhileRevalidate: true,
+      });
+      setStatuses(result);
     } catch {
       // keep current
     } finally {
@@ -33,22 +32,16 @@ export function useLeadStatuses() {
   }, []);
 
   useEffect(() => {
-    if (cached && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
-      setStatuses(cached);
-      setIsLoading(false);
-      return;
-    }
     void load();
   }, [load]);
 
   const invalidate = useCallback(() => {
-    cached = null;
-    cacheTimestamp = 0;
+    invalidateCache(CACHE_KEY);
   }, []);
 
   const refresh = useCallback(async () => {
-    cached = null;
-    cacheTimestamp = 0;
+    invalidateCache(CACHE_KEY);
+    setIsLoading(true);
     await load();
   }, [load]);
 
