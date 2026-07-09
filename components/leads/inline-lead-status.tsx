@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Loader2, Plus, Settings2, X } from "lucide-react";
 import { toast } from "sonner";
 import { ConvertLeadModal } from "@/components/leads/convert-lead-modal";
+import { FollowUpLeadModal } from "@/components/leads/followup-lead-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,6 +86,7 @@ export function InlineLeadStatus({
   const [isCreating, setIsCreating] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -104,6 +106,13 @@ export function InlineLeadStatus({
     if (statusValue === "converted") {
       setOpen(false);
       setConvertOpen(true);
+      return;
+    }
+
+    // Intercept "follow_up" — show follow-up scheduling modal
+    if (statusValue === "follow_up") {
+      setOpen(false);
+      setFollowUpOpen(true);
       return;
     }
 
@@ -322,6 +331,14 @@ export function InlineLeadStatus({
       lead={lead}
       isAdmin={isAdmin}
       onConverted={onStatusChange}
+    />
+
+    <FollowUpLeadModal
+      open={followUpOpen}
+      onOpenChange={setFollowUpOpen}
+      lead={lead}
+      isAdmin={isAdmin}
+      onFollowUpCreated={onStatusChange}
     />
     </>
   );
