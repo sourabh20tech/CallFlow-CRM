@@ -6,7 +6,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type UserRole = "admin" | "agent";
-export type LeadForce = "standard" | "premium" | "enterprise";
+export type LeadForce = "standard" | "premium";
 /** @deprecated Use LeadForce instead */
 export type LeadTier = LeadForce;
 export type LeadStatus =

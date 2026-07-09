@@ -19,7 +19,7 @@ interface ManageSourcesModalProps {
   onSourcesChanged: () => void;
 }
 
-const SYSTEM_VALUES = ["standard", "premium", "enterprise"];
+const SYSTEM_VALUES = ["standard", "premium"];
 
 export function ManageSourcesModal({
   open,

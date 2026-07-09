@@ -5,7 +5,6 @@ import { requireAdminApi } from "@/lib/api/require-admin";
 const DEFAULT_SOURCES = [
   { id: "src-1", label: "Standard", value: "standard", isSystem: true },
   { id: "src-2", label: "Premium", value: "premium", isSystem: true },
-  { id: "src-3", label: "Enterprise", value: "enterprise", isSystem: true },
 ];
 
 async function getDbClient() {

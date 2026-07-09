@@ -144,7 +144,7 @@ export type UpdateFollowupFormValues = z.infer<typeof updateFollowupSchema>;
 
 export const leadStatusSchema = z.string().min(1, "Status is required");
 
-export const leadForceSchema = z.enum(["standard", "premium", "enterprise"]);
+export const leadForceSchema = z.enum(["standard", "premium"]);
 
 /** @deprecated Use leadForceSchema instead */
 export const leadTierSchema = leadForceSchema;

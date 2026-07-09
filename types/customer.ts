@@ -4,7 +4,7 @@ export interface Customer {
   email: string;
   phone: string;
   company?: string;
-  force: "standard" | "premium" | "enterprise";
+  force: "standard" | "premium";
   lastContactAt: string;
   totalCalls: number;
 }

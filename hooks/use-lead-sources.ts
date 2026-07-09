@@ -13,7 +13,6 @@ export interface LeadSource {
 const FALLBACK: LeadSource[] = [
   { id: "src-1", label: "Standard", value: "standard", isSystem: true },
   { id: "src-2", label: "Premium", value: "premium", isSystem: true },
-  { id: "src-3", label: "Enterprise", value: "enterprise", isSystem: true },
 ];
 
 const CACHE_KEY = "ref:lead-sources";
