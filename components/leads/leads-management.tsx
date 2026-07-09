@@ -383,11 +383,12 @@ export function LeadsManagement({
             onDelete={requestDelete}
             onAssign={(id, agentId) => void handleAssign(id, agentId)}
             onStatusChange={(updatedLead) => {
-              setLeads((prev) =>
-                prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)),
-              );
+              // Move updated lead to bottom of list (enterprise behavior)
+              setLeads((prev) => {
+                const without = prev.filter((l) => l.id !== updatedLead.id);
+                return [...without, updatedLead];
+              });
               if (detailLead?.id === updatedLead.id) setDetailLead(updatedLead);
-              void loadLeads(true);
             }}
             assigningId={assigningId}
             selectedIds={selectedLeadIds}

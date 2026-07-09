@@ -50,13 +50,13 @@ export function MyLeadsSection({
   };
 
   const handleLeadUpdated = (updated: Lead) => {
-    const next = leads.map((l) =>
-      l.id === updated.id ? { ...updated, noteCount: l.noteCount } : l,
-    );
+    // Move updated lead to bottom of list after status change
+    const without = leads.filter((l) => l.id !== updated.id);
+    const updatedWithCount = { ...updated, noteCount: leads.find((l) => l.id === updated.id)?.noteCount ?? 0 };
     const filtered =
       updated.status === "converted"
-        ? next.filter((l) => l.id !== updated.id)
-        : next;
+        ? without
+        : [...without, updatedWithCount];
     onLeadsChange(filtered);
     setSelected((prev) =>
       prev?.id === updated.id ? { ...updated, noteCount: prev.noteCount } : prev,
