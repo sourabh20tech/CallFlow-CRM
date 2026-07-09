@@ -85,16 +85,15 @@ export function LoginForm() {
   };
 
   return (
-    <GlassCard variant="strong" padding="lg" className="ds-animate-scale w-full border-white/[0.08] bg-white/[0.03] p-5 backdrop-blur-xl sm:p-7">
-      <div className="mb-7 text-center sm:mb-8">
-        <p className="ds-overline mb-2 text-zinc-500">Secure sign in</p>
-        <h1 className="ds-h2 text-white">Welcome back</h1>
-        <p className="ds-body mt-2 text-zinc-400">
-          Secure access for your CRM operations team
+    <GlassCard variant="strong" padding="lg" className="ds-animate-scale w-full rounded-[20px] border-white/[0.06] bg-white/[0.025] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:p-6">
+      <div className="mb-5 text-center sm:mb-6">
+        <h1 className="text-lg font-semibold text-white sm:text-xl">Welcome back</h1>
+        <p className="mt-1 text-xs text-zinc-400 sm:text-sm">
+          Secure access for your CRM team
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <FormField label="Portal" error={errors.role?.message} required>
           <Controller
             name="role"
@@ -155,7 +154,7 @@ export function LoginForm() {
       </form>
 
       {isMaintenanceMode && (
-        <p className="ds-caption mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-center text-amber-800 dark:text-amber-300">
+        <p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 text-center text-[11px] text-amber-400">
           CRM is in maintenance mode.{" "}
           <Link href={MAINTENANCE_PATH} className="font-medium underline">
             Learn more
