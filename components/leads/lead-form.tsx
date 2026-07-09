@@ -9,8 +9,10 @@ import { FormField } from "@/components/design-system/form-field";
 import { FormInput } from "@/components/design-system/form-input";
 import { AssignAgentSelect } from "@/components/leads/assign-agent-select";
 import { ManageSourcesModal } from "@/components/leads/manage-sources-modal";
-import { LEAD_STATUS_OPTIONS, LEAD_FORCE_OPTIONS } from "@/lib/leads/constants";
+import { ManageStatusesModal } from "@/components/leads/manage-statuses-modal";
+import { LEAD_STATUS_OPTIONS } from "@/lib/leads/constants";
 import { useLeadSources } from "@/hooks/use-lead-sources";
+import { useLeadStatuses } from "@/hooks/use-lead-statuses";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { leadFormSchema, type LeadFormValues } from "@/utils/validators";
@@ -150,13 +152,7 @@ export function LeadForm({
           <SourceSelect register={register} />
         </FormField>
         <FormField label="Status" htmlFor="status">
-          <select id="status" className={selectClassName} {...register("status")}>
-            {LEAD_STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          <StatusSelect register={register} />
         </FormField>
       </div>
 
@@ -280,6 +276,123 @@ function SourceSelect({ register }: { register: any }) {
           onOpenChange={setManageOpen}
           sources={sources}
           onSourcesChanged={() => void refresh()}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Status dropdown with "+ Add New Status" and "Manage Statuses" for admin */
+function StatusSelect({ register }: { register: any }) {
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
+  const { statuses, refresh } = useLeadStatuses();
+  const [manageOpen, setManageOpen] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  // Merge custom statuses with fallback system statuses
+  const options = statuses.length > 0
+    ? statuses.map((s) => ({ value: s.value, label: s.label }))
+    : LEAD_STATUS_OPTIONS;
+
+  const handleCreate = async () => {
+    if (!newLabel.trim() || creating) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/lead-statuses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: newLabel.trim(), color: "#8b5cf6" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      toast.success(`Status "${newLabel.trim()}" created`);
+      setNewLabel("");
+      setShowCreate(false);
+      void refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Create failed");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div>
+      <select id="status" className={selectClassName} {...register("status")}>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      {isAdmin && (
+        <div className="mt-1.5 flex items-center gap-3">
+          {!showCreate && (
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
+              <Plus className="h-3 w-3" />
+              Add New Status
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setManageOpen(true)}
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            <Settings2 className="h-3 w-3" />
+            Manage Statuses
+          </button>
+        </div>
+      )}
+      {isAdmin && showCreate && (
+        <div className="mt-2 flex items-center gap-1.5">
+          <input
+            type="text"
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="Status name..."
+            maxLength={30}
+            className="h-7 flex-1 rounded border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); void handleCreate(); }
+              if (e.key === "Escape") { setShowCreate(false); setNewLabel(""); }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => void handleCreate()}
+            disabled={!newLabel.trim() || creating}
+            className="h-7 rounded bg-primary px-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {creating ? "..." : "Save"}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowCreate(false); setNewLabel(""); }}
+            className="h-7 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      {isAdmin && (
+        <ManageStatusesModal
+          open={manageOpen}
+          onOpenChange={setManageOpen}
+          statuses={statuses.map((s, i) => ({
+            id: s.id,
+            label: s.label,
+            value: s.value,
+            color: s.color ?? "#8b5cf6",
+            sortOrder: i,
+            isSystem: s.isSystem ?? false,
+            createdAt: "",
+          }))}
+          onStatusesChanged={() => void refresh()}
         />
       )}
     </div>
