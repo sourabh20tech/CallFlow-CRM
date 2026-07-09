@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       {/* ═══════════════ MOBILE & TABLET (< 1024px) ═══════════════ */}
-      <div className="flex min-h-[100dvh] flex-col items-center justify-start bg-[#09090f] px-4 py-6 lg:hidden">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-start overflow-y-auto bg-[#09090f] px-4 py-6 lg:hidden" style={{ WebkitOverflowScrolling: "touch" }}>
         {/* Bulb */}
         <div className="mb-3 flex flex-col items-center" aria-hidden>
           <div className="h-3 w-[1.5px] bg-zinc-700" />

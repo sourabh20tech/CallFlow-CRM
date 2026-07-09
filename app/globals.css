@@ -982,8 +982,8 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Prevent pull-to-refresh on mobile within the app */
-body {
+/* Prevent pull-to-refresh on mobile within the app (not on auth pages) */
+.ds-sidebar ~ main {
   overscroll-behavior-y: contain;
 }
 
