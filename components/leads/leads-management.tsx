@@ -309,7 +309,7 @@ export function LeadsManagement({
           <div className="flex flex-wrap items-center gap-2">
             <div className="hidden items-center gap-2 rounded-xl border border-[hsl(var(--ds-glass-border))] bg-[hsl(var(--ds-glass-bg))] px-3 py-2 text-sm text-muted-foreground sm:flex">
               <UserPlus className="h-4 w-4 text-primary" />
-              {total} leads
+              {total} {isAdmin ? "leads" : "my leads"}
             </div>
             <Button
               variant="outline"

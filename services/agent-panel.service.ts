@@ -73,17 +73,19 @@ export class AgentPanelService {
     );
     const agentName = agent?.name ?? user.fullName ?? "Agent";
 
-    const myLeads = await safe(
+    const myLeadsResult = await safe(
       "assigned leads",
       async () => {
-        const result = await leadsDbServiceServer.list(
+        return leadsDbServiceServer.list(
           { assignedAgentId: agentId },
           { page: 1, pageSize: 100 },
         );
-        return result.data;
       },
-      [] as Lead[],
+      { data: [] as Lead[], total: 0, page: 1, pageSize: 100, totalPages: 1 },
     );
+
+    const myLeads = myLeadsResult.data;
+    const totalAssignedLeads = myLeadsResult.total; // true DB count for stat card
 
     const myLeadsWithNotes = await withNoteCounts(myLeads);
     const convertedLeads = myLeadsWithNotes.filter((l) => l.status === "converted");
@@ -111,7 +113,7 @@ export class AgentPanelService {
     );
 
     const stats: AgentPanelStats = {
-      assignedLeads: activeLeads.length,
+      assignedLeads: totalAssignedLeads,
       callsToday: todayCalls.length,
       pendingFollowups: pendingFollowups.length,
       convertedLeads: convertedLeads.length,

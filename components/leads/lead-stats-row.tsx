@@ -22,7 +22,7 @@ export const LeadStatsRow = memo(function LeadStatsRow({
 }: LeadStatsRowProps) {
   return (
     <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${isAdmin ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
-      <StatMini icon={Users} label="Total Leads" value={total} />
+      <StatMini icon={Users} label={isAdmin ? "Total Leads" : "My Leads"} value={total} />
       <StatMini icon={Plus} label="New" value={newLeads} color="text-blue-500" />
       <StatMini icon={CalendarClock} label="Follow-Up Due" value={followUpDue} color="text-amber-500" />
       <StatMini icon={CheckCircle2} label="Converted" value={converted} color="text-emerald-500" />
