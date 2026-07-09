@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { CalendarClock, User } from "lucide-react";
 import {
   Table,
@@ -21,10 +21,9 @@ import { formatRelativeTime } from "@/utils/format";
 import type { Lead, LeadRosterAgent } from "@/types/lead";
 import { cn } from "@/lib/utils";
 
-const forceVariant = {
-  standard: "neutral" as const,
-  premium: "default" as const,
-  enterprise: "info" as const,
+const forceVariant: Record<string, "neutral" | "default" | "info"> = {
+  standard: "neutral",
+  premium: "default",
 };
 
 interface LeadTableProps {
@@ -87,100 +86,21 @@ export const LeadTable = memo(function LeadTable({
           </TableHeader>
           <TableBody>
             {leads.map((lead) => (
-              <TableRow
+              <LeadTableRow
                 key={lead.id}
-                className="cursor-pointer transition-colors hover:bg-muted/40"
-                onClick={() => onSelect(lead)}
-              >
-                {hasSelection && (
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds!.has(lead.id)}
-                      onChange={() => onToggleSelect!(lead.id)}
-                      className="h-4 w-4 rounded border-border"
-                      aria-label={`Select ${lead.fullName}`}
-                    />
-                  </TableCell>
-                )}
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{lead.fullName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {lead.email || lead.phone}
-                    </p>
-                    {lead.phone && (isAdmin || Boolean(lead.assignedAgentId)) && (
-                      <div className="mt-1.5 flex gap-1.5">
-                        <WhatsAppChatButton
-                          phone={lead.phone}
-                          message={WHATSAPP_TEMPLATES.greeting}
-                          label={`WhatsApp ${lead.fullName}`}
-                        />
-                        <DirectCallButton
-                          phone={lead.phone}
-                          label={`Call ${lead.fullName}`}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <InlineLeadStatus
-                    lead={lead}
-                    isAdmin={isAdmin}
-                    onStatusChange={onStatusChange}
-                  />
-                </TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  <StatusChip
-                    label={lead.force}
-                    variant={forceVariant[lead.force]}
-                    size="sm"
-                    showDot={false}
-                  />
-                </TableCell>
-                <TableCell className="hidden xl:table-cell" onClick={(e) => e.stopPropagation()}>
-                  {isAdmin ? (
-                    <AssignAgentSelect
-                      agents={agents}
-                      value={lead.assignedAgentId ?? ""}
-                      onChange={(id) => onAssign(lead.id, id)}
-                      disabled={assigningId === lead.id}
-                      className="max-w-[160px]"
-                    />
-                  ) : (
-                    <span className="text-sm text-muted-foreground">
-                      {lead.assignedAgentName ?? "—"}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
-                  {lead.nextFollowUpAt ? (
-                    <span className={`inline-flex items-center gap-1 ${new Date(lead.nextFollowUpAt) < new Date() ? "text-red-500 font-medium" : ""}`}>
-                      <CalendarClock className="h-3.5 w-3.5" />
-                      {new Date(lead.nextFollowUpAt) < new Date() ? "🔴 " : ""}
-                      {formatRelativeTime(lead.nextFollowUpAt)}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground/50 text-xs">No Follow-Up</span>
-                  )}
-                </TableCell>
-                <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
-                  {formatRelativeTime(lead.updatedAt)}
-                </TableCell>
-                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                  <LeadRowActions
-                    lead={lead}
-                    agents={agents}
-                    isAdmin={isAdmin}
-                    onView={onSelect}
-                    onEdit={isAdmin ? onEdit : undefined}
-                    onDelete={isAdmin ? onDelete : undefined}
-                    onAssign={isAdmin ? onAssign : undefined}
-                    assigning={assigningId === lead.id}
-                  />
-                </TableCell>
-              </TableRow>
+                lead={lead}
+                agents={agents}
+                isAdmin={isAdmin}
+                selected={selectedIds?.has(lead.id) ?? false}
+                hasSelection={hasSelection}
+                assigning={assigningId === lead.id}
+                onSelect={onSelect}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onAssign={onAssign}
+                onStatusChange={onStatusChange}
+                onToggleSelect={onToggleSelect}
+              />
             ))}
           </TableBody>
         </Table>
@@ -188,90 +108,273 @@ export const LeadTable = memo(function LeadTable({
 
       <ul className="space-y-3 md:hidden">
         {leads.map((lead) => (
-          <li key={lead.id}>
-            <div
-              className={cn(
-                "rounded-xl border border-[hsl(var(--ds-glass-border))]",
-                "bg-[hsl(var(--ds-glass-bg))] p-4",
-              )}
-            >
-              <div className="flex items-start gap-2">
-                <button
-                  type="button"
-                  onClick={() => onSelect(lead)}
-                  className="min-w-0 flex-1 text-left transition-colors active:scale-[0.99]"
-                >
-                  <div>
-                    <p className="font-medium">{lead.fullName}</p>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    {lead.assignedAgentName && (
-                      <span className="inline-flex items-center gap-1">
-                        <User className="h-3.5 w-3.5" />
-                        {lead.assignedAgentName}
-                      </span>
-                    )}
-                    {lead.nextFollowUpAt && (
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarClock className="h-3.5 w-3.5" />
-                        {formatRelativeTime(lead.nextFollowUpAt)}
-                      </span>
-                    )}
-                  </div>
-                  {lead.phone && (isAdmin || Boolean(lead.assignedAgentId)) && (
-                    <div className="mt-2 flex gap-1.5">
-                      <WhatsAppChatButton
-                        phone={lead.phone}
-                        message={WHATSAPP_TEMPLATES.greeting}
-                        label={`WhatsApp ${lead.fullName}`}
-                      />
-                      <DirectCallButton
-                        phone={lead.phone}
-                        label={`Call ${lead.fullName}`}
-                      />
-                    </div>
-                  )}
-                </button>
-                <LeadRowActions
-                  variant="card"
-                  lead={lead}
-                  agents={agents}
-                  isAdmin={isAdmin}
-                  onView={onSelect}
-                  onEdit={isAdmin ? onEdit : undefined}
-                  onDelete={isAdmin ? onDelete : undefined}
-                  onAssign={isAdmin ? onAssign : undefined}
-                  assigning={assigningId === lead.id}
-                />
-              </div>
-              <div
-                className="mt-3 border-t border-border/40 pt-3"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <InlineLeadStatus
-                  lead={lead}
-                  isAdmin={isAdmin}
-                  onStatusChange={onStatusChange}
-                />
-              </div>
-              {isAdmin && (
-                <div
-                  className="mt-3 border-t border-border/40 pt-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <AssignAgentSelect
-                    agents={agents}
-                    value={lead.assignedAgentId ?? ""}
-                    onChange={(id) => onAssign(lead.id, id)}
-                    disabled={assigningId === lead.id}
-                    className="w-full"
-                  />
-                </div>
-              )}
-            </div>
-          </li>
+          <LeadMobileCard
+            key={lead.id}
+            lead={lead}
+            agents={agents}
+            isAdmin={isAdmin}
+            assigning={assigningId === lead.id}
+            onSelect={onSelect}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onAssign={onAssign}
+            onStatusChange={onStatusChange}
+          />
         ))}
       </ul>
     </>
+  );
+});
+
+// ─── Memoized Row Component (prevents re-render on sibling selection) ─────────
+
+interface LeadTableRowProps {
+  lead: Lead;
+  agents: LeadRosterAgent[];
+  isAdmin: boolean;
+  selected: boolean;
+  hasSelection: boolean;
+  assigning: boolean;
+  onSelect: (lead: Lead, focus?: LeadDetailFocus) => void;
+  onEdit: (lead: Lead) => void;
+  onDelete: (lead: Lead) => void;
+  onAssign: (leadId: string, agentId: string) => void;
+  onStatusChange: (updatedLead: Lead) => void;
+  onToggleSelect?: (leadId: string) => void;
+}
+
+const LeadTableRow = memo(function LeadTableRow({
+  lead,
+  agents,
+  isAdmin,
+  selected,
+  hasSelection,
+  assigning,
+  onSelect,
+  onEdit,
+  onDelete,
+  onAssign,
+  onStatusChange,
+  onToggleSelect,
+}: LeadTableRowProps) {
+  const handleToggle = useCallback(() => {
+    onToggleSelect?.(lead.id);
+  }, [onToggleSelect, lead.id]);
+
+  const handleClick = useCallback(() => {
+    onSelect(lead);
+  }, [onSelect, lead]);
+
+  const handleAssign = useCallback((agentId: string) => {
+    onAssign(lead.id, agentId);
+  }, [onAssign, lead.id]);
+
+  const isOverdue = lead.nextFollowUpAt && new Date(lead.nextFollowUpAt) < new Date();
+
+  return (
+    <TableRow
+      className="cursor-pointer transition-colors hover:bg-muted/40"
+      onClick={handleClick}
+    >
+      {hasSelection && (
+        <TableCell onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={handleToggle}
+            className="h-4 w-4 rounded border-border"
+            aria-label={`Select ${lead.fullName}`}
+          />
+        </TableCell>
+      )}
+      <TableCell>
+        <div>
+          <p className="font-medium">{lead.fullName}</p>
+          <p className="text-xs text-muted-foreground">
+            {lead.email || lead.phone}
+          </p>
+          {lead.phone && (isAdmin || Boolean(lead.assignedAgentId)) && (
+            <div className="mt-1.5 flex gap-1.5">
+              <WhatsAppChatButton
+                phone={lead.phone}
+                message={WHATSAPP_TEMPLATES.greeting}
+                label={`WhatsApp ${lead.fullName}`}
+              />
+              <DirectCallButton
+                phone={lead.phone}
+                label={`Call ${lead.fullName}`}
+              />
+            </div>
+          )}
+        </div>
+      </TableCell>
+      <TableCell onClick={(e) => e.stopPropagation()}>
+        <InlineLeadStatus
+          lead={lead}
+          isAdmin={isAdmin}
+          onStatusChange={onStatusChange}
+        />
+      </TableCell>
+      <TableCell className="hidden lg:table-cell">
+        <StatusChip
+          label={lead.force}
+          variant={forceVariant[lead.force] ?? "neutral"}
+          size="sm"
+          showDot={false}
+        />
+      </TableCell>
+      <TableCell className="hidden xl:table-cell" onClick={(e) => e.stopPropagation()}>
+        {isAdmin ? (
+          <AssignAgentSelect
+            agents={agents}
+            value={lead.assignedAgentId ?? ""}
+            onChange={handleAssign}
+            disabled={assigning}
+            className="max-w-[160px]"
+          />
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            {lead.assignedAgentName ?? "—"}
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
+        {lead.nextFollowUpAt ? (
+          <span className={`inline-flex items-center gap-1 ${isOverdue ? "text-red-500 font-medium" : ""}`}>
+            <CalendarClock className="h-3.5 w-3.5" />
+            {isOverdue ? "🔴 " : ""}
+            {formatRelativeTime(lead.nextFollowUpAt)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground/50 text-xs">No Follow-Up</span>
+        )}
+      </TableCell>
+      <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
+        {formatRelativeTime(lead.updatedAt)}
+      </TableCell>
+      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+        <LeadRowActions
+          lead={lead}
+          agents={agents}
+          isAdmin={isAdmin}
+          onView={onSelect}
+          onEdit={isAdmin ? onEdit : undefined}
+          onDelete={isAdmin ? onDelete : undefined}
+          onAssign={isAdmin ? onAssign : undefined}
+          assigning={assigning}
+        />
+      </TableCell>
+    </TableRow>
+  );
+});
+
+// ─── Memoized Mobile Card ─────────────────────────────────────────────────────
+
+interface LeadMobileCardProps {
+  lead: Lead;
+  agents: LeadRosterAgent[];
+  isAdmin: boolean;
+  assigning: boolean;
+  onSelect: (lead: Lead, focus?: LeadDetailFocus) => void;
+  onEdit: (lead: Lead) => void;
+  onDelete: (lead: Lead) => void;
+  onAssign: (leadId: string, agentId: string) => void;
+  onStatusChange: (updatedLead: Lead) => void;
+}
+
+const LeadMobileCard = memo(function LeadMobileCard({
+  lead,
+  agents,
+  isAdmin,
+  assigning,
+  onSelect,
+  onEdit,
+  onDelete,
+  onAssign,
+  onStatusChange,
+}: LeadMobileCardProps) {
+  return (
+    <li>
+      <div
+        className={cn(
+          "rounded-xl border border-[hsl(var(--ds-glass-border))]",
+          "bg-[hsl(var(--ds-glass-bg))] p-4",
+        )}
+      >
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => onSelect(lead)}
+            className="min-w-0 flex-1 text-left transition-colors active:scale-[0.99]"
+          >
+            <div>
+              <p className="font-medium">{lead.fullName}</p>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+              {lead.assignedAgentName && (
+                <span className="inline-flex items-center gap-1">
+                  <User className="h-3.5 w-3.5" />
+                  {lead.assignedAgentName}
+                </span>
+              )}
+              {lead.nextFollowUpAt && (
+                <span className="inline-flex items-center gap-1">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  {formatRelativeTime(lead.nextFollowUpAt)}
+                </span>
+              )}
+            </div>
+            {lead.phone && (isAdmin || Boolean(lead.assignedAgentId)) && (
+              <div className="mt-2 flex gap-1.5">
+                <WhatsAppChatButton
+                  phone={lead.phone}
+                  message={WHATSAPP_TEMPLATES.greeting}
+                  label={`WhatsApp ${lead.fullName}`}
+                />
+                <DirectCallButton
+                  phone={lead.phone}
+                  label={`Call ${lead.fullName}`}
+                />
+              </div>
+            )}
+          </button>
+          <LeadRowActions
+            variant="card"
+            lead={lead}
+            agents={agents}
+            isAdmin={isAdmin}
+            onView={onSelect}
+            onEdit={isAdmin ? onEdit : undefined}
+            onDelete={isAdmin ? onDelete : undefined}
+            onAssign={isAdmin ? onAssign : undefined}
+            assigning={assigning}
+          />
+        </div>
+        <div
+          className="mt-3 border-t border-border/40 pt-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <InlineLeadStatus
+            lead={lead}
+            isAdmin={isAdmin}
+            onStatusChange={onStatusChange}
+          />
+        </div>
+        {isAdmin && (
+          <div
+            className="mt-3 border-t border-border/40 pt-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <AssignAgentSelect
+              agents={agents}
+              value={lead.assignedAgentId ?? ""}
+              onChange={(id) => onAssign(lead.id, id)}
+              disabled={assigning}
+              className="w-full"
+            />
+          </div>
+        )}
+      </div>
+    </li>
   );
 });
