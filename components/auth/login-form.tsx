@@ -85,15 +85,15 @@ export function LoginForm() {
   };
 
   return (
-    <GlassCard variant="strong" padding="lg" className="ds-animate-scale w-full rounded-[20px] border-white/[0.06] bg-white/[0.025] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:p-6">
-      <div className="mb-5 text-center sm:mb-6">
-        <h1 className="text-lg font-semibold text-white sm:text-xl">Welcome back</h1>
-        <p className="mt-1 text-xs text-zinc-400 sm:text-sm">
+    <GlassCard variant="strong" padding="lg" className="ds-animate-scale w-full rounded-[20px] border-white/[0.06] bg-white/[0.025] p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:p-5">
+      <div className="mb-4 text-center sm:mb-5">
+        <h1 className="text-base font-semibold text-white sm:text-lg">Welcome back</h1>
+        <p className="mt-0.5 text-[11px] text-zinc-400 sm:text-xs">
           Secure access for your CRM team
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4" noValidate>
         <FormField label="Portal" error={errors.role?.message} required>
           <Controller
             name="role"
