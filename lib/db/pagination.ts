@@ -11,9 +11,9 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-export const DEFAULT_PAGE_SIZE = 2000;
-export const MAX_PAGE_SIZE = 2000;
-export const PAGE_SIZE_OPTIONS = [200, 500, 1000, 2000] as const;
+export const DEFAULT_PAGE_SIZE = 25;
+export const MAX_PAGE_SIZE = 100;
+export const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
 export function normalizePagination(params?: PaginationParams) {
   const page = Math.max(1, params?.page ?? 1);

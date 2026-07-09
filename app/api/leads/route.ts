@@ -120,8 +120,13 @@ async function resolveAgentId(profileId: string): Promise<string | undefined> {
   if (!isSupabaseConfigured()) {
     return "agent-1";
   }
-  const { agentsDbServiceServer } = await import("@/services/db/agents.service");
-  const agents = await agentsDbServiceServer.list(true);
-  const match = agents.find((a) => a.profileId === profileId);
-  return match?.id;
+  // Direct query instead of loading ALL agents
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("agents")
+    .select("id")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  return data?.id ?? undefined;
 }
