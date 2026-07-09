@@ -117,7 +117,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     // System sources cannot be deleted
     if (source.is_system) {
       return NextResponse.json(
-        { error: "System sources (Standard, Premium, Enterprise) cannot be deleted" },
+        { error: "System sources cannot be deleted" },
         { status: 403 },
       );
     }

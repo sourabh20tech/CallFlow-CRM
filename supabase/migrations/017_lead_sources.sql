@@ -30,8 +30,7 @@ CREATE POLICY "Admins can delete sources" ON public.lead_sources
 -- Seed defaults
 INSERT INTO public.lead_sources (label, value, sort_order, is_system) VALUES
   ('Standard', 'standard', 1, true),
-  ('Premium', 'premium', 2, true),
-  ('Enterprise', 'enterprise', 3, true)
+  ('Premium', 'premium', 2, true)
 ON CONFLICT (value) DO NOTHING;
 
 NOTIFY pgrst, 'reload schema';
