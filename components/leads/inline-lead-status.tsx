@@ -90,6 +90,10 @@ export function InlineLeadStatus({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (cachedStatuses) {
+      setStatuses(cachedStatuses);
+      return;
+    }
     void fetchStatuses().then(setStatuses);
   }, []);
 

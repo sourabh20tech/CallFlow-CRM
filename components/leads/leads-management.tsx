@@ -147,9 +147,17 @@ export function LeadsManagement({
     }
   }, [queryFilters, page, pageSize]);
 
+  // Skip initial fetch if SSR data exists — only fetch on filter/page changes
+  const skipInitialFetch = useMemo(() => hasServerData, []);
+  const mountedRef = useMemo(() => ({ current: false }), []);
+
   useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      if (skipInitialFetch) return; // SSR data present — skip duplicate fetch
+    }
     void loadLeads();
-  }, [loadLeads]);
+  }, [loadLeads]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasActiveFilters = Boolean(
     debouncedSearch ||
@@ -158,14 +166,17 @@ export function LeadsManagement({
       (filters.assignedAgentId && filters.assignedAgentId !== "all"),
   );
 
-  // Compute lead stats from current data
-  const leadStats = useMemo(() => ({
-    total,
-    newLeads: leads.filter((l) => l.status === "new").length,
-    followUpDue: leads.filter((l) => l.nextFollowUpAt && new Date(l.nextFollowUpAt) <= new Date()).length,
-    converted: leads.filter((l) => l.status === "converted").length,
-    unassigned: leads.filter((l) => !l.assignedAgentId).length,
-  }), [leads, total]);
+  // Compute lead stats from current data (avoid new Date() per render)
+  const leadStats = useMemo(() => {
+    const now = Date.now();
+    return {
+      total,
+      newLeads: leads.filter((l) => l.status === "new").length,
+      followUpDue: leads.filter((l) => l.nextFollowUpAt && new Date(l.nextFollowUpAt).getTime() <= now).length,
+      converted: leads.filter((l) => l.status === "converted").length,
+      unassigned: leads.filter((l) => !l.assignedAgentId).length,
+    };
+  }, [leads, total]);
 
   // Selection handlers
   const toggleLeadSelection = useCallback((leadId: string) => {
