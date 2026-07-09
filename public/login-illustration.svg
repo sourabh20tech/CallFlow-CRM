@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500" fill="none">
+  <!-- Background glow -->
+  <ellipse cx="300" cy="250" rx="200" ry="180" fill="url(#glow)" opacity="0.3"/>
+  
+  <!-- Main monitor -->
+  <rect x="150" y="80" width="300" height="200" rx="12" fill="#1a1a2e" stroke="#8b5cf6" stroke-width="1.5" opacity="0.9"/>
+  <rect x="165" y="95" width="270" height="165" rx="6" fill="#0f0f1a"/>
+  
+  <!-- Dashboard lines on screen -->
+  <rect x="180" y="110" width="80" height="10" rx="3" fill="#8b5cf6" opacity="0.6"/>
+  <rect x="180" y="130" width="120" height="8" rx="3" fill="#4f46e5" opacity="0.3"/>
+  <rect x="180" y="150" width="60" height="30" rx="4" fill="#8b5cf6" opacity="0.15"/>
+  <rect x="250" y="150" width="60" height="30" rx="4" fill="#6366f1" opacity="0.15"/>
+  <rect x="320" y="150" width="60" height="30" rx="4" fill="#a78bfa" opacity="0.15"/>
+  <rect x="180" y="190" width="200" height="50" rx="4" fill="#1e1e36" stroke="#8b5cf6" stroke-width="0.5"/>
+  
+  <!-- Chart bars -->
+  <rect x="195" y="220" width="12" height="15" rx="2" fill="#8b5cf6" opacity="0.7"/>
+  <rect x="215" y="210" width="12" height="25" rx="2" fill="#a78bfa" opacity="0.7"/>
+  <rect x="235" y="215" width="12" height="20" rx="2" fill="#6366f1" opacity="0.7"/>
+  <rect x="255" y="205" width="12" height="30" rx="2" fill="#8b5cf6" opacity="0.8"/>
+  <rect x="275" y="212" width="12" height="23" rx="2" fill="#a78bfa" opacity="0.6"/>
+  <rect x="295" y="200" width="12" height="35" rx="2" fill="#8b5cf6" opacity="0.9"/>
+  <rect x="315" y="208" width="12" height="27" rx="2" fill="#6366f1" opacity="0.7"/>
+  
+  <!-- Monitor stand -->
+  <rect x="270" y="280" width="60" height="8" rx="2" fill="#2a2a40"/>
+  <rect x="285" y="288" width="30" height="25" rx="2" fill="#1a1a2e"/>
+  <ellipse cx="300" cy="315" rx="50" ry="8" fill="#1a1a2e"/>
+  
+  <!-- Phone headset -->
+  <path d="M420 180 C420 150 450 130 470 130 C490 130 520 150 520 180" stroke="#8b5cf6" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <rect x="415" y="175" width="14" height="30" rx="7" fill="#6366f1"/>
+  <rect x="511" y="175" width="14" height="30" rx="7" fill="#6366f1"/>
+  <circle cx="470" cy="130" r="3" fill="#a78bfa"/>
+  
+  <!-- Person silhouette -->
+  <circle cx="470" cy="250" r="25" fill="#2a2a40" stroke="#8b5cf6" stroke-width="1"/>
+  <ellipse cx="470" cy="320" rx="35" ry="40" fill="#1e1e36" stroke="#8b5cf6" stroke-width="0.5"/>
+  
+  <!-- Floating notification badges -->
+  <circle cx="130" cy="150" r="18" fill="#8b5cf6" opacity="0.2"/>
+  <text x="130" y="155" text-anchor="middle" fill="#a78bfa" font-size="12" font-family="system-ui">3</text>
+  
+  <circle cx="500" cy="100" r="15" fill="#10b981" opacity="0.2"/>
+  <path d="M495 100 L498 103 L505 96" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Connection lines -->
+  <line x1="130" y1="168" x2="165" y2="200" stroke="#8b5cf6" stroke-width="0.5" opacity="0.3"/>
+  <line x1="500" y1="115" x2="450" y2="150" stroke="#10b981" stroke-width="0.5" opacity="0.3"/>
+  
+  <!-- Bottom text area -->
+  <text x="300" y="380" text-anchor="middle" fill="#8b5cf6" font-size="16" font-weight="600" font-family="system-ui" opacity="0.8">CallFlow CRM</text>
+  <text x="300" y="405" text-anchor="middle" fill="#6b7280" font-size="11" font-family="system-ui">Enterprise Call Center Management</text>
+  
+  <!-- Decorative dots -->
+  <circle cx="100" cy="400" r="2" fill="#8b5cf6" opacity="0.3"/>
+  <circle cx="120" cy="420" r="1.5" fill="#6366f1" opacity="0.2"/>
+  <circle cx="500" cy="380" r="2" fill="#a78bfa" opacity="0.3"/>
+  <circle cx="520" cy="400" r="1.5" fill="#8b5cf6" opacity="0.2"/>
+  
+  <defs>
+    <radialGradient id="glow">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>
