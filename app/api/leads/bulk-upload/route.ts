@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireLeadsAdminApi } from "@/lib/api/require-leads-admin";
 import { logActivity } from "@/lib/activity/log-activity";
-import type { CreateLeadInput } from "@/types/lead";
 
 export interface BulkUploadRow {
   fullName: string;
@@ -26,45 +25,96 @@ interface RowError {
   name: string;
   error: string;
   field?: string;
+  originalPhone?: string;
+  normalizedPhone?: string;
 }
 
-// ─── Validation Helpers (unchanged logic) ────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENTERPRISE PHONE NORMALIZATION
+// Handles: 9876543210, +919876543210, 919876543210, 09876543210,
+//   p:+919876543210, P:9876543210, 91 9876543210, +91 9876543210,
+//   98765 43210, 98765-43210, (9876543210), +91-9876543210, +91 (9876543210)
+//   Excel scientific notation: 9.87654E+9
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Normalize phone to bare 10-digit Indian mobile number.
+ * Returns the 10 digits ONLY (no +91, no prefix).
+ * Returns null if cannot be normalized to valid 10 digits.
+ */
+function normalizePhoneToDigits(raw: string): string | null {
+  let phone = raw.toString().trim();
+
+  // Handle Excel scientific notation (e.g. 9.87654E+9)
+  if (/\d+\.?\d*[eE][+\-]?\d+/.test(phone)) {
+    const num = Number(phone);
+    if (!isNaN(num) && num > 0) phone = Math.round(num).toString();
+  }
+
+  // Strip p: or P: prefix
+  phone = phone.replace(/^[pP]\s*:\s*/, "");
+
+  // Remove ALL non-digit characters (spaces, hyphens, brackets, +, etc.)
+  const digits = phone.replace(/\D/g, "");
+
+  // Now extract the 10-digit mobile number
+  if (digits.length === 10) {
+    return digits;
+  }
+  // 11 digits starting with 0 (trunk prefix)
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return digits.slice(1);
+  }
+  // 12 digits starting with 91 (country code)
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits.slice(2);
+  }
+  // 13 digits starting with 091
+  if (digits.length === 13 && digits.startsWith("091")) {
+    return digits.slice(3);
+  }
+
+  // Fallback: if 7-15 digits, return as-is (international)
+  if (digits.length >= 7 && digits.length <= 15) {
+    return digits;
+  }
+
+  return null;
+}
+
+/**
+ * Validate that normalized digits represent a valid Indian mobile number.
+ */
+function isValidIndianMobile(digits: string): boolean {
+  if (digits.length !== 10) return false;
+  // Must start with 6, 7, 8, or 9
+  if (!/^[6-9]/.test(digits)) return false;
+  // Reject obvious fakes (all same digit, sequential)
+  if (/^(.)\1{9}$/.test(digits)) return false; // 1111111111, 0000000000
+  if (digits === "1234567890") return false;
+  return true;
+}
+
+/**
+ * Format to storage format: +91XXXXXXXXXX
+ */
+function formatToStorage(digits: string): string {
+  if (digits.length === 10) return "+91" + digits;
+  // International: store with + prefix
+  return "+" + digits;
+}
 
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function normalizePhone(phone: string): string {
-  let raw = phone.toString().trim();
-  if (/\d+\.?\d*[eE][+\-]?\d+/.test(raw)) {
-    const num = Number(raw);
-    if (!isNaN(num) && num > 0) raw = Math.round(num).toString();
-  }
-  const hasPlus = raw.startsWith("+");
-  const digits = raw.replace(/\D/g, "");
-  return hasPlus ? "+" + digits : digits;
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
 }
 
-function validatePhone(phone: string): boolean {
-  const normalized = normalizePhone(phone);
-  const digits = normalized.replace(/^\+/, "");
-  return /^\d{7,15}$/.test(digits);
-}
+// ═══════════════════════════════════════════════════════════════════════════════
 
-function formatIndianPhone(phone: string): string {
-  const normalized = normalizePhone(phone);
-  const digits = normalized.replace(/^\+/, "");
-  if (digits.length === 12 && digits.startsWith("91")) return "+" + digits;
-  if (digits.length === 10) return "+91" + digits;
-  if (normalized.startsWith("+")) return normalized;
-  return "+" + digits;
-}
-
-// ─── Bulk Insert Size ────────────────────────────────────────────────────────
-
-const DB_BATCH_SIZE = 200; // rows per INSERT statement
-
-// ─── Main Handler ────────────────────────────────────────────────────────────
+const DB_BATCH_SIZE = 200;
 
 export async function POST(request: Request) {
   const auth = await requireLeadsAdminApi();
@@ -104,14 +154,16 @@ export async function POST(request: Request) {
     ? selectedAgentIds.filter((id) => validAgentIds.size === 0 || validAgentIds.has(id))
     : [];
 
-  // ─── Phase 1: Validate all rows in memory (zero DB calls) ──────────────────
+  // ─── Phase 1: Validate & normalize all rows in memory ──────────────────────
 
   interface ValidatedLead {
     rowNum: number;
+    normalizedPhone: string | null; // bare 10 digits for dedup
+    normalizedEmail: string | null; // lowercase trimmed
     insert: {
       full_name: string;
       email: string | null;
-      phone: string | null;
+      phone: string | null; // +91XXXXXXXXXX storage format
       company: string | null;
       tier: string;
       status: string;
@@ -132,29 +184,49 @@ export async function POST(request: Request) {
     const rowNum = i + 1;
     const rowName = row.fullName?.trim() || `Row ${rowNum}`;
 
-    const hasEmail = Boolean(row.email?.trim());
-    const hasPhone = Boolean(row.phone?.trim());
+    const rawPhone = row.phone?.trim() ?? "";
+    const rawEmail = row.email?.trim() ?? "";
+    const hasPhone = rawPhone.length > 0;
+    const hasEmail = rawEmail.length > 0;
 
     if (!hasEmail && !hasPhone) {
       failCount++;
-      errors.push({ row: rowNum, name: rowName, error: "No phone number and no email — at least one is required", field: "email/phone" });
+      errors.push({ row: rowNum, name: rowName, error: "No phone and no email — at least one required", field: "email/phone" });
       continue;
     }
 
-    if (hasEmail && !validateEmail(row.email!.trim())) {
-      if (!hasPhone) {
-        failCount++;
-        errors.push({ row: rowNum, name: rowName, error: `Invalid email and no phone: ${row.email}`, field: "email" });
-        continue;
+    // Normalize phone
+    let phoneDigits: string | null = null;
+    let phoneValid = false;
+    if (hasPhone) {
+      phoneDigits = normalizePhoneToDigits(rawPhone);
+      if (phoneDigits && isValidIndianMobile(phoneDigits)) {
+        phoneValid = true;
+      } else if (phoneDigits && phoneDigits.length >= 7 && phoneDigits.length <= 15) {
+        // Accept international numbers too (non-Indian)
+        phoneValid = true;
+      } else {
+        phoneDigits = null;
       }
     }
 
-    if (hasPhone && !validatePhone(row.phone!.trim())) {
-      if (!hasEmail) {
-        failCount++;
-        errors.push({ row: rowNum, name: rowName, error: `Invalid phone and no email: ${row.phone}`, field: "phone" });
-        continue;
-      }
+    // Normalize email
+    let emailNorm: string | null = null;
+    let emailValid = false;
+    if (hasEmail) {
+      emailNorm = normalizeEmail(rawEmail);
+      emailValid = validateEmail(emailNorm);
+      if (!emailValid) emailNorm = null;
+    }
+
+    // Must have at least one valid contact
+    if (!phoneValid && !emailValid) {
+      failCount++;
+      const reason = hasPhone
+        ? `Invalid phone: ${rawPhone}`
+        : `Invalid email: ${rawEmail}`;
+      errors.push({ row: rowNum, name: rowName, error: reason, field: hasPhone ? "phone" : "email", originalPhone: rawPhone, normalizedPhone: phoneDigits ?? "" });
+      continue;
     }
 
     const leadName = row.fullName?.trim() || "Unknown Lead";
@@ -170,15 +242,17 @@ export async function POST(request: Request) {
       agentId = agentPool[i % agentPool.length];
     }
 
-    const finalEmail = (hasEmail && validateEmail(row.email!.trim())) ? row.email!.trim().toLowerCase() : null;
-    const finalPhone = (hasPhone && validatePhone(row.phone!.trim())) ? formatIndianPhone(row.phone!.trim()) : null;
+    // Storage format for phone: +91XXXXXXXXXX
+    const storagePhone = phoneValid && phoneDigits ? formatToStorage(phoneDigits) : null;
 
     validated.push({
       rowNum,
+      normalizedPhone: phoneDigits, // bare digits for dedup
+      normalizedEmail: emailNorm,
       insert: {
         full_name: leadName,
-        email: finalEmail,
-        phone: finalPhone,
+        email: emailNorm,
+        phone: storagePhone,
         company: row.company?.trim() || null,
         tier: force,
         status,
@@ -191,32 +265,103 @@ export async function POST(request: Request) {
     });
   }
 
-  // ─── Phase 2: Bulk duplicate detection (ONE query) ─────────────────────────
+  // ─── Phase 2: File-level duplicate detection (within uploaded file) ─────────
+
+  let duplicateCount = 0;
+  const filePhones = new Set<string>(); // normalized digits
+  const fileEmails = new Set<string>(); // lowercase
+  const dedupedInFile: ValidatedLead[] = [];
+
+  for (const item of validated) {
+    const phone = item.normalizedPhone;
+    const email = item.normalizedEmail;
+
+    // Check within-file duplicates (first occurrence wins)
+    if (phone && filePhones.has(phone)) {
+      duplicateCount++;
+      errors.push({
+        row: item.rowNum,
+        name: item.insert.full_name,
+        error: "Duplicate within uploaded file (same phone number)",
+        field: "duplicate",
+        originalPhone: phone,
+        normalizedPhone: phone,
+      });
+      continue;
+    }
+    if (email && fileEmails.has(email)) {
+      duplicateCount++;
+      errors.push({
+        row: item.rowNum,
+        name: item.insert.full_name,
+        error: "Duplicate within uploaded file (same email)",
+        field: "duplicate",
+      });
+      continue;
+    }
+
+    if (phone) filePhones.add(phone);
+    if (email) fileEmails.add(email);
+    dedupedInFile.push(item);
+  }
+
+  // ─── Phase 3: Database duplicate detection (bulk query) ────────────────────
 
   const { createAdminSupabaseClient, isAdminClientConfigured } = await import("@/lib/supabase/admin");
   const { createClient } = await import("@/lib/supabase/server");
-
-  // Use admin client to bypass RLS for bulk ops (auth already verified above)
   const supabase = isAdminClientConfigured() ? createAdminSupabaseClient() : await createClient();
 
-  // Collect all emails and phones to check
-  const emailsToCheck = validated
-    .map((v) => v.insert.email)
-    .filter((e): e is string => e !== null);
-  const phonesToCheck = validated
-    .map((v) => v.insert.phone)
-    .filter((p): p is string => p !== null);
-
-  // Fetch existing emails + phones in parallel (max 2 queries instead of N)
+  // Load existing phones from DB — we need to normalize them for comparison
+  // DB stores as +91XXXXXXXXXX, so extract last 10 digits for comparison
+  const existingPhoneDigits = new Set<string>();
   const existingEmails = new Set<string>();
-  const existingPhones = new Set<string>();
 
-  const dupCheckPromises: Promise<void>[] = [];
+  const phonesToCheck = [...filePhones]; // unique phones from file
+  const emailsToCheck = [...fileEmails]; // unique emails from file
+
+  const dupPromises: Promise<void>[] = [];
+
+  if (phonesToCheck.length > 0) {
+    dupPromises.push(
+      (async () => {
+        // Build all possible stored formats for these numbers
+        const storedFormats: string[] = [];
+        for (const digits of phonesToCheck) {
+          if (digits.length === 10) {
+            storedFormats.push("+91" + digits);
+            storedFormats.push("91" + digits);
+            storedFormats.push(digits);
+          } else {
+            storedFormats.push("+" + digits);
+            storedFormats.push(digits);
+          }
+        }
+
+        // Query in chunks of 500
+        for (let i = 0; i < storedFormats.length; i += 500) {
+          const chunk = storedFormats.slice(i, i + 500);
+          const { data } = await (supabase as any)
+            .from("leads")
+            .select("phone")
+            .is("deleted_at", null)
+            .in("phone", chunk);
+          if (data) {
+            for (const row of data) {
+              if (row.phone) {
+                // Normalize DB phone to bare digits for comparison
+                const dbDigits = normalizePhoneToDigits(row.phone);
+                if (dbDigits) existingPhoneDigits.add(dbDigits);
+              }
+            }
+          }
+        }
+      })(),
+    );
+  }
 
   if (emailsToCheck.length > 0) {
-    dupCheckPromises.push(
+    dupPromises.push(
       (async () => {
-        // Supabase `in` supports up to ~1000 values; chunk if needed
         for (let i = 0; i < emailsToCheck.length; i += 500) {
           const chunk = emailsToCheck.slice(i, i + 500);
           const { data } = await (supabase as any)
@@ -234,67 +379,39 @@ export async function POST(request: Request) {
     );
   }
 
-  if (phonesToCheck.length > 0) {
-    dupCheckPromises.push(
-      (async () => {
-        for (let i = 0; i < phonesToCheck.length; i += 500) {
-          const chunk = phonesToCheck.slice(i, i + 500);
-          const { data } = await (supabase as any)
-            .from("leads")
-            .select("phone")
-            .is("deleted_at", null)
-            .in("phone", chunk);
-          if (data) {
-            for (const row of data) {
-              if (row.phone) existingPhones.add(row.phone);
-            }
-          }
-        }
-      })(),
-    );
-  }
+  await Promise.all(dupPromises);
 
-  await Promise.all(dupCheckPromises);
+  // ─── Phase 4: Filter DB duplicates ─────────────────────────────────────────
 
-  // ─── Phase 3: Filter duplicates in-memory ──────────────────────────────────
+  const toInsert: typeof dedupedInFile = [];
 
-  let duplicateCount = 0;
-  const toInsert: ValidatedLead[] = [];
-  // Track within-batch duplicates too
-  const batchEmails = new Set<string>();
-  const batchPhones = new Set<string>();
+  for (const item of dedupedInFile) {
+    const phone = item.normalizedPhone;
+    const email = item.normalizedEmail;
 
-  for (const item of validated) {
-    const email = item.insert.email;
-    const phone = item.insert.phone;
+    const phoneDup = phone && existingPhoneDigits.has(phone);
+    const emailDup = email && existingEmails.has(email);
 
-    // Check against existing DB records
-    const emailDup = email && existingEmails.has(email.toLowerCase());
-    const phoneDup = phone && existingPhones.has(phone);
-
-    // Check against other rows in this batch (prevent intra-batch duplicates)
-    const batchEmailDup = email && batchEmails.has(email.toLowerCase());
-    const batchPhoneDup = phone && batchPhones.has(phone);
-
-    if (emailDup || phoneDup || batchEmailDup || batchPhoneDup) {
+    if (phoneDup && emailDup) {
       duplicateCount++;
-      const rowName = item.insert.full_name || `Row ${item.rowNum}`;
-      errors.push({
-        row: item.rowNum,
-        name: rowName,
-        error: "Duplicate entry (email or phone already exists)",
-        field: "duplicate",
-      });
+      errors.push({ row: item.rowNum, name: item.insert.full_name, error: "Duplicate phone & email already exist in database", field: "duplicate" });
+      continue;
+    }
+    if (phoneDup) {
+      duplicateCount++;
+      errors.push({ row: item.rowNum, name: item.insert.full_name, error: "Duplicate phone already exists in database", field: "duplicate" });
+      continue;
+    }
+    if (emailDup) {
+      duplicateCount++;
+      errors.push({ row: item.rowNum, name: item.insert.full_name, error: "Duplicate email already exists in database", field: "duplicate" });
       continue;
     }
 
-    // Track for intra-batch dedup
-    if (email) batchEmails.add(email.toLowerCase());
-    if (phone) batchPhones.add(phone);
     toInsert.push(item);
   }
 
-  // ─── Phase 4: Bulk INSERT in batches of DB_BATCH_SIZE ──────────────────────
+  // ─── Phase 5: Bulk INSERT in batches ───────────────────────────────────────
 
   let successCount = 0;
 
@@ -308,8 +425,7 @@ export async function POST(request: Request) {
       .select("id");
 
     if (error) {
-      // If the batch insert fails entirely (rare), fall back to individual inserts
-      // This handles edge cases like partial unique constraint violations
+      // Batch failed — fall back to individual inserts
       for (const item of batch) {
         const { error: singleErr } = await (supabase as any)
           .from("leads")
@@ -318,42 +434,31 @@ export async function POST(request: Request) {
 
         if (singleErr) {
           const msg = singleErr.message ?? "Failed to create";
-          const isDuplicate = msg.toLowerCase().includes("duplicate") ||
+          const isDup = msg.toLowerCase().includes("duplicate") ||
             msg.toLowerCase().includes("unique") ||
             msg.toLowerCase().includes("already exists") ||
             msg.toLowerCase().includes("violates unique");
 
-          if (isDuplicate) {
+          if (isDup) {
             duplicateCount++;
-            errors.push({
-              row: item.rowNum,
-              name: item.insert.full_name,
-              error: "Duplicate entry (email or phone already exists)",
-              field: "duplicate",
-            });
+            errors.push({ row: item.rowNum, name: item.insert.full_name, error: "Duplicate detected by database constraint", field: "duplicate" });
           } else {
             failCount++;
-            errors.push({
-              row: item.rowNum,
-              name: item.insert.full_name,
-              error: msg,
-              field: "database",
-            });
+            errors.push({ row: item.rowNum, name: item.insert.full_name, error: msg, field: "database" });
           }
         } else {
           successCount++;
         }
       }
     } else {
-      // Batch succeeded — count all rows
       successCount += data?.length ?? batch.length;
     }
   }
 
-  // ─── Phase 5: Activity log (one call) ──────────────────────────────────────
+  // ─── Phase 6: Activity log ─────────────────────────────────────────────────
 
   if (errors.length > 0) {
-    console.warn(`[bulk-upload] ${errors.length} errors out of ${leads.length} rows:`,
+    console.warn(`[bulk-upload] ${errors.length} issues out of ${leads.length} rows:`,
       errors.slice(0, 5).map((e) => `Row ${e.row}: ${e.error}`).join("; "),
     );
   }
@@ -364,7 +469,7 @@ export async function POST(request: Request) {
       userName: auth.user.fullName ?? "Admin",
       role: auth.user.role as "admin" | "agent",
       actionType: "bulk_lead_upload",
-      actionDescription: `Bulk uploaded ${successCount} leads (${failCount + duplicateCount} failed) from "${assignmentMode}" assignment mode`,
+      actionDescription: `Bulk uploaded ${successCount} leads (${duplicateCount} duplicates, ${failCount} failed) via "${assignmentMode}" mode`,
       entityType: "lead",
       metadata: { successCount, failCount, duplicateCount, total: leads.length, assignmentMode },
     });
