@@ -17,13 +17,15 @@ export async function GET(request: Request) {
   try {
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
+    const { getTodayRange, getTodayDateString } = await import("@/lib/date/today");
 
     const now = new Date();
     let from: string;
     const to: string = now.toISOString();
 
     if (dateFilter === "today") {
-      from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const todayRange = getTodayRange();
+      from = todayRange.start;
     } else if (dateFilter === "week") {
       const day = now.getDay();
       const diff = now.getDate() - day + (day === 0 ? -6 : 1);
@@ -31,7 +33,8 @@ export async function GET(request: Request) {
     } else if (dateFilter === "month") {
       from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     } else {
-      from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const todayRange = getTodayRange();
+      from = todayRange.start;
     }
 
     let query = (supabase as any)

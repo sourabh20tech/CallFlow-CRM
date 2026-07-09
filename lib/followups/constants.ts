@@ -55,10 +55,14 @@ export function isFollowupOverdue(followup: { dueAt: string; status: FollowupSta
 export function isFollowupDueToday(followup: { dueAt: string; status: FollowupStatus }): boolean {
   if (followup.status === "completed" || followup.status === "cancelled") return false;
   const due = new Date(followup.dueAt);
-  const now = new Date();
-  return (
-    due.getFullYear() === now.getFullYear() &&
-    due.getMonth() === now.getMonth() &&
-    due.getDate() === now.getDate()
-  );
+  // Use IST calendar day for consistency
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const dueDate = formatter.format(due);
+  const todayDate = formatter.format(new Date());
+  return dueDate === todayDate;
 }

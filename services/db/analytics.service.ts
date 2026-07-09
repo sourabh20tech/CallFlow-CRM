@@ -74,7 +74,8 @@ export class AnalyticsDbService extends BaseDbService {
     const supabase = await this.db(client);
     const from = range.from;
     const to = range.to;
-    const today = new Date().toISOString().slice(0, 10);
+    const { getTodayDateString } = await import("@/lib/date/today");
+    const today = getTodayDateString();
 
     // Resolve profile_id for fund filtering (lead_funds.agent_id stores profile_id)
     // MUST use admin client to bypass RLS on agents table
@@ -107,7 +108,8 @@ export class AnalyticsDbService extends BaseDbService {
 
   async fetchLiveStats(client?: TypedSupabaseClient): Promise<DashboardStatsRow | null> {
     const supabase = await this.db(client);
-    const today = new Date().toISOString().slice(0, 10);
+    const { getTodayDateString } = await import("@/lib/date/today");
+    const today = getTodayDateString();
     return this.refreshDashboardStats(supabase, today);
   }
 

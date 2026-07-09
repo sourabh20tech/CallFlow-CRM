@@ -106,16 +106,19 @@ export class FollowupsService {
     const now = Date.now();
     const in24h = now + 24 * 60 * 60 * 1000;
 
+    // Use IST calendar day for "dueToday"
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const todayStr = formatter.format(new Date());
+
     const overdue = active.filter((f) => new Date(f.dueAt).getTime() < now);
     const dueToday = active.filter((f) => {
-      const due = new Date(f.dueAt);
-      const today = new Date();
-      return (
-        due.getFullYear() === today.getFullYear() &&
-        due.getMonth() === today.getMonth() &&
-        due.getDate() === today.getDate() &&
-        new Date(f.dueAt).getTime() >= now
-      );
+      const dueStr = formatter.format(new Date(f.dueAt));
+      return dueStr === todayStr && new Date(f.dueAt).getTime() >= now;
     });
     const upcoming = active.filter((f) => {
       const t = new Date(f.dueAt).getTime();

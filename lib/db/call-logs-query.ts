@@ -104,11 +104,17 @@ export function applyCallLogFilters<T extends CallLogsFilterableQuery>(
     q = q.lte("started_at", filters.dateTo);
   }
   if (filters?.todayOnly) {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-    q = q.gte("started_at", start.toISOString()).lte("started_at", end.toISOString());
+    // Use IST calendar day for "today" — construct start/end in IST
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const todayStr = formatter.format(new Date());
+    const start = new Date(`${todayStr}T00:00:00+05:30`).toISOString();
+    const end = new Date(`${todayStr}T23:59:59.999+05:30`).toISOString();
+    q = q.gte("started_at", start).lte("started_at", end);
   }
 
   const term = search.term;
