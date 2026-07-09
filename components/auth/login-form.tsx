@@ -85,18 +85,13 @@ export function LoginForm() {
   };
 
   return (
-    <GlassCard variant="strong" padding="lg" className="ds-animate-scale w-full p-5 sm:p-7">
+    <GlassCard variant="strong" padding="lg" className="ds-animate-scale w-full border-white/[0.08] bg-white/[0.03] p-5 backdrop-blur-xl sm:p-7">
       <div className="mb-7 text-center sm:mb-8">
-        <p className="ds-overline mb-2">Secure sign in</p>
-        <h1 className="ds-h2">Welcome back</h1>
-        <p className="ds-body mt-2 text-muted-foreground">
+        <p className="ds-overline mb-2 text-zinc-500">Secure sign in</p>
+        <h1 className="ds-h2 text-white">Welcome back</h1>
+        <p className="ds-body mt-2 text-zinc-400">
           Secure access for your CRM operations team
         </p>
-        <div className="mt-2 inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-3 py-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-            VRSH GOUD SERVICES
-          </p>
-        </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6" noValidate>
