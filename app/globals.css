@@ -987,6 +987,147 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* ─── Enterprise Responsive System ─── */
+
+/* Global: prevent ANY horizontal overflow */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* All flex containers: allow wrapping by default on small screens */
+@media (max-width: 639px) {
+  /* Page header action buttons: wrap and fill */
+  .ds-page-header [class*="flex"] {
+    flex-wrap: wrap;
+  }
+
+  /* All button groups in headers should be full width */
+  .ds-page-header [class*="flex"] > button,
+  .ds-page-header [class*="flex"] > a {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* Forms: all grids become single column */
+  form .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tables: horizontal scroll container */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  table thead, table tbody, table tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  /* Pagination: compact */
+  [class*="TablePagination"],
+  [class*="pagination"] {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  /* Charts: minimum height to prevent squishing */
+  [class*="recharts"],
+  .recharts-wrapper {
+    min-height: 200px !important;
+  }
+}
+
+/* All modals: enterprise responsive */
+@media (max-width: 767px) {
+  [role="dialog"] {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    max-height: 90dvh !important;
+    margin: auto !important;
+    overflow-y: auto !important;
+  }
+
+  /* Modal content: proper internal scroll */
+  [role="dialog"] > div {
+    max-height: 85dvh;
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  [role="dialog"] {
+    width: 95vw !important;
+    max-width: 720px !important;
+    max-height: 90dvh !important;
+  }
+}
+
+/* Sidebar: handled by component (hidden md:flex), ensure no leftover space */
+@media (max-width: 767px) {
+  aside {
+    display: none !important;
+  }
+}
+
+/* TopBar: compact on mobile */
+@media (max-width: 639px) {
+  .ds-topbar {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* Hide search on very small screens (available in mobile nav) */
+  .ds-topbar form {
+    display: none;
+  }
+}
+
+/* Cards: always fit */
+[class*="GlassCard"],
+[class*="glass-card"],
+.ds-glass,
+.ds-glass-strong {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Stat cards: responsive grid */
+@media (max-width: 479px) {
+  .grid[class*="grid-cols"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Single column for very complex cards */
+  .grid[class*="lg:grid-cols-3"] {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dropdown menus: always within viewport */
+[data-radix-popper-content-wrapper] {
+  max-width: min(calc(100vw - 1rem), 400px) !important;
+}
+
+/* Report tabs: scrollable on mobile */
+@media (max-width: 639px) {
+  [role="tablist"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+  }
+
+  [role="tablist"] > * {
+    flex-shrink: 0;
+  }
+}
+
 /* ─── Print: hide nav and chrome ─── */
 @media print {
   .ds-sidebar,
