@@ -7,6 +7,7 @@ import { AgentInactivityGuard } from "@/components/auth/agent-inactivity-guard";
 import { Sidebar } from "@/components/layouts/sidebar";
 import { TopNavbar } from "@/components/layouts/top-navbar";
 import { RoutePrefetcher } from "@/components/layouts/route-prefetcher";
+import { useFollowupReminderToasts } from "@/hooks/use-followup-reminder-toasts";
 import { pageContainer, pageSection } from "@/lib/design-system/styles";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,9 @@ interface DashboardShellProps {
 
 export const DashboardShell = memo(function DashboardShell({ children }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Enable follow-up reminder toast notifications for all authenticated users
+  useFollowupReminderToasts(true);
 
   return (
     <div className="flex min-h-[100dvh] bg-transparent">
