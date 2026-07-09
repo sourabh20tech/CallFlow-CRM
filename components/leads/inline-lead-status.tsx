@@ -210,7 +210,7 @@ export function InlineLeadStatus({
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="min-w-[180px]">
+      <DropdownMenuContent align="start" className="min-w-[180px] scrollbar-dropdown">
         {statuses.map((status) => {
           const active = lead.status === status.value;
           return (

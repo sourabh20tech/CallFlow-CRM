@@ -566,6 +566,70 @@ body {
   background: hsl(var(--border));
 }
 
+/* Modern scrollbar for dropdown menus */
+.scrollbar-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  overscroll-behavior: contain;
+}
+
+.scrollbar-dropdown::-webkit-scrollbar {
+  width: 5px;
+}
+
+.scrollbar-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.scrollbar-dropdown::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: hsl(var(--muted-foreground) / 0.25);
+  transition: background 0.2s;
+}
+
+.scrollbar-dropdown::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+
+/* Global: constrain all Radix popover/menu content to viewport */
+[data-radix-popper-content-wrapper] {
+  max-height: calc(var(--radix-popper-available-height, 100vh) - 16px) !important;
+}
+
+[role="listbox"],
+[role="menu"] {
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+[role="listbox"]::-webkit-scrollbar,
+[role="menu"]::-webkit-scrollbar {
+  width: 5px;
+}
+
+[role="listbox"]::-webkit-scrollbar-thumb,
+[role="menu"]::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: hsl(var(--muted-foreground) / 0.25);
+}
+
+/* Native select: constrain dropdown size */
+select {
+  appearance: auto;
+  max-height: 2.75rem;
+}
+
+@media (max-width: 767px) {
+  [role="listbox"],
+  [role="menu"] {
+    max-height: 260px;
+  }
+}
+
 /* Maintenance page */
 .maintenance-bg {
   background:
