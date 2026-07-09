@@ -85,15 +85,15 @@ export function LoginForm() {
   };
 
   return (
-    <GlassCard variant="strong" padding="lg" className="ds-animate-scale w-full rounded-[16px] border-white/[0.06] bg-white/[0.025] px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:rounded-[20px] sm:px-5 sm:py-4">
-      <div className="mb-3 text-center sm:mb-4">
-        <h1 className="text-sm font-semibold text-white sm:text-base">Welcome back</h1>
-        <p className="mt-0.5 text-[10px] text-zinc-400 sm:text-[11px]">
+    <GlassCard variant="strong" padding="lg" className="ds-animate-scale w-full rounded-[18px] border-white/[0.06] bg-white/[0.025] px-4 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl lg:rounded-[20px] lg:px-5 lg:py-5">
+      <div className="mb-3 text-center lg:mb-4">
+        <h1 className="text-sm font-semibold text-white lg:text-base">Welcome back</h1>
+        <p className="mt-0.5 text-[10px] text-zinc-400 lg:text-[11px]">
           Secure access for your CRM team
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 lg:space-y-4" noValidate>
         <FormField label="Portal" error={errors.role?.message} required>
           <Controller
             name="role"
@@ -119,7 +119,7 @@ export function LoginForm() {
                 selectedRole === "admin" ? "admin@company.com" : "agent@company.com"
               }
               autoComplete="email"
-              className="h-10 pl-10 sm:h-11"
+              className="h-10 pl-10"
               {...register("email")}
             />
           </div>
@@ -133,7 +133,7 @@ export function LoginForm() {
               type="password"
               placeholder="••••••••"
               autoComplete="current-password"
-              className="h-10 pl-10 sm:h-11"
+              className="h-10 pl-10"
               {...register("password")}
             />
           </div>
@@ -147,7 +147,7 @@ export function LoginForm() {
           </div>
         </FormField>
 
-        <Button type="submit" variant="premium" className="h-10 w-full sm:h-11" disabled={busy}>
+        <Button type="submit" variant="premium" className="h-10 w-full lg:h-11" disabled={busy}>
           {busy && <Loader2 className="animate-spin" />}
           Sign in as {selectedRole === "admin" ? "Administrator" : "Agent"}
         </Button>
