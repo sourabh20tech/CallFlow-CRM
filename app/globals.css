@@ -725,7 +725,8 @@ select {
   /* Full-width inputs on mobile */
   select,
   input[type="date"],
-  input[type="datetime-local"] {
+  input[type="datetime-local"],
+  input[type="time"] {
     width: 100%;
     min-width: 0;
   }
@@ -749,11 +750,20 @@ select {
     border-radius: var(--radius);
   }
 
-  /* Modals: full-width on mobile, scrollable */
+  /* Modals: full-width on mobile, scrollable, safe area aware */
   [role="dialog"] {
-    max-width: calc(100vw - 1.5rem) !important;
-    max-height: calc(100dvh - 2rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 1.5rem) !important;
     overflow-y: auto;
+    margin: 0.75rem auto;
+    border-radius: var(--radius) !important;
+  }
+
+  /* Modal body scroll */
+  [role="dialog"] [data-slot="modal-body"],
+  [role="dialog"] .space-y-4 {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Typography: slightly smaller on mobile */
@@ -782,7 +792,31 @@ select {
   /* Dropdowns: constrain to viewport */
   [role="menu"],
   [data-radix-popper-content-wrapper] {
-    max-width: calc(100vw - 1.5rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+  }
+
+  /* Form grids: full width on mobile */
+  .grid.gap-4.sm\:grid-cols-2,
+  .grid.gap-3.sm\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Page header actions: wrap to full width */
+  .ds-page-header > div:last-child {
+    width: 100%;
+  }
+
+  .ds-page-header > div:last-child > div {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  /* Lead filters bar: horizontal scroll */
+  [class*="flex-wrap"][class*="gap-2"]:has(select) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
   }
 }
 
@@ -835,6 +869,20 @@ img, video, svg, canvas {
   .ds-table-wrap table {
     min-width: 28rem;
   }
+
+  /* Smaller text on tiny screens */
+  .ds-body, p, span {
+    font-size: 0.8125rem;
+  }
+
+  /* Stack all action buttons vertically */
+  .ds-page-header [class*="flex-wrap"] {
+    flex-direction: column;
+  }
+
+  .ds-page-header [class*="flex-wrap"] > * {
+    width: 100%;
+  }
 }
 
 /* Mobile form fixes (all phones) */
@@ -869,9 +917,27 @@ img, video, svg, canvas {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Touch-friendly button sizes */
-  button, [role="button"] {
+  /* Touch-friendly: minimum 44px tap targets */
+  button, [role="button"], a[href] {
+    min-height: 44px;
+  }
+
+  /* Compact buttons (icon-only) keep smaller size */
+  button[aria-label]:not(:has(span)),
+  [role="button"][aria-label]:not(:has(span)) {
     min-height: 36px;
+  }
+
+  /* Full-width action buttons on mobile */
+  .ds-page-header button[class*="gap"] {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* Pagination: compact on mobile */
+  nav[aria-label*="pagination"] button {
+    min-height: 36px;
+    min-width: 36px;
   }
 }
 
@@ -892,5 +958,37 @@ img, video, svg, canvas {
   :root {
     --ds-content-max: 96rem;
     --ds-page-padding-x: 2.5rem;
+  }
+}
+
+/* ─── Safe Area Insets (notched devices: iPhone X+) ─── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .ds-topbar {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  [role="dialog"] {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ─── Smooth scrolling everywhere ─── */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent pull-to-refresh on mobile within the app */
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* ─── Print: hide nav and chrome ─── */
+@media print {
+  .ds-sidebar,
+  .ds-topbar,
+  nav,
+  [role="navigation"] {
+    display: none !important;
   }
 }
