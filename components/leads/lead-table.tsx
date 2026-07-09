@@ -156,12 +156,13 @@ export const LeadTable = memo(function LeadTable({
                 </TableCell>
                 <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
                   {lead.nextFollowUpAt ? (
-                    <span className="inline-flex items-center gap-1">
+                    <span className={`inline-flex items-center gap-1 ${new Date(lead.nextFollowUpAt) < new Date() ? "text-red-500 font-medium" : ""}`}>
                       <CalendarClock className="h-3.5 w-3.5" />
+                      {new Date(lead.nextFollowUpAt) < new Date() ? "🔴 " : ""}
                       {formatRelativeTime(lead.nextFollowUpAt)}
                     </span>
                   ) : (
-                    "—"
+                    <span className="text-muted-foreground/50 text-xs">No Follow-Up</span>
                   )}
                 </TableCell>
                 <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">

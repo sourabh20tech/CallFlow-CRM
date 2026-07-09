@@ -99,7 +99,7 @@ export function FollowUpLeadModal({
         throw new Error(data.error ?? "Failed to create follow-up");
       }
 
-      // 2. Update lead status to follow_up
+      // 2. Update lead status to follow_up AND set next_follow_up_at
       const statusUrl = isAdmin
         ? `/api/leads/${lead.id}`
         : `/api/agent/leads/${lead.id}`;
@@ -107,7 +107,7 @@ export function FollowUpLeadModal({
       const statusRes = await fetch(statusUrl, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "follow_up" }),
+        body: JSON.stringify({ status: "follow_up", nextFollowUpAt: dueAt }),
       });
 
       const updatedLead = await statusRes.json();

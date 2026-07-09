@@ -133,6 +133,17 @@ export async function POST(request: Request) {
       ...parsed.data,
       dueAt,
     });
+
+    // Auto-update lead's next_follow_up_at to the earliest pending follow-up
+    if (parsed.data.leadId) {
+      try {
+        const { leadsService: ls } = await import("@/services/leads.service");
+        await ls.update(parsed.data.leadId, { nextFollowUpAt: dueAt });
+      } catch {
+        // Non-critical — follow-up still created
+      }
+    }
+
     return NextResponse.json(followup, { status: 201 });
   } catch (error) {
     const message = toDbError(error, "Failed to schedule follow-up").message;

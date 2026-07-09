@@ -81,6 +81,14 @@ export async function POST(request: Request, { params }: RouteParams) {
       assignedAgentId: parsed.data.assignedAgentId,
       priority: parsed.data.priority,
     });
+
+    // Auto-update lead's next_follow_up_at
+    try {
+      await leadsService.update(id, { nextFollowUpAt: new Date(parsed.data.dueAt).toISOString() });
+    } catch {
+      // Non-critical
+    }
+
     return NextResponse.json(followup, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to schedule follow-up";
