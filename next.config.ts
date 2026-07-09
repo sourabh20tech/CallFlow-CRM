@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
   },
 
   // Server-only heavy packages — don't bundle on client
-  serverExternalPackages: ["server-only"],
+  serverExternalPackages: [],
 
   async redirects() {
     return [
