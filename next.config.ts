@@ -67,14 +67,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Cache JS/CSS chunks — they have content hashes
-        source: "/_next/static/:path*",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
-      },
-      {
-        // API security + brief cache for dashboard-type routes
+        // API security headers
         source: "/api/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
@@ -82,7 +75,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Cache relatively stable reference data APIs
+        // Cache stable reference data APIs
         source: "/api/lead-sources",
         headers: [
           { key: "Cache-Control", value: "private, max-age=60, stale-while-revalidate=120" },
