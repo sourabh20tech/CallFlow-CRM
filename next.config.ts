@@ -34,8 +34,8 @@ const nextConfig: NextConfig = {
     ],
     // Router cache — pages stay in memory for fast back/forward navigation
     staleTimes: {
-      dynamic: 30, // Cache dynamic pages for 30s in router
-      static: 300, // Cache static pages for 5 minutes
+      dynamic: 60, // Cache dynamic pages for 60s in router (instant back button)
+      static: 600, // Cache static pages for 10 minutes
     },
   },
 
