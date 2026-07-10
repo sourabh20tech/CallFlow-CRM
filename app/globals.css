@@ -719,421 +719,171 @@ select {
   }
 }
 
-/* ─── Mobile Responsive Fixes ─── */
-@media (max-width: 767px) {
-  /* Prevent any element from causing horizontal scroll */
-  .ds-page-container {
-    overflow-x: hidden;
-  }
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ENTERPRISE RESPONSIVE SYSTEM — Mobile First
+   ═══════════════════════════════════════════════════════════════════════════════ */
 
-  /* Full-width inputs on mobile */
-  select,
-  input[type="date"],
-  input[type="datetime-local"],
-  input[type="time"] {
-    width: 100%;
-    min-width: 0;
-  }
-
-  /* Stack filters vertically */
-  .ds-page-header {
-    gap: 0.5rem;
-  }
-
-  /* Reduce padding on small screens */
-  :root {
-    --ds-page-padding-x: 0.75rem;
-    --ds-page-padding-y: 0.75rem;
-    --ds-section-gap: 1rem;
-    --ds-stack-gap: 0.75rem;
-  }
-
-  /* Cards: tighter padding on mobile */
-  .ds-glass,
-  .ds-glass-strong {
-    border-radius: var(--radius);
-  }
-
-  /* Modals: full-width on mobile, scrollable, safe area aware */
-  [role="dialog"] {
-    max-width: calc(100vw - 1rem) !important;
-    max-height: calc(100dvh - 1.5rem) !important;
-    overflow-y: auto;
-    margin: 0.75rem auto;
-    border-radius: var(--radius) !important;
-  }
-
-  /* Modal body scroll */
-  [role="dialog"] [data-slot="modal-body"],
-  [role="dialog"] .space-y-4 {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Typography: slightly smaller on mobile */
-  .ds-h1 {
-    font-size: 1.25rem;
-  }
-
-  .ds-h2 {
-    font-size: 1.125rem;
-  }
-
-  .ds-h3 {
-    font-size: 1rem;
-  }
-
-  /* Filter selects stack on mobile */
-  select {
-    max-width: 100% !important;
-  }
-
-  /* Table actions - compact on mobile */
-  td button {
-    min-width: 0;
-  }
-
-  /* Dropdowns: constrain to viewport */
-  [role="menu"],
-  [data-radix-popper-content-wrapper] {
-    max-width: calc(100vw - 1rem) !important;
-  }
-
-  /* Form grids: full width on mobile */
-  .grid.gap-4.sm\:grid-cols-2,
-  .grid.gap-3.sm\:grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-
-  /* Page header actions: wrap to full width */
-  .ds-page-header > div:last-child {
-    width: 100%;
-  }
-
-  .ds-page-header > div:last-child > div {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-
-  /* Lead filters bar: horizontal scroll */
-  [class*="flex-wrap"][class*="gap-2"]:has(select) {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    flex-wrap: nowrap;
-    padding-bottom: 0.25rem;
-  }
-}
-
-/* Tablet adjustments */
-@media (min-width: 768px) and (max-width: 1023px) {
-  :root {
-    --ds-page-padding-x: 1.25rem;
-  }
-}
-
-/* Ensure no element overflows */
-img, video, svg, canvas {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Fix button wrapping on small screens */
-@media (max-width: 639px) {
-  .ds-page-header [class*="flex-wrap"] {
-    gap: 0.5rem;
-  }
-
-  .ds-page-header button {
-    font-size: 0.75rem;
-  }
-
-  /* Stats grid: 2 columns max on very small screens */
-  .grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Extra small screens (320-375px) */
-@media (max-width: 375px) {
-  :root {
-    --ds-page-padding-x: 0.5rem;
-    --ds-page-padding-y: 0.5rem;
-  }
-
-  .ds-h1 {
-    font-size: 1.125rem;
-  }
-
-  /* Single column for very narrow */
-  [class*="grid-cols-2"] {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Table: allow horizontal scroll with smaller min-width */
-  .ds-table-wrap table {
-    min-width: 28rem;
-  }
-
-  /* Smaller text on tiny screens */
-  .ds-body, p, span {
-    font-size: 0.8125rem;
-  }
-
-  /* Stack all action buttons vertically */
-  .ds-page-header [class*="flex-wrap"] {
-    flex-direction: column;
-  }
-
-  .ds-page-header [class*="flex-wrap"] > * {
-    width: 100%;
-  }
-}
-
-/* Mobile form fixes (all phones) */
-@media (max-width: 639px) {
-  /* Stack form actions vertically */
-  [class*="ModalFooter"],
-  [role="dialog"] [class*="flex"][class*="justify-end"] {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  [class*="ModalFooter"] button,
-  [role="dialog"] [class*="flex"][class*="justify-end"] button {
-    width: 100%;
-  }
-
-  /* Ensure dropdowns never overflow */
-  select {
-    max-width: 100%;
-    min-width: 0;
-  }
-
-  /* Activity log filter stack */
-  .ds-page-header + div select,
-  .ds-page-header + div input[type="date"] {
-    min-width: 0;
-    flex: 1 1 calc(50% - 0.5rem);
-  }
-
-  /* Dashboard stat cards: ensure 2-col minimum */
-  .grid[class*="sm:grid-cols-2"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* Touch-friendly: minimum 44px tap targets */
-  button, [role="button"], a[href] {
-    min-height: 44px;
-  }
-
-  /* Compact buttons (icon-only) keep smaller size */
-  button[aria-label]:not(:has(span)),
-  [role="button"][aria-label]:not(:has(span)) {
-    min-height: 36px;
-  }
-
-  /* Full-width action buttons on mobile */
-  .ds-page-header button[class*="gap"] {
-    flex: 1 1 auto;
-    justify-content: center;
-  }
-
-  /* Pagination: compact on mobile */
-  nav[aria-label*="pagination"] button {
-    min-height: 36px;
-    min-width: 36px;
-  }
-}
-
-/* Tablet tweaks */
-@media (min-width: 640px) and (max-width: 1023px) {
-  /* 2-column grids for tablet */
-  .grid[class*="xl:grid-cols-4"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .grid[class*="xl:grid-cols-5"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-/* Large screens optimization */
-@media (min-width: 1920px) {
-  :root {
-    --ds-content-max: 96rem;
-    --ds-page-padding-x: 2.5rem;
-  }
-}
-
-/* ─── Safe Area Insets (notched devices: iPhone X+) ─── */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .ds-topbar {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  [role="dialog"] {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-
-/* ─── Smooth scrolling everywhere ─── */
-html {
-  scroll-behavior: smooth;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Prevent pull-to-refresh on mobile within the app (not on auth pages) */
-.ds-sidebar ~ main {
-  overscroll-behavior-y: contain;
-}
-
-/* ─── Enterprise Responsive System ─── */
-
-/* Global: prevent ANY horizontal overflow */
+/* ─── Global Constraints ─── */
 html, body {
   overflow-x: hidden;
   max-width: 100vw;
 }
 
-/* All flex containers: allow wrapping by default on small screens */
-@media (max-width: 639px) {
-  /* Page header action buttons: wrap and fill */
-  .ds-page-header [class*="flex"] {
-    flex-wrap: wrap;
-  }
-
-  /* All button groups in headers should be full width */
-  .ds-page-header [class*="flex"] > button,
-  .ds-page-header [class*="flex"] > a {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  /* Forms: all grids become single column */
-  form .grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Tables: horizontal scroll container */
-  table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    white-space: nowrap;
-  }
-
-  table thead, table tbody, table tr {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-  }
-
-  /* Pagination: compact */
-  [class*="TablePagination"],
-  [class*="pagination"] {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
-  }
-
-  /* Charts: minimum height to prevent squishing */
-  [class*="recharts"],
-  .recharts-wrapper {
-    min-height: 200px !important;
-  }
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* All modals: enterprise responsive */
-@media (max-width: 767px) {
-  [role="dialog"] {
-    width: 96vw !important;
-    max-width: 96vw !important;
-    max-height: 90dvh !important;
-    margin: auto !important;
-    overflow-y: auto !important;
-  }
-
-  /* Modal content: proper internal scroll */
-  [role="dialog"] > div {
-    max-height: 85dvh;
-    overflow-y: auto;
-  }
+img, video, svg, canvas {
+  max-width: 100%;
+  height: auto;
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  [role="dialog"] {
-    width: 95vw !important;
-    max-width: 720px !important;
-    max-height: 90dvh !important;
-  }
+/* Prevent pull-to-refresh inside dashboard only */
+.ds-sidebar ~ main {
+  overscroll-behavior-y: contain;
 }
 
-/* Sidebar: handled by component (hidden md:flex), ensure no leftover space */
-@media (max-width: 767px) {
-  aside {
-    display: none !important;
-  }
+/* ─── Safe Area (iPhone notch) ─── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .ds-topbar { padding-top: env(safe-area-inset-top); }
+  [role="dialog"] { padding-bottom: env(safe-area-inset-bottom); }
 }
 
-/* TopBar: compact on mobile */
-@media (max-width: 639px) {
-  .ds-topbar {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-
-  /* Hide search on very small screens (available in mobile nav) */
-  .ds-topbar form {
-    display: none;
-  }
+/* ─── Dropdowns: Global ─── */
+[data-radix-popper-content-wrapper] {
+  max-width: min(calc(100vw - 1rem), 400px) !important;
+  max-height: calc(var(--radix-popper-available-height, 100vh) - 16px) !important;
+}
+[role="listbox"], [role="menu"] {
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
-/* Cards: always fit */
-[class*="GlassCard"],
-[class*="glass-card"],
-.ds-glass,
-.ds-glass-strong {
+/* ─── Cards: Never Overflow ─── */
+.ds-glass, .ds-glass-strong {
   max-width: 100%;
   overflow: hidden;
 }
 
-/* Stat cards: responsive grid */
-@media (max-width: 479px) {
-  .grid[class*="grid-cols"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* Single column for very complex cards */
-  .grid[class*="lg:grid-cols-3"] {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Dropdown menus: always within viewport */
-[data-radix-popper-content-wrapper] {
-  max-width: min(calc(100vw - 1rem), 400px) !important;
-}
-
-/* Report tabs: scrollable on mobile */
+/* ═══ MOBILE (all phones, < 640px) ═══ */
 @media (max-width: 639px) {
-  [role="tablist"] {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    flex-wrap: nowrap !important;
-    justify-content: flex-start !important;
+  :root {
+    --ds-page-padding-x: 0.75rem;
+    --ds-page-padding-y: 0.75rem;
+    --ds-section-gap: 0.875rem;
+    --ds-stack-gap: 0.625rem;
   }
 
-  [role="tablist"] > * {
-    flex-shrink: 0;
+  /* Typography */
+  .ds-h1 { font-size: 1.2rem; }
+  .ds-h2 { font-size: 1.05rem; }
+  .ds-h3 { font-size: 0.95rem; }
+
+  /* Sidebar hidden (mobile uses drawer) */
+  aside { display: none !important; }
+
+  /* TopBar compact */
+  .ds-topbar { padding-left: 0.5rem; padding-right: 0.5rem; }
+  .ds-topbar form { display: none; }
+
+  /* Page header */
+  .ds-page-header { gap: 0.5rem; }
+  .ds-page-header [class*="flex"] { flex-wrap: wrap; gap: 0.5rem; }
+  .ds-page-header button { font-size: 0.75rem; flex: 1 1 auto; min-width: 0; }
+
+  /* Forms: single column */
+  form .grid, .grid.gap-4.sm\:grid-cols-2, .grid.gap-3.sm\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+  select, input[type="date"], input[type="datetime-local"], input[type="time"] {
+    width: 100%; min-width: 0; max-width: 100%;
+  }
+
+  /* Touch targets: 44px minimum */
+  button, [role="button"], a[href] { min-height: 44px; }
+  button[aria-label]:not(:has(span)) { min-height: 36px; }
+
+  /* Stat grids: 2-col */
+  .grid[class*="sm:grid-cols-2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Tables: mobile card view handles this via component (md:hidden) */
+  /* Fallback scroll for any remaining tables */
+  .ds-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Modals: full width */
+  [role="dialog"] {
+    width: 96vw !important; max-width: 96vw !important;
+    max-height: 90dvh !important;
+    margin: auto !important; overflow-y: auto !important;
+    border-radius: var(--radius) !important;
+  }
+  [role="dialog"] > div { max-height: 85dvh; overflow-y: auto; }
+
+  /* Modal footer buttons stack */
+  [role="dialog"] [class*="flex"][class*="justify-end"] {
+    flex-direction: column; gap: 0.5rem;
+  }
+  [role="dialog"] [class*="flex"][class*="justify-end"] button { width: 100%; }
+
+  /* Tabs: horizontal scroll */
+  [role="tablist"] {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+  }
+  [role="tablist"] > * { flex-shrink: 0; }
+
+  /* Dropdowns constrained */
+  [role="menu"], [data-radix-popper-content-wrapper] { max-width: calc(100vw - 1rem) !important; }
+  [role="listbox"], [role="menu"] { max-height: 260px; }
+
+  /* Charts min height */
+  .recharts-wrapper { min-height: 200px !important; }
+}
+
+/* ═══ EXTRA SMALL (320-375px) ═══ */
+@media (max-width: 375px) {
+  :root { --ds-page-padding-x: 0.5rem; --ds-page-padding-y: 0.5rem; }
+  .ds-h1 { font-size: 1.05rem; }
+  .grid[class*="grid-cols-2"] { grid-template-columns: 1fr !important; }
+}
+
+/* ═══ TABLET (640px - 1023px) ═══ */
+@media (min-width: 640px) and (max-width: 1023px) {
+  :root { --ds-page-padding-x: 1.25rem; }
+  aside { display: none !important; }
+
+  .grid[class*="xl:grid-cols-4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid[class*="xl:grid-cols-5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  [role="dialog"] {
+    width: 95vw !important; max-width: 720px !important; max-height: 90dvh !important;
   }
 }
 
-/* ─── Print: hide nav and chrome ─── */
-@media print {
-  .ds-sidebar,
-  .ds-topbar,
-  nav,
-  [role="navigation"] {
-    display: none !important;
+/* ═══ DESKTOP (1024px+) ═══ */
+@media (min-width: 1024px) {
+  /* Sidebar shows via component classes */
+}
+
+/* ═══ LARGE (1280px+) ═══ */
+@media (min-width: 1280px) {
+  :root {
+    --ds-section-gap: 2rem;
+    --ds-stack-gap: 1.375rem;
+    --ds-page-padding-x: 2rem;
+    --ds-page-padding-y: 2rem;
   }
+}
+
+/* ═══ ULTRA WIDE (1920px+) ═══ */
+@media (min-width: 1920px) {
+  :root { --ds-content-max: 96rem; --ds-page-padding-x: 2.5rem; }
+}
+
+/* ─── Print ─── */
+@media print {
+  .ds-sidebar, .ds-topbar, nav, [role="navigation"] { display: none !important; }
 }
