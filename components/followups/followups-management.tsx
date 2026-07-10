@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -8,12 +9,7 @@ import { PageHeader } from "@/components/design-system/page-header";
 import { SkeletonStatCard } from "@/components/design-system/skeletons";
 import { FollowupStatsCards } from "@/components/followups/followup-stats-cards";
 import { FollowupFiltersBar } from "@/components/followups/followup-filters";
-import { FollowupNotifications } from "@/components/followups/followup-notifications";
-import { AgentFollowupTracker } from "@/components/followups/agent-followup-tracker";
-import { FollowupCalendar } from "@/components/followups/followup-calendar";
 import { PendingFollowupsSection } from "@/components/followups/pending-followups-section";
-import { CompletedFollowupsSection } from "@/components/followups/completed-followups-section";
-import { ScheduleFollowupModal } from "@/components/followups/schedule-followup-modal";
 import { Button } from "@/components/ui/button";
 import type { DialLead } from "@/lib/calls/dial-leads";
 import { ACTIVE_STATUSES } from "@/lib/followups/constants";
@@ -26,6 +22,13 @@ import type {
 } from "@/types/followup";
 import type { ScheduleFollowupFormValues } from "@/utils/validators";
 import { pageSection } from "@/lib/design-system/styles";
+
+// Lazy-load heavy sub-components
+const FollowupNotifications = dynamic(() => import("@/components/followups/followup-notifications").then(m => m.FollowupNotifications), { ssr: false });
+const AgentFollowupTracker = dynamic(() => import("@/components/followups/agent-followup-tracker").then(m => m.AgentFollowupTracker), { ssr: false });
+const FollowupCalendar = dynamic(() => import("@/components/followups/followup-calendar").then(m => m.FollowupCalendar), { ssr: false });
+const CompletedFollowupsSection = dynamic(() => import("@/components/followups/completed-followups-section").then(m => m.CompletedFollowupsSection), { ssr: false });
+const ScheduleFollowupModal = dynamic(() => import("@/components/followups/schedule-followup-modal").then(m => m.ScheduleFollowupModal), { ssr: false });
 
 interface RemindersPayload {
   overdue: Followup[];

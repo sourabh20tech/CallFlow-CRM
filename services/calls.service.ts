@@ -27,7 +27,7 @@ export class CallsService {
   }
 
   async listAll(filters?: CallFilters): Promise<Call[]> {
-    const result = await this.list(filters, { page: 1, pageSize: 500 });
+    const result = await this.list(filters, { page: 1, pageSize: 200 });
     return result.data;
   }
 
