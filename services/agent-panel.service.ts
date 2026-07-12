@@ -73,19 +73,35 @@ export class AgentPanelService {
     );
     const agentName = agent?.name ?? user.fullName ?? "Agent";
 
-    const myLeadsResult = await safe(
-      "assigned leads",
-      async () => {
-        return leadsDbServiceServer.list(
+    // Run independent queries IN PARALLEL (not sequentially)
+    const [myLeadsResult, todayCalls, allFollowups, announcement] = await Promise.all([
+      safe(
+        "assigned leads",
+        () => leadsDbServiceServer.list(
           { assignedAgentId: agentId },
           { page: 1, pageSize: 100 },
-        );
-      },
-      { data: [] as Lead[], total: 0, page: 1, pageSize: 100, totalPages: 1 },
-    );
+        ),
+        { data: [] as Lead[], total: 0, page: 1, pageSize: 100, totalPages: 1 },
+      ),
+      safe(
+        "today calls",
+        () => callsService.listAll({ agentId, todayOnly: true }),
+        [],
+      ),
+      safe(
+        "follow-ups",
+        () => followupsService.list({ agentId, view: "all" }),
+        [],
+      ),
+      safe(
+        "admin announcement",
+        () => systemSettingsDbServiceServer.getAnnouncement(),
+        { title: "", message: "", updatedAt: null },
+      ),
+    ]);
 
     const myLeads = myLeadsResult.data;
-    const totalAssignedLeads = myLeadsResult.total; // true DB count for stat card
+    const totalAssignedLeads = myLeadsResult.total;
 
     const myLeadsWithNotes = await withNoteCounts(myLeads);
     const convertedLeads = myLeadsWithNotes.filter((l) => l.status === "converted");
@@ -93,17 +109,6 @@ export class AgentPanelService {
       (l) => l.status !== "converted",
     );
 
-    const todayCalls = await safe(
-      "today calls",
-      () => callsService.listAll({ agentId, todayOnly: true }),
-      [],
-    );
-
-    const allFollowups = await safe(
-      "follow-ups",
-      () => followupsService.list({ agentId, view: "all" }),
-      [],
-    );
     const pendingFollowups = allFollowups.filter(
       (f) => f.status === "pending" || f.status === "in_progress",
     );
@@ -119,9 +124,6 @@ export class AgentPanelService {
       convertedLeads: convertedLeads.length,
       activeCalls: activeCalls.length,
     };
-
-    const announcement = await safe("admin announcement", () =>
-      systemSettingsDbServiceServer.getAnnouncement(), { title: "", message: "", updatedAt: null });
 
     const assignedDial = activeLeads.map((l) => ({
       id: l.id,
