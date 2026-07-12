@@ -83,64 +83,72 @@ export class DashboardService {
     requireSupabaseConfigured("admin dashboard");
 
     const range = this.lastNDaysRange(7);
-    const supabase = await createClient();
 
-    // Run analytics and recent items in parallel for faster load
-    const [raw, { data: leadsRows }, { data: callRows }, { data: followRows }] =
-      await Promise.all([
-        analyticsDbServiceServer.fetchRaw(range),
-        supabase
-          .from("leads")
-          .select("id, full_name, email, tier, status, last_contacted_at, created_at")
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
-          .limit(8),
-        supabase
-          .from("call_logs")
-          .select("id, status, started_at")
-          .is("deleted_at", null)
-          .order("started_at", { ascending: false })
-          .limit(5),
-        supabase
-          .from("follow_ups")
-          .select("id, title, due_at, status, created_at")
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
-          .limit(5),
-      ]);
-
+    // Single consolidated fetch — no redundant recent-items queries
+    // The raw analytics data already contains leads, calls, followups
+    const raw = await analyticsDbServiceServer.fetchRaw(range);
     const bundle = buildReportsBundleFromRaw(range, raw);
 
-    const leads: DashboardLeadRow[] = (leadsRows ?? []).map((row) => ({
-      id: row.id,
-      name: row.full_name,
-      email: row.email ?? "—",
-      force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
-      status: row.status as DashboardLeadRow["status"],
-      lastContactAt: row.last_contacted_at ?? row.created_at,
-    }));
+    // Derive recent leads from raw data (already fetched, sorted by created_at)
+    const leads: DashboardLeadRow[] = raw.leads
+      .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+      .slice(0, 8)
+      .map((row) => ({
+        id: row.id,
+        name: "", // Raw doesn't have full_name — need a light query
+        email: "—",
+        force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
+        status: row.status as DashboardLeadRow["status"],
+        lastContactAt: row.created_at,
+      }));
 
+    // For recent leads with names, do ONE small query (8 rows only)
+    let recentLeads = leads;
+    try {
+      const supabase = await createClient();
+      const { data: leadsRows } = await supabase
+        .from("leads")
+        .select("id, full_name, email, tier, status, last_contacted_at, created_at")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(8);
+
+      if (leadsRows?.length) {
+        recentLeads = leadsRows.map((row) => ({
+          id: row.id,
+          name: row.full_name,
+          email: row.email ?? "—",
+          force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
+          status: row.status as DashboardLeadRow["status"],
+          lastContactAt: row.last_contacted_at ?? row.created_at,
+        }));
+      }
+    } catch {
+      // Use derived data as fallback
+    }
+
+    // Derive activities from raw data (no extra queries needed)
     const activities: DashboardActivity[] = [
-      ...(leadsRows ?? []).slice(0, 4).map((row) => ({
+      ...raw.leads.slice(0, 4).map((row) => ({
         id: `lead-${row.id}`,
         type: "lead" as const,
         title: "Lead updated",
-        description: row.full_name,
+        description: `Lead ${row.status}`,
         timestamp: row.created_at,
       })),
-      ...(callRows ?? []).slice(0, 4).map((row) => ({
+      ...raw.calls.slice(0, 4).map((row) => ({
         id: `call-${row.id}`,
         type: "call" as const,
         title: "Call logged",
         description: `Status: ${row.status}`,
         timestamp: row.started_at,
       })),
-      ...(followRows ?? []).slice(0, 4).map((row) => ({
+      ...raw.followups.slice(0, 4).map((row) => ({
         id: `followup-${row.id}`,
         type: "follow-up" as const,
         title: "Follow-up task",
-        description: row.title ?? `Status: ${row.status}`,
-        timestamp: row.created_at ?? row.due_at,
+        description: `Status: ${row.status}`,
+        timestamp: row.due_at,
       })),
     ]
       .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp))
@@ -152,7 +160,7 @@ export class DashboardService {
       leadConversion: bundle.leadConversion as LeadConversionDataPoint[],
       agentPerformance: bundle.agentPerformance as AgentPerformanceDataPoint[],
       activities,
-      leads,
+      leads: recentLeads,
       updatedAt: bundle.generatedAt,
     };
   }
