@@ -155,8 +155,11 @@ export function LeadsManagement({
     if (!mountedRef.current) {
       mountedRef.current = true;
       if (skipInitialFetch) return; // SSR data present — skip duplicate fetch
+      void loadLeads(); // First load — show skeleton
+      return;
     }
-    void loadLeads();
+    // Subsequent loads (filter/page change) — keep old data visible, refresh silently
+    void loadLeads(true);
   }, [loadLeads]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasActiveFilters = Boolean(
@@ -266,6 +269,15 @@ export function LeadsManagement({
   const handleAssign = async (leadId: string, agentId: string) => {
     if (!canManage) return;
     setAssigningId(leadId);
+
+    // Optimistic UI: update local state immediately
+    const agentName = agents.find((a) => a.id === agentId)?.name ?? undefined;
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === leadId ? { ...l, assignedAgentId: agentId || undefined, assignedAgentName: agentName } : l,
+      ),
+    );
+
     try {
       const res = await fetch(`/api/leads/${leadId}/assign`, {
         method: "PATCH",
@@ -276,9 +288,12 @@ export function LeadsManagement({
       if (!res.ok) throw new Error(data.error ?? "Assignment failed");
       toast.success(agentId ? "Lead assigned" : "Lead unassigned");
       if (detailLead?.id === leadId) setDetailLead(data as Lead);
-      await loadLeads(true);
+      // Background refresh to sync any server-side changes
+      void loadLeads(true);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Assignment failed");
+      // Revert optimistic update on failure
+      void loadLeads(true);
     } finally {
       setAssigningId(null);
     }
