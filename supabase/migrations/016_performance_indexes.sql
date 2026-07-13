@@ -1,5 +1,7 @@
 -- Performance indexes for faster queries across the CRM
--- Run this in Supabase SQL Editor for production optimization
+
+-- Enable trigram extension for fuzzy text search
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Leads indexes
 CREATE INDEX IF NOT EXISTS idx_leads_phone ON public.leads(phone) WHERE deleted_at IS NULL;
