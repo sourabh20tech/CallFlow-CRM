@@ -21,51 +21,48 @@ interface DashboardShellProps {
 }
 
 /**
- * Enterprise Dashboard Shell
- * 
- * Scroll Architecture:
- * - Outer container: flex row, h-[100dvh], NO scroll
- * - Sidebar: fixed height, internal scroll for nav items
- * - Right panel: flex column, h-[100dvh]
- *   - TopNavbar: sticky, never scrolls
- *   - Main: flex-1, THIS is the ONLY scroll container
- * 
- * This ensures:
- * - Single scroll source (main content area)
- * - Header always visible
- * - Sidebar always visible (desktop)
- * - No nested scroll conflicts
- * - Natural mobile scroll behavior
+ * Enterprise Dashboard Shell — Mobile-First Scroll Architecture
+ *
+ * MOBILE: Body scrolls naturally (no fixed container)
+ *   - Header: sticky top-0
+ *   - Main: natural document flow, scrolls with page
+ *   - No overflow:hidden on any parent
+ *
+ * DESKTOP: Fixed viewport layout
+ *   - Outer: h-dvh, overflow-hidden
+ *   - Sidebar: fixed height, internal nav scroll
+ *   - Main: flex-1, overflow-y-auto (single scroll)
  */
 export const DashboardShell = memo(function DashboardShell({ children }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   useFollowupReminderToasts(true);
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-transparent">
+    <div className="flex min-h-[100dvh] bg-transparent md:h-[100dvh] md:overflow-hidden">
       <FollowupReminderListener />
       <AgentInactivityGuard />
       <RoutePrefetcher />
 
-      {/* Sidebar: desktop only, fixed height with internal scroll */}
+      {/* Sidebar: desktop only */}
       <Sidebar />
 
       {/* Mobile drawer */}
       {mobileOpen && <MobileNav open={mobileOpen} onOpenChange={setMobileOpen} />}
 
-      {/* Right panel: header + scrollable main */}
-      <div className="flex h-[100dvh] min-w-0 flex-1 flex-col">
-        {/* Sticky header - never scrolls */}
+      {/* Right panel */}
+      <div className="flex min-h-[100dvh] min-w-0 flex-1 flex-col md:h-[100dvh]">
+        {/* Header: sticky on mobile, fixed within flex on desktop */}
         <TopNavbar onMobileMenuOpen={() => setMobileOpen(true)} />
 
-        {/* SINGLE scroll container for the entire app */}
+        {/* Main content: natural scroll on mobile, overflow-y-auto on desktop */}
         <main
           className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden",
+            "flex-1",
             "px-[var(--ds-page-padding-x)] py-[var(--ds-page-padding-y)]",
             "pb-[max(var(--ds-page-padding-y),env(safe-area-inset-bottom))]",
-            "-webkit-overflow-scrolling-touch",
+            "md:overflow-y-auto md:overflow-x-hidden",
           )}
+          style={{ WebkitOverflowScrolling: "touch" }}
         >
           <div className={cn(pageContainer, pageSection, "ds-animate-in")}>{children}</div>
         </main>

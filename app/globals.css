@@ -783,8 +783,7 @@ img, video, svg, canvas {
   .ds-h2 { font-size: 1.05rem; }
   .ds-h3 { font-size: 0.95rem; }
 
-  /* Sidebar hidden (mobile uses drawer) */
-  aside { display: none !important; }
+  /* Sidebar hidden on mobile (component uses hidden md:flex) */
 
   /* TopBar compact */
   .ds-topbar { padding-left: 0.5rem; padding-right: 0.5rem; }
@@ -854,7 +853,6 @@ img, video, svg, canvas {
 /* ═══ TABLET (640px - 1023px) ═══ */
 @media (min-width: 640px) and (max-width: 1023px) {
   :root { --ds-page-padding-x: 1.25rem; }
-  aside { display: none !important; }
 
   .grid[class*="xl:grid-cols-4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid[class*="xl:grid-cols-5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
