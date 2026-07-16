@@ -46,7 +46,7 @@ export function CallLogsTable({
 }: CallLogsTableProps) {
   return (
     <>
-      <div className="hidden lg:block">
+      <div className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -140,7 +140,7 @@ export function CallLogsTable({
         </Table>
       </div>
 
-      <ul className="space-y-3 lg:hidden">
+      <ul className="space-y-3 md:hidden">
         {calls.map((call) => (
           <li key={call.id}>
             <button
