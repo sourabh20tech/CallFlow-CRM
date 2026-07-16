@@ -36,10 +36,10 @@ const nextConfig: NextConfig = {
       "jspdf",
       "xlsx",
     ],
-    // Router cache — pages stay in memory for fast back/forward navigation
+    // Router cache — pages stay in memory for instant back/forward navigation
     staleTimes: {
-      dynamic: 60, // Cache dynamic pages for 60s in router (instant back button)
-      static: 600, // Cache static pages for 10 minutes
+      dynamic: 180, // Cache dynamic pages for 3 minutes (instant repeat navigation)
+      static: 900, // Cache static pages for 15 minutes
     },
   },
 
