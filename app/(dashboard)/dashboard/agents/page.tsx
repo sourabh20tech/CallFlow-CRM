@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth/guards";
 import { AgentsManagement } from "@/components/agents/agents-management";
 import { agentsService } from "@/services/agents.service";
+import { isAdminClientConfigured } from "@/lib/supabase/admin";
 import { GlassCard } from "@/components/design-system/glass-card";
 
 export const metadata = {
@@ -11,9 +12,12 @@ export const metadata = {
 export default async function AgentsPage() {
   await requireAdmin();
 
+  // Pre-resolve capabilities server-side (eliminates client /api/agents/capabilities call)
+  const canCreateAgents = isAdminClientConfigured();
+
   try {
     const agents = await agentsService.getAll(true);
-    return <AgentsManagement initialAgents={agents} />;
+    return <AgentsManagement initialAgents={agents} canCreateAgents={canCreateAgents} />;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load agents";
 

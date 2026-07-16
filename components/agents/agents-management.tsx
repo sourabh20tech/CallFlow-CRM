@@ -28,6 +28,7 @@ import { pageSection } from "@/lib/design-system/styles";
 
 interface AgentsManagementProps {
   initialAgents: Agent[];
+  canCreateAgents?: boolean;
 }
 
 function filterAgents(agents: Agent[], filters: AgentListFilters): Agent[] {
@@ -43,7 +44,7 @@ function filterAgents(agents: Agent[], filters: AgentListFilters): Agent[] {
   });
 }
 
-export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
+export function AgentsManagement({ initialAgents, canCreateAgents: initialCanCreate }: AgentsManagementProps) {
   const router = useRouter();
   const [agents, setAgents] = useState(initialAgents);
   const [filters, setFilters] = useState<AgentListFilters>(DEFAULT_AGENT_FILTERS);
@@ -55,10 +56,14 @@ export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
   const [editAgent, setEditAgent] = useState<Agent | null>(null);
   const [deleteAgent, setDeleteAgent] = useState<Agent | null>(null);
   const [resetAgent, setResetAgent] = useState<Agent | null>(null);
-  const [canCreateAgents, setCanCreateAgents] = useState(true);
-  const [createBlockedMessage, setCreateBlockedMessage] = useState<string | null>(null);
+  const [canCreateAgents, setCanCreateAgents] = useState(initialCanCreate ?? true);
+  const [createBlockedMessage, setCreateBlockedMessage] = useState<string | null>(
+    initialCanCreate === false ? "Add SUPABASE_SERVICE_ROLE_KEY to create agents." : null,
+  );
 
+  // Only fetch capabilities if not provided via SSR prop
   useEffect(() => {
+    if (initialCanCreate !== undefined) return; // Already resolved server-side
     let cancelled = false;
     void (async () => {
       try {
@@ -80,10 +85,8 @@ export function AgentsManagement({ initialAgents }: AgentsManagementProps) {
         /* non-fatal */
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    return () => { cancelled = true; };
+  }, [initialCanCreate]);
 
   const openAddAgent = useCallback(() => {
     if (!canCreateAgents && createBlockedMessage) {
