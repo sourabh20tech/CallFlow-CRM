@@ -1,36 +1,44 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getNavItemsForRole } from "@/constants/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { prefetch } from "@/lib/cache/data-cache";
 
 /**
- * Prefetch all dashboard routes AND critical API data on idle.
- * Routes: JS bundles + RSC payloads cached for instant navigation.
- * Data: Sources, statuses, dashboard stats pre-warmed in cache.
+ * Enterprise Route & Data Prefetcher
+ * 
+ * Strategy:
+ * 1. Immediately after auth resolves: prefetch ALL route bundles (RSC payloads)
+ * 2. On idle: prefetch reference data into memory cache
+ * 3. Result: first click on ANY sidebar item loads from prefetch cache
  */
 export function RoutePrefetcher() {
   const router = useRouter();
   const { role } = useAuth();
+  const prefetchedRef = useRef(false);
 
   useEffect(() => {
-    if (!role) return;
+    if (!role || prefetchedRef.current) return;
+    prefetchedRef.current = true;
 
     const navItems = getNavItemsForRole(role);
     const routes = navItems.map((item) => item.href);
 
-    const prefetchAll = () => {
-      // Prefetch route bundles
-      for (const route of routes) {
-        router.prefetch(route);
-      }
+    // Phase 1: Prefetch ALL route bundles IMMEDIATELY (high priority)
+    // This ensures RSC payload + JS is cached for every sidebar link
+    for (const route of routes) {
+      router.prefetch(route);
+    }
 
-      // Prefetch critical API data into cache
+    // Phase 2: Prefetch API data on idle (lower priority)
+    const prefetchData = () => {
+      // Reference data (used by all pages)
       prefetch("ref:lead-sources", () => fetch("/api/lead-sources").then(r => r.json()).then(d => d.sources ?? []), 180_000);
       prefetch("ref:lead-statuses", () => fetch("/api/lead-statuses").then(r => r.json()).then(d => d.statuses ?? []), 180_000);
 
+      // Page-specific data
       if (role === "admin") {
         prefetch("dashboard:admin", () => fetch("/api/dashboard/admin").then(r => r.json()), 20_000);
       } else {
@@ -39,11 +47,9 @@ export function RoutePrefetcher() {
     };
 
     if ("requestIdleCallback" in window) {
-      const id = requestIdleCallback(prefetchAll, { timeout: 3000 });
-      return () => cancelIdleCallback(id);
+      requestIdleCallback(prefetchData, { timeout: 2000 });
     } else {
-      const timer = setTimeout(prefetchAll, 1500);
-      return () => clearTimeout(timer);
+      setTimeout(prefetchData, 1000);
     }
   }, [role, router]);
 
