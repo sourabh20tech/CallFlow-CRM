@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cachedFetch, invalidateCache } from "@/lib/cache/data-cache";
+import { cachedFetch, getCached, invalidateCache } from "@/lib/cache/data-cache";
 import type {
   AdminDashboardStats,
   AgentPerformanceDataPoint,
@@ -38,8 +38,10 @@ async function fetchDashboard(): Promise<AdminDashboardData> {
 
 export function useDashboard(options: UseDashboardOptions = {}) {
   const { refreshInterval } = options;
-  const [data, setData] = useState<AdminDashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Start with cached data if available — NO skeleton flash on revisit
+  const cachedData = getCached<AdminDashboardData>(CACHE_KEY);
+  const [data, setData] = useState<AdminDashboardData | null>(cachedData);
+  const [isLoading, setIsLoading] = useState(!cachedData);
   const [error, setError] = useState<string | null>(null);
   const fetchingRef = useRef(false);
 

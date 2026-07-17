@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cachedFetch, invalidateCache } from "@/lib/cache/data-cache";
+import { cachedFetch, getCached, invalidateCache } from "@/lib/cache/data-cache";
 import type { AgentPanelBundle } from "@/types/agent-panel";
 
 interface UseAgentPanelOptions {
@@ -20,8 +20,11 @@ async function fetchPanel(): Promise<AgentPanelBundle> {
 
 export function useAgentPanel(options: UseAgentPanelOptions = {}) {
   const { initialData } = options;
-  const [data, setData] = useState<AgentPanelBundle | null>(initialData ?? null);
-  const [isRefreshing, setIsRefreshing] = useState(!initialData);
+  // Use cached data if available — no skeleton on revisit
+  const cachedData = getCached<AgentPanelBundle>(CACHE_KEY);
+  const startData = initialData ?? cachedData ?? null;
+  const [data, setData] = useState<AgentPanelBundle | null>(startData);
+  const [isRefreshing, setIsRefreshing] = useState(!startData);
   const [error, setError] = useState<string | null>(null);
   const fetchingRef = useRef(false);
 
