@@ -32,13 +32,13 @@ export function RoutePrefetcher() {
       router.prefetch(route);
     }
 
-    // Phase 2: Prefetch API data on idle (lower priority)
+    // Phase 2: Prefetch API data IMMEDIATELY (not on idle — we want instant dashboard)
     const prefetchData = () => {
       // Reference data (used by all pages)
       prefetch("ref:lead-sources", () => fetch("/api/lead-sources").then(r => r.json()).then(d => d.sources ?? []), 180_000);
       prefetch("ref:lead-statuses", () => fetch("/api/lead-statuses").then(r => r.json()).then(d => d.statuses ?? []), 180_000);
 
-      // Page-specific data
+      // Page-specific data — prefetch dashboard data immediately
       if (role === "admin") {
         prefetch("dashboard:admin", () => fetch("/api/dashboard/admin").then(r => r.json()), 20_000);
       } else {
@@ -46,11 +46,8 @@ export function RoutePrefetcher() {
       }
     };
 
-    if ("requestIdleCallback" in window) {
-      requestIdleCallback(prefetchData, { timeout: 2000 });
-    } else {
-      setTimeout(prefetchData, 1000);
-    }
+    // Start data prefetch after a tiny delay (let UI render first)
+    setTimeout(prefetchData, 100);
   }, [role, router]);
 
   return null;

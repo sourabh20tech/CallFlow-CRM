@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { SessionLoading } from "@/components/auth/session-loading";
 import { toast } from "sonner";
 
-const AUTH_GUARD_MAX_MS = 6_000;
+const AUTH_GUARD_MAX_MS = 3_000;
 
 interface AuthGuardProps {
   children: React.ReactNode;

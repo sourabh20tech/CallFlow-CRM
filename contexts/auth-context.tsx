@@ -19,7 +19,7 @@ import { authService } from "@/services/auth.service";
 import type { Session as SupabaseAuthSession } from "@supabase/supabase-js";
 import type { LoginCredentials, Session, User, UserRole } from "@/types/auth";
 
-const AUTH_INIT_TIMEOUT_MS = 3_000;
+const AUTH_INIT_TIMEOUT_MS = 1_500;
 
 interface AuthContextValue {
   user: User | null;
@@ -39,9 +39,26 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  // Hydrate from sessionStorage for instant repeat visits (no blank page)
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const cached = sessionStorage.getItem("crm:user");
+      return cached ? (JSON.parse(cached) as User) : null;
+    } catch {
+      return null;
+    }
+  });
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    // If we have cached user, skip loading state entirely
+    if (typeof window === "undefined") return true;
+    try {
+      return !sessionStorage.getItem("crm:user");
+    } catch {
+      return true;
+    }
+  });
   const [isSigningOut, setIsSigningOut] = useState(false);
   const signInInFlightRef = useRef(false);
   const mountedRef = useRef(true);
@@ -59,11 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!resolved) {
         setUser(null);
         setSession(null);
+        try { sessionStorage.removeItem("crm:user"); } catch {}
         return false;
       }
 
       setUser(resolved);
       setSession(mapSupabaseAuthSession(supabaseSession ?? null));
+      try { sessionStorage.setItem("crm:user", JSON.stringify(resolved)); } catch {}
       return true;
     },
     [],
@@ -82,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!supabaseSession?.user) {
         setUser(null);
         setSession(null);
+        try { sessionStorage.removeItem("crm:user"); } catch {}
         return;
       }
 
@@ -90,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("[auth] refreshUser error:", error);
       setUser(null);
       setSession(null);
+      try { sessionStorage.removeItem("crm:user"); } catch {}
     } finally {
       if (mountedRef.current) {
         setIsLoading(false);
@@ -125,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!supabaseSession?.user) {
           setUser(null);
           setSession(null);
+          try { sessionStorage.removeItem("crm:user"); } catch {}
           return;
         }
 
@@ -133,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("[auth] bootstrap error:", error);
         setUser(null);
         setSession(null);
+        try { sessionStorage.removeItem("crm:user"); } catch {}
       } finally {
         window.clearTimeout(initTimeout);
         if (mountedRef.current) {
@@ -154,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setSession(null);
         setIsLoading(false);
+        try { sessionStorage.removeItem("crm:user"); } catch {}
         return;
       }
 
@@ -191,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (signedInUser) {
         setUser(signedInUser);
         setSession(mapSupabaseAuthSession(newSession));
+        try { sessionStorage.setItem("crm:user", JSON.stringify(signedInUser)); } catch {}
       }
 
       return {};
@@ -208,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!isSupabaseConfigured()) {
         setUser(null);
         setSession(null);
+        try { sessionStorage.removeItem("crm:user"); } catch {}
         return;
       }
 
@@ -225,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authService.signOut();
       setUser(null);
       setSession(null);
+      try { sessionStorage.removeItem("crm:user"); } catch {}
     } finally {
       setIsSigningOut(false);
       setIsLoading(false);

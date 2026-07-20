@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Lock, Mail } from "lucide-react";
@@ -23,6 +23,7 @@ import type { UserRole } from "@/types/auth";
 export function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo");
+  const router = useRouter();
   const { signIn } = useAuth();
   const { crmEnabled, isMaintenanceMode, maintenanceMessage } = useCrmEnabled();
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -74,7 +75,7 @@ export function LoginForm() {
       toast.success(`Welcome back, ${values.role === "admin" ? "Administrator" : "Agent"}!`);
 
       const destination = resolvePostLoginPath(redirectTo, values.role);
-      window.location.replace(destination);
+      router.push(destination);
       return;
     } catch (error) {
       console.error("[auth] login form error:", error);

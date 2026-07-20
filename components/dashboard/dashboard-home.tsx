@@ -1,17 +1,15 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { Suspense, lazy } from "react";
 import { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
 import { useAuth } from "@/hooks/use-auth";
 
 // Lazy-load dashboards — only the relevant one loads based on role
-const AdminDashboard = dynamic(
-  () => import("@/components/dashboard/admin-dashboard").then((m) => m.AdminDashboard),
-  { ssr: false, loading: () => <AgentPanelSkeleton /> },
+const AdminDashboard = lazy(
+  () => import("@/components/dashboard/admin-dashboard").then((m) => ({ default: m.AdminDashboard })),
 );
-const AgentDashboard = dynamic(
-  () => import("@/components/dashboard/agent-dashboard").then((m) => m.AgentDashboard),
-  { ssr: false, loading: () => <AgentPanelSkeleton /> },
+const AgentDashboard = lazy(
+  () => import("@/components/dashboard/agent-dashboard").then((m) => ({ default: m.AgentDashboard })),
 );
 
 export function DashboardHome() {
@@ -22,8 +20,16 @@ export function DashboardHome() {
   }
 
   if (role === "agent") {
-    return <AgentDashboard />;
+    return (
+      <Suspense fallback={<AgentPanelSkeleton />}>
+        <AgentDashboard />
+      </Suspense>
+    );
   }
 
-  return <AdminDashboard />;
+  return (
+    <Suspense fallback={<AgentPanelSkeleton />}>
+      <AdminDashboard />
+    </Suspense>
+  );
 }
