@@ -49,25 +49,37 @@ function SectionSkeleton() {
 const LIVE_STATS_INTERVAL_MS = 120_000;
 
 interface ReportsDashboardProps {
-  initialData: ReportsBundle;
+  initialData?: ReportsBundle;
 }
+
+const EMPTY_BUNDLE: ReportsBundle = {
+  kpis: { totalLeads: 0, convertedLeads: 0, totalCalls: 0, pendingFollowups: 0, activeAgents: 0, conversionRate: 0, totalFund: 0, answeredRate: 0, fundChange: 0, avgHandleTime: 0 },
+  daily: [],
+  leadConversion: [],
+  agentPerformance: [],
+  performance: [],
+  followups: { total: 0, pending: 0, inProgress: 0, completed: 0, overdue: 0, byStatus: [] },
+  range: { from: new Date().toISOString(), to: new Date().toISOString(), preset: "this_week" },
+  generatedAt: new Date().toISOString(),
+};
 
 export function ReportsDashboard({ initialData }: ReportsDashboardProps) {
   const { role } = useAuth();
   const isAdmin = role === "admin";
-  const [data, setData] = useState(initialData);
-  const [preset, setPreset] = useState<ReportDatePreset>(initialData.range.preset ?? "this_week");
+  const resolvedInitial = initialData ?? EMPTY_BUNDLE;
+  const [data, setData] = useState(resolvedInitial);
+  const [preset, setPreset] = useState<ReportDatePreset>(resolvedInitial.range.preset ?? "this_week");
   const [customFrom, setCustomFrom] = useState(() =>
-    toDatetimeLocalValue(initialData.range.from).slice(0, 10),
+    toDatetimeLocalValue(resolvedInitial.range.from).slice(0, 10),
   );
   const [customTo, setCustomTo] = useState(() =>
-    toDatetimeLocalValue(initialData.range.to).slice(0, 10),
+    toDatetimeLocalValue(resolvedInitial.range.to).slice(0, 10),
   );
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!initialData);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [liveStats, setLiveStats] = useState<LiveDashboardStats | null>(null);
-  const skipNextFetch = useRef(true);
+  const skipNextFetch = useRef(!!initialData);
   const filterKey = `${preset}-${customFrom}-${customTo}`;
 
   const chartKey = `${filterKey}-${data.range.from}-${data.range.to}`;

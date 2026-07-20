@@ -20,7 +20,7 @@ import type { AgentPanelBundle } from "@/types/agent-panel";
 import { pageSection } from "@/lib/design-system/styles";
 
 interface AgentPanelDashboardProps {
-  initialData: AgentPanelBundle;
+  initialData?: AgentPanelBundle;
 }
 
 const TAB_HASH: Record<string, string> = {
@@ -45,16 +45,29 @@ export function AgentPanelDashboard({ initialData }: AgentPanelDashboardProps) {
     initialData,
   });
 
-  if (isLoading && !data) {
-    return <AgentPanelSkeleton />;
+  if (isLoading && !data && !initialData) {
+    return (
+      <div className="flex min-h-[30vh] items-center justify-center">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   if (error && !data) {
     return <AgentWorkspaceError message={error} />;
   }
-  const activeTab = useSyncExternalStore(subscribeToHash, getHashTab, () => "overview");
 
   const panel = data ?? initialData;
+  if (!panel) {
+    return (
+      <div className="flex min-h-[30vh] items-center justify-center">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  const activeTab = useSyncExternalStore(subscribeToHash, getHashTab, () => "overview");
+
   const leadLookup = useMemo(
     () => buildAgentLeadLookup([...panel.myLeads, ...panel.convertedLeads]),
     [panel.myLeads, panel.convertedLeads],
