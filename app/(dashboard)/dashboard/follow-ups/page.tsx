@@ -5,6 +5,8 @@ import { agentsService } from "@/services/agents.service";
 import { followupsService } from "@/services/followups.service";
 import type { Followup, FollowupStats, AgentFollowupSummary } from "@/types/followup";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Follow-Up Management",
   description: "Schedule, track pending tasks, and review completed follow-ups",

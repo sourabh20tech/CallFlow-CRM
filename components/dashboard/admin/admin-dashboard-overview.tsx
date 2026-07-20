@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/design-system/page-header";
 import { AdminKpiRow, AdminKpiSummary } from "@/components/dashboard/admin/admin-kpi-row";
-import { AdminDashboardSkeleton } from "@/components/dashboard/admin/admin-dashboard-skeleton";
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useIsClient } from "@/hooks/use-is-client";
@@ -37,8 +36,12 @@ export function AdminDashboardOverview() {
   });
   const isClient = useIsClient();
 
-  if (isLoading || !data) {
-    return <AdminDashboardSkeleton />;
+  if (isLoading && !data) {
+    return (
+      <div className="flex min-h-[30vh] items-center justify-center">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   if (error) {
@@ -46,6 +49,14 @@ export function AdminDashboardOverview() {
       <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
         <p className="text-destructive">{error}</p>
         <Button onClick={() => void refresh()}>Retry</Button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex min-h-[30vh] items-center justify-center">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }

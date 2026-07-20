@@ -3,6 +3,8 @@ import { DEFAULT_PAGE_SIZE } from "@/lib/db/pagination";
 import { getServerUser } from "@/lib/auth/session.server";
 import { leadsService } from "@/services/leads.service";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+
+export const dynamic = "force-dynamic";
 import type { Lead, LeadRosterAgent } from "@/types/lead";
 
 export const metadata = {

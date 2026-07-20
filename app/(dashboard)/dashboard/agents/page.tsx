@@ -4,6 +4,8 @@ import { agentsService } from "@/services/agents.service";
 import { isAdminClientConfigured } from "@/lib/supabase/admin";
 import { GlassCard } from "@/components/design-system/glass-card";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Agent Management",
   description: "Create and manage call center agents, access, and assignments",

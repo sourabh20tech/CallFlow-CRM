@@ -15,7 +15,6 @@ import {
 import { PageHeader } from "@/components/design-system/page-header";
 import { StatCard } from "@/components/design-system/stat-card";
 import { GlassCard } from "@/components/design-system/glass-card";
-import { AgentPanelSkeleton } from "@/components/agent-panel/agent-panel-skeleton";
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { Button } from "@/components/ui/button";
 import { useAgentPanel } from "@/hooks/use-agent-panel";
@@ -35,7 +34,11 @@ export function AgentDashboard() {
   const { data, refresh, isRefreshing, isLoading, error } = useAgentPanel();
 
   if (isLoading && !data) {
-    return <AgentPanelSkeleton />;
+    return (
+      <div className="flex min-h-[30vh] items-center justify-center">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   const stats = data?.stats;

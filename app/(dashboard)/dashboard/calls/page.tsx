@@ -6,6 +6,8 @@ import { callsService } from "@/services/calls.service";
 import { getServerUser } from "@/lib/auth/session.server";
 import type { CallStats } from "@/types/call";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Call Management",
   description: "Dial, log calls, notes, and call history",

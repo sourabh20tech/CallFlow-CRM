@@ -4,6 +4,8 @@ import { SettingsContent } from "@/components/settings/settings-content";
 import { pageSection } from "@/lib/design-system/styles";
 import { requireAdmin } from "@/lib/auth/guards";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Settings",
 };

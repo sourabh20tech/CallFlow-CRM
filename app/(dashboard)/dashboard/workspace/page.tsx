@@ -4,6 +4,8 @@ import { AgentWorkspaceError } from "@/components/agent-panel/agent-workspace-er
 import { getServerUser } from "@/lib/auth/session.server";
 import { agentPanelService } from "@/services/agent-panel.service";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "My Workspace | Agent Panel",
   description: "Manage your leads, calls, follow-ups, and conversions",
