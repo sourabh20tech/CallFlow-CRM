@@ -813,16 +813,7 @@ img, video, svg, canvas {
   /* Fallback scroll for any remaining tables */
   .ds-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-  /* Modals: full width */
-  [role="dialog"] {
-    width: 96vw !important; max-width: 96vw !important;
-    max-height: 90dvh !important;
-    margin: auto !important; overflow-y: auto !important;
-    border-radius: var(--radius) !important;
-  }
-  [role="dialog"] > div { max-height: 85dvh; overflow-y: auto; }
-
-  /* Modal footer buttons stack */
+  /* Modals: handled by component (bottom sheet on mobile, centered on desktop) */
   [role="dialog"] [class*="flex"][class*="justify-end"] {
     flex-direction: column; gap: 0.5rem;
   }
@@ -856,10 +847,6 @@ img, video, svg, canvas {
 
   .grid[class*="xl:grid-cols-4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid[class*="xl:grid-cols-5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-
-  [role="dialog"] {
-    width: 95vw !important; max-width: 720px !important; max-height: 90dvh !important;
-  }
 }
 
 /* ═══ DESKTOP (1024px+) ═══ */
