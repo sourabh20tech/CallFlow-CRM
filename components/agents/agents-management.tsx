@@ -48,7 +48,7 @@ export function AgentsManagement({ initialAgents, canCreateAgents: initialCanCre
   const router = useRouter();
   const [agents, setAgents] = useState(initialAgents);
   const [filters, setFilters] = useState<AgentListFilters>(DEFAULT_AGENT_FILTERS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!initialAgents.length);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -128,6 +128,13 @@ export function AgentsManagement({ initialAgents, canCreateAgents: initialCanCre
       setIsRefreshing(false);
     }
   }, []);
+
+  // Auto-fetch on mount when no initial data
+  useEffect(() => {
+    if (initialAgents.length === 0) {
+      void refreshAgents();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async (values: CreateAgentFormValues) => {
     setIsSubmitting(true);

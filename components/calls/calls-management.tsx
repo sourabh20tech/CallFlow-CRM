@@ -99,7 +99,7 @@ export function CallsManagement({
   const [editDuration, setEditDuration] = useState("0");
   const [editSummary, setEditSummary] = useState("");
   const [logOpen, setLogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!initialCalls.length);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -108,7 +108,7 @@ export function CallsManagement({
     if (initialLoadError) {
       toast.error(initialLoadError);
     }
-  }, [initialLoadError]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasActiveFilters = Boolean(
     filters.search?.trim() ||
