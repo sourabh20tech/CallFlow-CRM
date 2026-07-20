@@ -43,26 +43,40 @@ export class AgentsDbService extends BaseDbService {
     const now = Date.now();
 
     for (const session of (activeSessions ?? []) as { user_id: string; last_heartbeat: string | null }[]) {
-      // Consider online if heartbeat within last 5 minutes
       const lastBeat = session.last_heartbeat ? new Date(session.last_heartbeat).getTime() : 0;
       if (now - lastBeat < HEARTBEAT_TIMEOUT_MS) {
         onlineUserIds.add(session.user_id);
       }
     }
 
-    const withCounts = await Promise.all(
-      rows.map(async (row) => {
-        const count = await this.getAssignedLeadCount(row.id, supabase);
-        const agent = mapAgentRow(row, { assignedLeadsCount: count });
-        // Override status with live presence
-        if (agent.profileId && onlineUserIds.has(agent.profileId)) {
-          agent.status = "available";
-        } else {
-          agent.status = "offline";
+    // Batch lead count: ONE query instead of N (eliminates N+1 problem)
+    const agentIds = rows.map((r) => r.id);
+    const leadCounts = new Map<string, number>();
+
+    if (agentIds.length > 0) {
+      const { data: countRows } = await supabase
+        .from("leads")
+        .select("assigned_agent_id")
+        .in("assigned_agent_id", agentIds)
+        .is("deleted_at", null);
+
+      for (const row of (countRows ?? []) as { assigned_agent_id: string }[]) {
+        if (row.assigned_agent_id) {
+          leadCounts.set(row.assigned_agent_id, (leadCounts.get(row.assigned_agent_id) ?? 0) + 1);
         }
-        return agent;
-      }),
-    );
+      }
+    }
+
+    const withCounts = rows.map((row) => {
+      const count = leadCounts.get(row.id) ?? 0;
+      const agent = mapAgentRow(row, { assignedLeadsCount: count });
+      if (agent.profileId && onlineUserIds.has(agent.profileId)) {
+        agent.status = "available";
+      } else {
+        agent.status = "offline";
+      }
+      return agent;
+    });
     return withCounts;
   }
 
