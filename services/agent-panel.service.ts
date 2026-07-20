@@ -66,39 +66,19 @@ export class AgentPanelService {
     requireSupabaseConfigured("agent workspace");
     const agentId = await this.getAgentIdForUser(user);
 
-    const agent = await safe(
-      "agent profile",
-      () => agentsService.getById(agentId),
-      null,
-    );
-    const agentName = agent?.name ?? user.fullName ?? "Agent";
-
-    // Run independent queries IN PARALLEL (not sequentially)
-    const [myLeadsResult, todayCalls, allFollowups, announcement] = await Promise.all([
-      safe(
-        "assigned leads",
-        () => leadsDbServiceServer.list(
-          { assignedAgentId: agentId },
-          { page: 1, pageSize: 100 },
-        ),
-        { data: [] as Lead[], total: 0, page: 1, pageSize: 100, totalPages: 1 },
-      ),
-      safe(
-        "today calls",
-        () => callsService.listAll({ agentId, todayOnly: true }),
-        [],
-      ),
-      safe(
-        "follow-ups",
-        () => followupsService.list({ agentId, view: "all" }),
-        [],
-      ),
-      safe(
-        "admin announcement",
-        () => systemSettingsDbServiceServer.getAnnouncement(),
-        { title: "", message: "", updatedAt: null },
-      ),
+    // ALL queries in parallel (agent profile + data — saves one round trip)
+    const [agent, myLeadsResult, todayCalls, allFollowups, announcement] = await Promise.all([
+      safe("agent profile", () => agentsService.getById(agentId), null),
+      safe("assigned leads", () => leadsDbServiceServer.list(
+        { assignedAgentId: agentId },
+        { page: 1, pageSize: 100 },
+      ), { data: [] as Lead[], total: 0, page: 1, pageSize: 100, totalPages: 1 }),
+      safe("today calls", () => callsService.listAll({ agentId, todayOnly: true }), []),
+      safe("follow-ups", () => followupsService.list({ agentId, view: "all" }), []),
+      safe("admin announcement", () => systemSettingsDbServiceServer.getAnnouncement(), { title: "", message: "", updatedAt: null }),
     ]);
+
+    const agentName = agent?.name ?? user.fullName ?? "Agent";
 
     const myLeads = myLeadsResult.data;
     const totalAssignedLeads = myLeadsResult.total;
