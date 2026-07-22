@@ -36,15 +36,15 @@ export function AdminDashboardOverview() {
   });
   const isClient = useIsClient();
 
-  if (isLoading && !data) {
-    return (
-      <div className="flex min-h-[30vh] items-center justify-center">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  // Show dashboard shell immediately — even while data loads
+  // KPIs show 0 briefly then animate to real values
+  const stats = data?.stats ?? {
+    totalLeads: 0, convertedLeads: 0, pendingFollowUps: 0,
+    totalCalls: 0, activeAgents: 0, conversionRate: 0,
+    trends: { totalLeads: 0, convertedLeads: 0, pendingFollowUps: 0, totalCalls: 0, activeAgents: 0 },
+  };
 
-  if (error) {
+  if (error && !data) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
         <p className="text-destructive">{error}</p>
@@ -53,15 +53,7 @@ export function AdminDashboardOverview() {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="flex min-h-[30vh] items-center justify-center">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  const chartKey = data.updatedAt.slice(0, 19);
+  const chartKey = data?.updatedAt?.slice(0, 19) ?? "loading";
 
   return (
     <div className={pageSection}>
@@ -70,7 +62,7 @@ export function AdminDashboardOverview() {
         description="Real-time overview of leads, calls, follow-ups, and agent performance"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {isClient && (
+            {isClient && data && (
               <span className="hidden text-xs text-muted-foreground sm:inline">
                 Updated {new Date(data.updatedAt).toLocaleTimeString()}
               </span>
@@ -88,23 +80,27 @@ export function AdminDashboardOverview() {
         }
       />
 
-      <AdminKpiRow stats={data.stats} />
-      <AdminKpiSummary stats={data.stats} />
+      <AdminKpiRow stats={stats} />
+      <AdminKpiSummary stats={stats} />
 
       <AnnouncementBanner />
 
-      <AdminChartsSection
-        dailyCalls={data.dailyCalls}
-        agentPerformance={data.agentPerformance}
-        chartKey={chartKey}
-      />
+      {data && (
+        <>
+          <AdminChartsSection
+            dailyCalls={data.dailyCalls}
+            agentPerformance={data.agentPerformance}
+            chartKey={chartKey}
+          />
 
-      <AdminActivitySection activities={data.activities} />
+          <AdminActivitySection activities={data.activities} />
 
-      <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-2">
-        <FollowupCenterWidget />
-        <AdminLatestLeadsSection leads={data.leads} />
-      </div>
+          <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-2">
+            <FollowupCenterWidget />
+            <AdminLatestLeadsSection leads={data.leads} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

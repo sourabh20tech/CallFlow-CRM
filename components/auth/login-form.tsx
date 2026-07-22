@@ -14,6 +14,7 @@ import { GlassCard } from "@/components/design-system/glass-card";
 import { RoleTabs } from "@/components/auth/role-tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useCrmEnabled } from "@/hooks/use-crm-enabled";
+import { setCache } from "@/lib/cache/data-cache";
 import { INACTIVE_AGENT_LOGIN_MESSAGE } from "@/lib/auth/agent-account";
 import { resolvePostLoginPath } from "@/lib/auth/post-login-path";
 import { loginSchema, type LoginFormValues } from "@/lib/auth/schemas";
@@ -73,6 +74,19 @@ export function LoginForm() {
       }
 
       toast.success(`Welcome back, ${values.role === "admin" ? "Administrator" : "Agent"}!`);
+
+      // Start dashboard data fetch IMMEDIATELY — don't wait for page mount
+      // This runs in parallel with navigation, saving 1-2s on first load
+      const dashboardUrl = values.role === "admin" ? "/api/dashboard/admin" : "/api/agent/panel";
+      const cacheKey = values.role === "admin" ? "dashboard:admin" : "agent:panel";
+      fetch(dashboardUrl)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data) setCache(cacheKey, data); })
+        .catch(() => {});
+
+      // Also prefetch reference data
+      fetch("/api/lead-sources").catch(() => {});
+      fetch("/api/lead-statuses").catch(() => {});
 
       const destination = resolvePostLoginPath(redirectTo, values.role);
       router.push(destination);
