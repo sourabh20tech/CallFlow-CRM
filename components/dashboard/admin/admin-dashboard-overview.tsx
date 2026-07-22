@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/design-system/page-header";
@@ -11,17 +11,13 @@ import { pageSection } from "@/lib/design-system/styles";
 import { Button } from "@/components/ui/button";
 import type { AdminDashboardStats } from "@/types/dashboard";
 
-// Lazy-load heavy sections — charts and activity load after KPIs render
+// Lazy-load heavy sections
 const AdminChartsSection = dynamic(
   () => import("@/components/dashboard/admin/admin-charts-section").then((m) => m.AdminChartsSection),
   { ssr: false },
 );
 const AdminActivitySection = dynamic(
   () => import("@/components/dashboard/admin/admin-activity-section").then((m) => m.AdminActivitySection),
-  { ssr: false },
-);
-const AdminLatestLeadsSection = dynamic(
-  () => import("@/components/dashboard/admin/admin-latest-leads-section").then((m) => m.AdminLatestLeadsSection),
   { ssr: false },
 );
 const FollowupCenterWidget = dynamic(
@@ -119,10 +115,7 @@ export function AdminDashboardOverview() {
 
           <AdminActivitySection activities={data.activities} />
 
-          <div className="grid gap-[var(--ds-stack-gap)] lg:grid-cols-2">
-            <FollowupCenterWidget />
-            <AdminLatestLeadsSection leads={data.leads} />
-          </div>
+          <FollowupCenterWidget />
         </>
       ) : hasStats ? (
         <div className="flex items-center justify-center py-8">

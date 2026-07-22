@@ -1,7 +1,6 @@
 import "server-only";
 import { analyticsDbServiceServer } from "@/services/db/analytics.service";
 import { buildReportsBundleFromRaw } from "@/lib/reports/aggregations";
-import { createClient } from "@/lib/supabase/server";
 import { requireSupabaseConfigured } from "@/lib/supabase/config";
 import type {
   AdminDashboardStats,
@@ -83,30 +82,9 @@ export class DashboardService {
     requireSupabaseConfigured("admin dashboard");
 
     const range = this.lastNDaysRange(7);
-    const supabase = await createClient();
 
-    // ALL queries in parallel — including recent leads
-    const [raw, recentLeadsResult] = await Promise.all([
-      analyticsDbServiceServer.fetchRaw(range),
-      supabase
-        .from("leads")
-        .select("id, full_name, email, tier, status, last_contacted_at, created_at")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-        .limit(8),
-    ]);
-
+    const raw = await analyticsDbServiceServer.fetchRaw(range);
     const bundle = buildReportsBundleFromRaw(range, raw);
-
-    // Use recent leads from parallel query
-    const recentLeads: DashboardLeadRow[] = (recentLeadsResult.data ?? []).map((row) => ({
-      id: row.id,
-      name: row.full_name,
-      email: row.email ?? "—",
-      force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
-      status: row.status as DashboardLeadRow["status"],
-      lastContactAt: row.last_contacted_at ?? row.created_at,
-    }));
 
     // Derive activities from raw data (no extra queries needed)
     const activities: DashboardActivity[] = [
@@ -141,7 +119,7 @@ export class DashboardService {
       leadConversion: bundle.leadConversion as LeadConversionDataPoint[],
       agentPerformance: bundle.agentPerformance as AgentPerformanceDataPoint[],
       activities,
-      leads: recentLeads,
+      leads: [],
       updatedAt: bundle.generatedAt,
     };
   }
