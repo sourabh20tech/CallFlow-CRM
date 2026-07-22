@@ -85,11 +85,12 @@ export function LeadsManagement({
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
 
-  // Use prefetched cache if no server data
+  // Use prefetched cache if no server data (validate it has actual leads)
   const cachedLeadsData = !initialLeads?.length ? getCached<any>("leads:page1") : null;
-  const hasServerData = Boolean(initialLeads?.length || cachedLeadsData);
-  const [leads, setLeads] = useState<Lead[]>(initialLeads?.length ? initialLeads : (cachedLeadsData?.leads ?? []));
-  const [agents, setAgents] = useState<LeadRosterAgent[]>(initialAgents?.length ? initialAgents : (cachedLeadsData?.agents ?? []));
+  const validCache = cachedLeadsData?.leads?.length > 0 ? cachedLeadsData : null;
+  const hasServerData = Boolean(initialLeads?.length || validCache);
+  const [leads, setLeads] = useState<Lead[]>(initialLeads?.length ? initialLeads : (validCache?.leads ?? []));
+  const [agents, setAgents] = useState<LeadRosterAgent[]>(initialAgents?.length ? initialAgents : (validCache?.agents ?? []));
   const [filters, setFilters] = useState<LeadListFilters>({
     ...DEFAULT_FILTERS,
     search: initialSearch,
@@ -108,8 +109,8 @@ export function LeadsManagement({
   const [detailFocus, setDetailFocus] = useState<LeadDetailFocus>("overview");
   const [deleteLead, setDeleteLead] = useState<Lead | null>(null);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(initialTotal ?? cachedLeadsData?.total ?? 0);
-  const [totalPages, setTotalPages] = useState(initialTotalPages ?? cachedLeadsData?.totalPages ?? 1);
+  const [total, setTotal] = useState(initialTotal ?? validCache?.total ?? 0);
+  const [totalPages, setTotalPages] = useState(initialTotalPages ?? validCache?.totalPages ?? 1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   useEffect(() => {

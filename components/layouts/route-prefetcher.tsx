@@ -43,11 +43,31 @@ export function RoutePrefetcher() {
 
     // Prefetch leads, calls, followups data after 500ms (let dashboard load first)
     setTimeout(() => {
-      prefetch("leads:page1", () => fetch("/api/leads?page=1&pageSize=25").then(r => r.json()), 60_000);
-      prefetch("calls:page1", () => fetch("/api/calls?page=1&pageSize=20").then(r => r.json()), 60_000);
-      prefetch("followups:all", () => fetch("/api/followups?view=all").then(r => r.json()), 60_000);
+      prefetch("leads:page1", async () => {
+        const r = await fetch("/api/leads?page=1&pageSize=25");
+        if (!r.ok) throw new Error("fetch failed");
+        const d = await r.json();
+        if (!d.leads) throw new Error("invalid response");
+        return d;
+      }, 60_000);
+      prefetch("calls:page1", async () => {
+        const r = await fetch("/api/calls?page=1&pageSize=20");
+        if (!r.ok) throw new Error("fetch failed");
+        const d = await r.json();
+        if (!d.calls) throw new Error("invalid response");
+        return d;
+      }, 60_000);
+      prefetch("followups:all", async () => {
+        const r = await fetch("/api/followups?view=all");
+        if (!r.ok) throw new Error("fetch failed");
+        return r.json();
+      }, 60_000);
       if (role === "admin") {
-        prefetch("agents:list", () => fetch("/api/agents").then(r => r.json()), 60_000);
+        prefetch("agents:list", async () => {
+          const r = await fetch("/api/agents");
+          if (!r.ok) throw new Error("fetch failed");
+          return r.json();
+        }, 60_000);
       }
     }, 500);
   }, [role, router]);

@@ -10,8 +10,6 @@ import type { User } from "@/types/auth";
 /** 
  * Resolves the authenticated CRM user on the server.
  * Uses React cache() to deduplicate within the same request.
- * Uses getSession() (local cookie read) instead of getUser() (network call)
- * for faster API responses.
  */
 export const getServerUser = cache(async (): Promise<User | null> => {
   if (!isSupabaseConfigured()) {
@@ -20,21 +18,17 @@ export const getServerUser = cache(async (): Promise<User | null> => {
 
   const supabase = await createClient();
   
-  // getSession() reads from cookie — NO network call to Supabase Auth
-  // This saves ~1.4s per request compared to getUser()
   const {
-    data: { session },
+    data: { user: authUser },
     error,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (error || !session?.user) {
+  if (error || !authUser) {
     return null;
   }
 
-  const authUser = session.user;
-
   const resolved = await resolveSessionUser(supabase, authUser, {
-    allowProvision: false, // Don't provision on API calls — only on login
+    allowProvision: false,
   });
 
   if (!resolved) {
