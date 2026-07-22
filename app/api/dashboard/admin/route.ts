@@ -18,7 +18,7 @@ export async function GET() {
     const data = await dashboardService.getAdminDashboard();
     return NextResponse.json(data, {
       headers: {
-        "Cache-Control": "private, max-age=15, stale-while-revalidate=45",
+        "Cache-Control": "private, max-age=30, stale-while-revalidate=120",
       },
     });
   } catch (error) {

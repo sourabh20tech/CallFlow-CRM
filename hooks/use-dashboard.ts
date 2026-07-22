@@ -27,10 +27,10 @@ interface UseDashboardOptions {
 }
 
 const CACHE_KEY = "dashboard:admin";
-const CACHE_TTL = 20_000; // 20s — dashboard data stays fresh briefly
+const CACHE_TTL = 60_000; // 60s — dashboard data cached for 1 minute
 
 async function fetchDashboard(): Promise<AdminDashboardData> {
-  const res = await fetch("/api/dashboard/admin", { cache: "no-store" });
+  const res = await fetch("/api/dashboard/admin");
   const body = (await res.json()) as AdminDashboardData & { error?: string };
   if (!res.ok) throw new Error(body.error ?? "Failed to load dashboard");
   return body;

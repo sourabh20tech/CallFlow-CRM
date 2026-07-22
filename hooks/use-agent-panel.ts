@@ -9,7 +9,7 @@ interface UseAgentPanelOptions {
 }
 
 const CACHE_KEY = "agent:panel";
-const CACHE_TTL = 15_000; // 15s
+const CACHE_TTL = 60_000; // 60s
 
 async function fetchPanel(): Promise<AgentPanelBundle> {
   const res = await fetch("/api/agent/panel");

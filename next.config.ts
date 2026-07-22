@@ -38,8 +38,8 @@ const nextConfig: NextConfig = {
     ],
     // Router cache — pages stay in memory for instant back/forward navigation
     staleTimes: {
-      dynamic: 180, // Cache dynamic pages for 3 minutes (instant repeat navigation)
-      static: 900, // Cache static pages for 15 minutes
+      dynamic: 300, // Cache dynamic pages for 5 minutes (instant repeat navigation)
+      static: 1800, // Cache static pages for 30 minutes
     },
   },
 
@@ -82,13 +82,13 @@ const nextConfig: NextConfig = {
         // Cache stable reference data APIs
         source: "/api/lead-sources",
         headers: [
-          { key: "Cache-Control", value: "private, max-age=60, stale-while-revalidate=120" },
+          { key: "Cache-Control", value: "private, max-age=300, stale-while-revalidate=600" },
         ],
       },
       {
         source: "/api/lead-statuses",
         headers: [
-          { key: "Cache-Control", value: "private, max-age=60, stale-while-revalidate=120" },
+          { key: "Cache-Control", value: "private, max-age=300, stale-while-revalidate=600" },
         ],
       },
     ];
