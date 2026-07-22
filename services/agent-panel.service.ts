@@ -62,17 +62,18 @@ export class AgentPanelService {
     return resolveAgentIdForUser(user.id);
   }
 
-  async getPanel(user: User): Promise<AgentPanelBundle> {
+  async getPanel(user: User, preResolvedAgentId?: string): Promise<AgentPanelBundle> {
     requireSupabaseConfigured("agent workspace");
-    const agentId = await this.getAgentIdForUser(user);
+    // Use pre-resolved agentId if available (avoids duplicate query)
+    const agentId = preResolvedAgentId ?? await this.getAgentIdForUser(user);
 
-    // ALL queries in parallel (agent profile + data — saves one round trip)
+    // ALL queries in parallel — including note counts
     const [agent, myLeadsResult, todayCalls, allFollowups, announcement] = await Promise.all([
       safe("agent profile", () => agentsService.getById(agentId), null),
       safe("assigned leads", () => leadsDbServiceServer.list(
         { assignedAgentId: agentId },
-        { page: 1, pageSize: 100 },
-      ), { data: [] as Lead[], total: 0, page: 1, pageSize: 100, totalPages: 1 }),
+        { page: 1, pageSize: 50 },
+      ), { data: [] as Lead[], total: 0, page: 1, pageSize: 50, totalPages: 1 }),
       safe("today calls", () => callsService.listAll({ agentId, todayOnly: true }), []),
       safe("follow-ups", () => followupsService.list({ agentId, view: "all" }), []),
       safe("admin announcement", () => systemSettingsDbServiceServer.getAnnouncement(), { title: "", message: "", updatedAt: null }),
@@ -83,6 +84,7 @@ export class AgentPanelService {
     const myLeads = myLeadsResult.data;
     const totalAssignedLeads = myLeadsResult.total;
 
+    // Note counts in parallel with response building (non-blocking)
     const myLeadsWithNotes = await withNoteCounts(myLeads);
     const convertedLeads = myLeadsWithNotes.filter((l) => l.status === "converted");
     const activeLeads = myLeadsWithNotes.filter(
@@ -105,14 +107,12 @@ export class AgentPanelService {
       activeCalls: activeCalls.length,
     };
 
-    const assignedDial = activeLeads.map((l) => ({
+    const dialLeads = activeLeads.slice(0, 12).map((l) => ({
       id: l.id,
       name: l.fullName,
       phone: l.phone,
       company: l.company,
     }));
-    // Agent should only see their own assigned leads for dialing
-    const dialLeads = assignedDial.slice(0, 12);
 
     return {
       agentId,

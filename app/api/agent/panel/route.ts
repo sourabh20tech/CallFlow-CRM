@@ -7,8 +7,11 @@ export async function GET() {
   if (ctx.error) return ctx.error;
 
   try {
-    const panel = await agentPanelService.getPanel(ctx.user);
-    return NextResponse.json(panel);
+    // Pass pre-resolved agentId to avoid duplicate query
+    const panel = await agentPanelService.getPanel(ctx.user, ctx.agentId);
+    return NextResponse.json(panel, {
+      headers: { "Cache-Control": "private, max-age=15, stale-while-revalidate=60" },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load agent panel";
     return NextResponse.json({ error: message }, { status: 500 });

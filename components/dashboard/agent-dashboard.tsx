@@ -33,15 +33,11 @@ const WorkTimeWidget = dynamic(
 export function AgentDashboard() {
   const { data, refresh, isRefreshing, isLoading, error } = useAgentPanel();
 
-  if (isLoading && !data) {
-    return (
-      <div className="flex min-h-[30vh] items-center justify-center">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  const stats = data?.stats;
+  // Show KPI cards immediately with 0 values, fill in when data arrives
+  const stats = data?.stats ?? {
+    assignedLeads: 0, callsToday: 0, pendingFollowups: 0,
+    activeCalls: 0, convertedLeads: 0,
+  };
   const announcement = data?.announcement;
   const showAnnouncement = Boolean(announcement?.title || announcement?.message);
 

@@ -3,7 +3,7 @@ import type { UserRole } from "@/types/auth";
 
 /** Default landing path after sign-in for each CRM role. */
 export function defaultDashboardPathForRole(role: UserRole): string {
-  return role === "agent" ? "/dashboard/workspace" : "/dashboard";
+  return "/dashboard";
 }
 
 /**

@@ -97,7 +97,7 @@ export async function updateSession(request: NextRequest) {
   if (user && isProtectedRoute(pathname) && isAdminOnlyRoute(pathname)) {
     if (!canAccessRoute(pathname, role)) {
       const url = request.nextUrl.clone();
-      url.pathname = role === "agent" ? "/dashboard/workspace" : "/dashboard";
+      url.pathname = "/dashboard";
       url.searchParams.set("error", "forbidden");
       return NextResponse.redirect(url);
     }
