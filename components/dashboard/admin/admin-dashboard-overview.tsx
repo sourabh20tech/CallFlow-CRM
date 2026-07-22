@@ -1,14 +1,15 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/design-system/page-header";
 import { AdminKpiRow, AdminKpiSummary } from "@/components/dashboard/admin/admin-kpi-row";
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner";
 import { useDashboard } from "@/hooks/use-dashboard";
-import { useIsClient } from "@/hooks/use-is-client";
 import { pageSection } from "@/lib/design-system/styles";
 import { Button } from "@/components/ui/button";
+import type { AdminDashboardStats } from "@/types/dashboard";
 
 // Lazy-load heavy sections — charts and activity load after KPIs render
 const AdminChartsSection = dynamic(
@@ -28,23 +29,44 @@ const FollowupCenterWidget = dynamic(
   { ssr: false },
 );
 
-const REFRESH_INTERVAL = undefined as number | undefined;
+const EMPTY_STATS: AdminDashboardStats = {
+  totalLeads: 0, convertedLeads: 0, pendingFollowUps: 0,
+  totalCalls: 0, activeAgents: 0, conversionRate: 0,
+  trends: { totalLeads: 0, convertedLeads: 0, pendingFollowUps: 0, totalCalls: 0, activeAgents: 0 },
+};
 
+/**
+ * Two-phase dashboard loading:
+ * Phase 1: Fast KPI stats from /api/dashboard/stats (~500ms) → cards appear
+ * Phase 2: Full data from /api/dashboard/admin (2-3s) → charts + activity appear
+ */
 export function AdminDashboardOverview() {
-  const { data, isLoading, error, refresh } = useDashboard({
-    refreshInterval: REFRESH_INTERVAL,
-  });
-  const isClient = useIsClient();
+  const { data, error, refresh } = useDashboard();
+  const [fastStats, setFastStats] = useState<AdminDashboardStats | null>(null);
+  const fastFetched = useRef(false);
 
-  // Show dashboard shell immediately — even while data loads
-  // KPIs show 0 briefly then animate to real values
-  const stats = data?.stats ?? {
-    totalLeads: 0, convertedLeads: 0, pendingFollowUps: 0,
-    totalCalls: 0, activeAgents: 0, conversionRate: 0,
-    trends: { totalLeads: 0, convertedLeads: 0, pendingFollowUps: 0, totalCalls: 0, activeAgents: 0 },
-  };
+  // Phase 1: Fetch lightweight stats immediately
+  useEffect(() => {
+    if (fastFetched.current || data) return; // Skip if full data already loaded
+    fastFetched.current = true;
+    fetch("/api/dashboard/stats")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d && d.totalLeads !== undefined) {
+          setFastStats({
+            ...d,
+            trends: { totalLeads: 0, convertedLeads: 0, pendingFollowUps: 0, totalCalls: 0, activeAgents: 0 },
+          });
+        }
+      })
+      .catch(() => {});
+  }, [data]);
 
-  if (error && !data) {
+  // Use full data stats if available, else fast stats, else empty
+  const stats = data?.stats ?? fastStats ?? EMPTY_STATS;
+  const hasStats = Boolean(data?.stats || fastStats);
+
+  if (error && !data && !fastStats) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
         <p className="text-destructive">{error}</p>
@@ -62,7 +84,7 @@ export function AdminDashboardOverview() {
         description="Real-time overview of leads, calls, follow-ups, and agent performance"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {isClient && data && (
+            {data && (
               <span className="hidden text-xs text-muted-foreground sm:inline">
                 Updated {new Date(data.updatedAt).toLocaleTimeString()}
               </span>
@@ -80,12 +102,14 @@ export function AdminDashboardOverview() {
         }
       />
 
+      {/* KPI cards — appear fast from /api/dashboard/stats */}
       <AdminKpiRow stats={stats} />
-      <AdminKpiSummary stats={stats} />
+      {hasStats && <AdminKpiSummary stats={stats} />}
 
       <AnnouncementBanner />
 
-      {data && (
+      {/* Charts and activity — appear after full data loads */}
+      {data ? (
         <>
           <AdminChartsSection
             dailyCalls={data.dailyCalls}
@@ -100,7 +124,12 @@ export function AdminDashboardOverview() {
             <AdminLatestLeadsSection leads={data.leads} />
           </div>
         </>
-      )}
+      ) : hasStats ? (
+        <div className="flex items-center justify-center py-8">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="ml-3 text-sm text-muted-foreground">Loading charts...</span>
+        </div>
+      ) : null}
     </div>
   );
 }

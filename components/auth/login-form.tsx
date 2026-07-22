@@ -75,11 +75,15 @@ export function LoginForm() {
 
       toast.success(`Welcome back, ${values.role === "admin" ? "Administrator" : "Agent"}!`);
 
-      // Start dashboard data fetch IMMEDIATELY — don't wait for page mount
-      // This runs in parallel with navigation, saving 1-2s on first load
-      const dashboardUrl = values.role === "admin" ? "/api/dashboard/admin" : "/api/agent/panel";
+      // Start dashboard stats fetch IMMEDIATELY — appears in <1s
+      const statsUrl = values.role === "admin" ? "/api/dashboard/stats" : "/api/agent/panel";
+      const fullUrl = values.role === "admin" ? "/api/dashboard/admin" : "/api/agent/panel";
       const cacheKey = values.role === "admin" ? "dashboard:admin" : "agent:panel";
-      fetch(dashboardUrl)
+      
+      // Fast stats first (for KPI cards)
+      fetch(statsUrl).catch(() => {});
+      // Full data in background (for charts)
+      fetch(fullUrl)
         .then(r => r.ok ? r.json() : null)
         .then(data => { if (data) setCache(cacheKey, data); })
         .catch(() => {});
