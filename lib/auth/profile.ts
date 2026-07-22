@@ -88,19 +88,19 @@ export async function resolveUserFromAuth(
     app_metadata?: Record<string, unknown>;
   },
 ): Promise<User | null> {
-  // Fast path: if metadata has role, build user without DB query
-  // This saves ~1.4s on Sydney connections
-  const metaRole = roleFromAuthMetadata(authUser.user_metadata, authUser.app_metadata);
-  if (metaRole && authUser.email) {
-    return metadataToUser(authUser, metaRole);
-  }
-
-  // Slow path: fetch from profiles table
+  // Try profile DB first (source of truth for name, avatar etc.)
   const profile = await fetchProfile(supabase, authUser.id);
   if (profile) {
     return profileToUser(profile);
   }
 
+  // Fallback: use JWT metadata if profile not found
+  const metaRole = roleFromAuthMetadata(authUser.user_metadata, authUser.app_metadata);
+  if (metaRole && authUser.email) {
+    return metadataToUser(authUser, metaRole);
+  }
+
+  // Last resort: provision profile via RPC
   const viaRpc = await ensureProfileViaRpc(supabase);
   if (viaRpc) {
     return profileToUser(viaRpc);

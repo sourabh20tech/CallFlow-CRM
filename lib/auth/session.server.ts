@@ -28,7 +28,7 @@ export const getServerUser = cache(async (): Promise<User | null> => {
   }
 
   const resolved = await resolveSessionUser(supabase, authUser, {
-    allowProvision: false,
+    allowProvision: true,
   });
 
   if (!resolved) {
