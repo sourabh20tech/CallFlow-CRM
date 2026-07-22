@@ -20,6 +20,11 @@ export function resolvePostLoginPath(
     return fallback;
   }
 
+  // Never redirect to workspace as landing — always go to dashboard
+  if (redirectTo === "/dashboard/workspace") {
+    return fallback;
+  }
+
   if (isAdminOnlyRoute(redirectTo) && !canAccessRoute(redirectTo, role)) {
     return fallback;
   }
