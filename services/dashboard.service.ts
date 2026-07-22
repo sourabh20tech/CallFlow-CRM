@@ -83,49 +83,30 @@ export class DashboardService {
     requireSupabaseConfigured("admin dashboard");
 
     const range = this.lastNDaysRange(7);
+    const supabase = await createClient();
 
-    // Single consolidated fetch — no redundant recent-items queries
-    // The raw analytics data already contains leads, calls, followups
-    const raw = await analyticsDbServiceServer.fetchRaw(range);
-    const bundle = buildReportsBundleFromRaw(range, raw);
-
-    // Derive recent leads from raw data (already fetched, sorted by created_at)
-    const leads: DashboardLeadRow[] = raw.leads
-      .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
-      .slice(0, 8)
-      .map((row) => ({
-        id: row.id,
-        name: "", // Raw doesn't have full_name — need a light query
-        email: "—",
-        force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
-        status: row.status as DashboardLeadRow["status"],
-        lastContactAt: row.created_at,
-      }));
-
-    // For recent leads with names, do ONE small query (8 rows only)
-    let recentLeads = leads;
-    try {
-      const supabase = await createClient();
-      const { data: leadsRows } = await supabase
+    // ALL queries in parallel — including recent leads
+    const [raw, recentLeadsResult] = await Promise.all([
+      analyticsDbServiceServer.fetchRaw(range),
+      supabase
         .from("leads")
         .select("id, full_name, email, tier, status, last_contacted_at, created_at")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
-        .limit(8);
+        .limit(8),
+    ]);
 
-      if (leadsRows?.length) {
-        recentLeads = leadsRows.map((row) => ({
-          id: row.id,
-          name: row.full_name,
-          email: row.email ?? "—",
-          force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
-          status: row.status as DashboardLeadRow["status"],
-          lastContactAt: row.last_contacted_at ?? row.created_at,
-        }));
-      }
-    } catch {
-      // Use derived data as fallback
-    }
+    const bundle = buildReportsBundleFromRaw(range, raw);
+
+    // Use recent leads from parallel query
+    const recentLeads: DashboardLeadRow[] = (recentLeadsResult.data ?? []).map((row) => ({
+      id: row.id,
+      name: row.full_name,
+      email: row.email ?? "—",
+      force: (row.tier as DashboardLeadRow["force"]) ?? "standard",
+      status: row.status as DashboardLeadRow["status"],
+      lastContactAt: row.last_contacted_at ?? row.created_at,
+    }));
 
     // Derive activities from raw data (no extra queries needed)
     const activities: DashboardActivity[] = [

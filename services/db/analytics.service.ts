@@ -262,23 +262,11 @@ export class AnalyticsDbService extends BaseDbService {
         .select("id, lead_id, agent_id, amount, created_at");
 
       if (profileId) {
-        // AGENT: filter strictly by their profile_id
-        // Do NOT apply date filter — show agent's ALL TIME fund
-        // This prevents the "missing fund" bug when date range doesn't match
         query = query.eq("agent_id", profileId);
       } else {
-        // ADMIN: apply date range + only non-deleted leads
         query = query
           .gte("created_at", from)
           .lte("created_at", to);
-
-        const { data: activeLeads } = await (client as any)
-          .from("leads")
-          .select("id")
-          .is("deleted_at", null);
-        const activeIds = ((activeLeads ?? []) as { id: string }[]).map((l) => l.id);
-        if (activeIds.length === 0) return [];
-        query = query.in("lead_id", activeIds);
       }
 
       const { data, error } = await query.limit(2000);
