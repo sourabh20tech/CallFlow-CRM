@@ -173,17 +173,19 @@ export function LeadsManagement({
       (filters.assignedAgentId && filters.assignedAgentId !== "all"),
   );
 
-  // Compute lead stats from current data (avoid new Date() per render)
+  // Compute lead stats from current data
+  // Use `total` from API if available, otherwise fallback to leads.length
+  const effectiveTotal = total > 0 ? total : leads.length;
   const leadStats = useMemo(() => {
     const now = Date.now();
     return {
-      total,
+      total: effectiveTotal,
       newLeads: leads.filter((l) => l.status === "new").length,
       followUpDue: leads.filter((l) => l.nextFollowUpAt && new Date(l.nextFollowUpAt).getTime() <= now).length,
       converted: leads.filter((l) => l.status === "converted").length,
       unassigned: leads.filter((l) => !l.assignedAgentId).length,
     };
-  }, [leads, total]);
+  }, [leads, effectiveTotal]);
 
   // Selection handlers
   const toggleLeadSelection = useCallback((leadId: string) => {
@@ -427,8 +429,8 @@ export function LeadsManagement({
           />
           <TablePagination
             page={page}
-            totalPages={totalPages}
-            total={total}
+            totalPages={totalPages > 0 ? totalPages : Math.ceil(effectiveTotal / pageSize) || 1}
+            total={effectiveTotal}
             pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
