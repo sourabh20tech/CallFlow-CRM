@@ -1,6 +1,5 @@
 import "server-only";
 
-import { cache } from "react";
 import { assertAgentCanAuthenticate } from "@/lib/auth/agent-account";
 import { resolveSessionUser } from "@/lib/auth/resolve-session-user";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -9,9 +8,8 @@ import type { User } from "@/types/auth";
 
 /** 
  * Resolves the authenticated CRM user on the server.
- * Uses React cache() to deduplicate within the same request.
  */
-export const getServerUser = cache(async (): Promise<User | null> => {
+export async function getServerUser(): Promise<User | null> {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -44,7 +42,7 @@ export const getServerUser = cache(async (): Promise<User | null> => {
   }
 
   return resolved;
-});
+}
 
 export async function requireServerUser(): Promise<User> {
   const user = await getServerUser();

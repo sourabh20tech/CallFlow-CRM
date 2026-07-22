@@ -23,7 +23,6 @@ import { LeadsEmptyState } from "@/components/leads/leads-empty-state";
 import { DeleteLeadModal } from "@/components/leads/delete-lead-modal";
 import { TablePagination } from "@/components/leads/table-pagination";
 import { DEFAULT_PAGE_SIZE } from "@/lib/db/pagination";
-import { getCached } from "@/lib/cache/data-cache";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { pageSection } from "@/lib/design-system/styles";
@@ -85,12 +84,9 @@ export function LeadsManagement({
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
 
-  // Use prefetched cache if no server data (validate it has actual leads)
-  const cachedLeadsData = !initialLeads?.length ? getCached<any>("leads:page1") : null;
-  const validCache = cachedLeadsData?.leads?.length > 0 ? cachedLeadsData : null;
-  const hasServerData = Boolean(initialLeads?.length || validCache);
-  const [leads, setLeads] = useState<Lead[]>(initialLeads?.length ? initialLeads : (validCache?.leads ?? []));
-  const [agents, setAgents] = useState<LeadRosterAgent[]>(initialAgents?.length ? initialAgents : (validCache?.agents ?? []));
+  const [leads, setLeads] = useState<Lead[]>(initialLeads ?? []);
+  const [agents, setAgents] = useState<LeadRosterAgent[]>(initialAgents ?? []);
+  const hasServerData = Boolean(initialLeads?.length);
   const [filters, setFilters] = useState<LeadListFilters>({
     ...DEFAULT_FILTERS,
     search: initialSearch,
@@ -109,8 +105,8 @@ export function LeadsManagement({
   const [detailFocus, setDetailFocus] = useState<LeadDetailFocus>("overview");
   const [deleteLead, setDeleteLead] = useState<Lead | null>(null);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(initialTotal ?? validCache?.total ?? 0);
-  const [totalPages, setTotalPages] = useState(initialTotalPages ?? validCache?.totalPages ?? 1);
+  const [total, setTotal] = useState(initialTotal ?? 0);
+  const [totalPages, setTotalPages] = useState(initialTotalPages ?? 1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   useEffect(() => {
