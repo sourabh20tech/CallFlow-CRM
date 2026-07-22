@@ -88,8 +88,15 @@ export async function resolveUserFromAuth(
     app_metadata?: Record<string, unknown>;
   },
 ): Promise<User | null> {
-  const profile = await fetchProfile(supabase, authUser.id);
+  // Fast path: if metadata has role, build user without DB query
+  // This saves ~1.4s on Sydney connections
+  const metaRole = roleFromAuthMetadata(authUser.user_metadata, authUser.app_metadata);
+  if (metaRole && authUser.email) {
+    return metadataToUser(authUser, metaRole);
+  }
 
+  // Slow path: fetch from profiles table
+  const profile = await fetchProfile(supabase, authUser.id);
   if (profile) {
     return profileToUser(profile);
   }
@@ -97,25 +104,6 @@ export async function resolveUserFromAuth(
   const viaRpc = await ensureProfileViaRpc(supabase);
   if (viaRpc) {
     return profileToUser(viaRpc);
-  }
-
-  const metaRole = roleFromAuthMetadata(authUser.user_metadata, authUser.app_metadata);
-  if (metaRole) {
-    return metadataToUser(authUser, metaRole);
-  }
-
-  try {
-    const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
-    if (!adminError && isAdmin === true) {
-      return metadataToUser(authUser, "admin");
-    }
-
-    const { data: isAgent, error: agentError } = await supabase.rpc("is_agent");
-    if (!agentError && isAgent === true) {
-      return metadataToUser(authUser, "agent");
-    }
-  } catch {
-    /* RPC may be unavailable before migrations are applied */
   }
 
   return null;
