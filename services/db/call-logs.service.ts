@@ -211,42 +211,39 @@ export class CallLogsDbService extends BaseDbService {
 
   async getStats(filters?: CallFilters, client?: TypedSupabaseClient): Promise<CallStats> {
     const supabase = await this.db(client);
-    const search = await this.buildSearchContext(filters, supabase);
-    const statuses: CallStatus[] = [
-      "connected",
-      "callback",
-      "interested",
-      "no_answer",
-    ];
 
-    const countFor = async (extra?: { status?: CallStatus }): Promise<number> => {
-      try {
-        let q = createCallLogsCountQuery(supabase);
-        q = applyCallLogFilters(q, filters, search);
-        if (extra?.status) {
-          q = q.eq("status", extra.status);
-        }
+    // Single query fetching only status column, then count in-memory
+    try {
+      let query = (supabase as any)
+        .from("call_logs")
+        .select("status")
+        .is("deleted_at", null);
 
-        const { count, error } = await q;
-        if (error) {
-          throwPostgrestError(error as PostgrestError, "Call log stats count");
-        }
-        return count ?? 0;
-      } catch (error) {
-        console.warn("[call_logs] Stats count failed:", error);
-        return 0;
+      if (filters?.agentId) query = query.eq("agent_id", filters.agentId);
+      if (filters?.status) query = query.eq("status", filters.status);
+      if (filters?.direction) query = query.eq("direction", filters.direction);
+      if (filters?.leadId) query = query.eq("lead_id", filters.leadId);
+      if (filters?.dateFrom) query = query.gte("started_at", filters.dateFrom);
+      if (filters?.dateTo) query = query.lte("started_at", filters.dateTo);
+
+      const { data, error } = await query.limit(5000);
+      if (error) throw error;
+
+      const rows = (data ?? []) as { status: string }[];
+      const total = rows.length;
+      let connected = 0, callback = 0, interested = 0, noAnswer = 0;
+      for (const r of rows) {
+        if (r.status === "connected") connected++;
+        else if (r.status === "callback") callback++;
+        else if (r.status === "interested") interested++;
+        else if (r.status === "no_answer") noAnswer++;
       }
-    };
 
-    const [total, connected, callback, interested, noAnswer] = await Promise.all([
-      countFor(),
-      countFor({ status: "connected" }),
-      countFor({ status: "callback" }),
-      countFor({ status: "interested" }),
-      countFor({ status: "no_answer" }),
-    ]);
-
-    return { total, connected, callback, interested, noAnswer };
+      return { total, connected, callback, interested, noAnswer };
+    } catch (error) {
+      console.warn("[call_logs] getStats failed:", error);
+      return { ...EMPTY_CALL_STATS };
+    }
   }
 
   /** Safe stats for pages that must not crash on partial DB failures. */

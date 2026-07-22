@@ -63,6 +63,8 @@ export async function GET(request: Request) {
       totalPages: result.totalPages,
       stats,
       agents,
+    }, {
+      headers: { "Cache-Control": "private, max-age=10, stale-while-revalidate=60" },
     });
   } catch (error) {
     const message = toDbError(error, "Failed to load calls").message;
@@ -126,24 +128,32 @@ export async function POST(request: Request) {
 
 async function resolveAgentId(profileId: string): Promise<string | undefined> {
   const { isSupabaseConfigured } = await import("@/lib/supabase/config");
-  if (!isSupabaseConfigured()) {
-    return "agent-1";
-  }
-  const { agentsDbServiceServer } = await import("@/services/db/agents.service");
-  const agents = await agentsDbServiceServer.list(true);
-  const match = agents.find((a) => a.profileId === profileId);
-  return match?.id;
+  if (!isSupabaseConfigured()) return "agent-1";
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("agents")
+    .select("id")
+    .eq("profile_id", profileId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return data?.id ?? undefined;
 }
 
 async function loadAgentRoster(): Promise<{ id: string; name: string }[]> {
   const { isSupabaseConfigured } = await import("@/lib/supabase/config");
   if (!isSupabaseConfigured()) {
-    return [
-      { id: "agent-1", name: "Alex Morgan" },
-      { id: "agent-2", name: "Jordan Lee" },
-    ];
+    return [{ id: "agent-1", name: "Alex Morgan" }];
   }
-  const { agentsDbServiceServer } = await import("@/services/db/agents.service");
-  const agents = await agentsDbServiceServer.list(true);
-  return agents.map((a) => ({ id: a.id, name: a.name }));
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("agents")
+    .select("id, profiles!inner(full_name)")
+    .eq("is_active", true)
+    .is("deleted_at", null);
+  return (data ?? []).map((a: any) => ({
+    id: a.id,
+    name: a.profiles?.full_name ?? "Agent",
+  }));
 }
